@@ -7,7 +7,7 @@ import { authActions } from '@redux/modules/auth';
 import { AppRoutes } from '@routes/index';
 import { lightTheme } from '@styles/theme';
 import { STORAGE_KEYS } from '@utils/constants';
-import { ConfigProvider } from 'antd';
+import { App as AntApp, ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import { useEffect } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
@@ -59,10 +59,12 @@ const AuthHydration: React.FC = () => {
 export default function App(): JSX.Element {
   return (
     <ConfigProvider locale={viVN} theme={lightTheme}>
-      <Router>
-        <AuthHydration />
-        <AppRoutes />
-      </Router>
+      <AntApp>
+        <Router>
+          <AuthHydration />
+          <AppRoutes />
+        </Router>
+      </AntApp>
     </ConfigProvider>
   );
 }

@@ -17,7 +17,7 @@ export const goalService = {
    */
   getGoals: async (params: {
     page?: number;
-    pageSize?: number;
+    limit?: number;
   }): Promise<TPaginatedResponse<IGoal>> => {
     return await api.get(API_ENDPOINTS.GOALS.LIST, { params });
   },
@@ -26,8 +26,7 @@ export const goalService = {
    * Get goal by ID
    */
   getGoalById: async (id: string): Promise<IGoal> => {
-    const url = API_ENDPOINTS.GOALS.GET_BY_ID.replace(':id', id);
-    return await api.get(url);
+    return await api.get(API_ENDPOINTS.GOALS.GET_BY_ID(id));
   },
 
   /**
@@ -43,8 +42,7 @@ export const goalService = {
    * Update goal
    */
   updateGoal: async (id: string, data: IUpdateGoalRequest): Promise<IGoal> => {
-    const url = API_ENDPOINTS.GOALS.UPDATE.replace(':id', id);
-    return await api.put(url, data, {
+    return await api.put(API_ENDPOINTS.GOALS.UPDATE(id), data, {
       showSuccessMessage: false,
     });
   },
@@ -53,8 +51,7 @@ export const goalService = {
    * Delete goal
    */
   deleteGoal: async (id: string): Promise<void> => {
-    const url = API_ENDPOINTS.GOALS.DELETE.replace(':id', id);
-    return await api.delete(url, {
+    return await api.delete(API_ENDPOINTS.GOALS.DELETE(id), {
       showSuccessMessage: false,
     });
   },
@@ -63,8 +60,7 @@ export const goalService = {
    * Contribute to goal
    */
   contributeToGoal: async (goalId: string, data: IContributeGoalRequest): Promise<IGoal> => {
-    const url = API_ENDPOINTS.GOALS.CONTRIBUTE.replace(':id', goalId);
-    return await api.post(url, data, {
+    return await api.post(API_ENDPOINTS.GOALS.CONTRIBUTE(goalId), data, {
       showSuccessMessage: false,
     });
   },

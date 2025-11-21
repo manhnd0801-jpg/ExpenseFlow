@@ -26,9 +26,12 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { DebtsModule } from './modules/debts/debts.module';
 import { EventsModule } from './modules/events/events.module';
 import { GoalsModule } from './modules/goals/goals.module';
+import { LoansModule } from './modules/loans/loans.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { RecurringTransactionsModule } from './modules/recurring-transactions/recurring-transactions.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { SharedBooksModule } from './modules/shared-books/shared-books.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -89,6 +92,9 @@ import { UsersModule } from './modules/users/users.module';
     BudgetsModule,
     GoalsModule,
     DebtsModule,
+    LoansModule,
+    RecurringTransactionsModule,
+    SharedBooksModule,
     EventsModule,
     RemindersModule,
     ReportsModule,

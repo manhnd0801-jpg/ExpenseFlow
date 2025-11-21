@@ -9,7 +9,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-import DashboardLayout from '@/components/templates/DashboardLayout';
 import { useAppDispatch, useAppSelector, useNotification } from '@/hooks';
 import {
   accountActions,
@@ -208,53 +207,51 @@ const AccountListPage: React.FC = () => {
   ];
 
   return (
-    <DashboardLayout>
-      <StyledPageWrapper>
-        {/* Page Header */}
-        <div className="page-header">
-          <h1>Accounts</h1>
-          <p>Manage your bank accounts and digital wallets</p>
-        </div>
+    <StyledPageWrapper>
+      {/* Page Header */}
+      <div className="page-header">
+        <h1>Accounts</h1>
+        <p>Manage your bank accounts and digital wallets</p>
+      </div>
 
-        {/* Actions */}
-        <div className="actions-row">
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddAccount}>
-            Add Account
-          </Button>
-        </div>
+      {/* Actions */}
+      <div className="actions-row">
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddAccount}>
+          Add Account
+        </Button>
+      </div>
 
-        {/* Accounts Table */}
-        <Card className="table-wrapper">
-          <Table
-            columns={columns}
-            dataSource={
-              accounts && accounts.length > 0
-                ? accounts.map((acc: IAccount) => ({ ...acc, key: acc.id }))
-                : []
-            }
-            loading={isLoading}
-            pagination={{
-              current: pagination.page,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              showSizeChanger: true,
-              showTotal: (total) => `Total ${total} accounts`,
-              onChange: (page) => {
-                dispatch(accountActions.setAccountPage(page));
-              },
-            }}
-            locale={{
-              emptyText: (
-                <Empty
-                  description="No Accounts"
-                  style={{ marginTop: '48px', marginBottom: '48px' }}
-                />
-              ),
-            }}
-          />
-        </Card>
-      </StyledPageWrapper>
-    </DashboardLayout>
+      {/* Accounts Table */}
+      <Card className="table-wrapper">
+        <Table
+          columns={columns}
+          dataSource={
+            accounts && accounts.length > 0
+              ? accounts.map((acc: IAccount) => ({ ...acc, key: acc.id }))
+              : []
+          }
+          loading={isLoading}
+          pagination={{
+            current: pagination.page,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} accounts`,
+            onChange: (page) => {
+              dispatch(accountActions.setAccountPage(page));
+            },
+          }}
+          locale={{
+            emptyText: (
+              <Empty
+                description="No Accounts"
+                style={{ marginTop: '48px', marginBottom: '48px' }}
+              />
+            ),
+          }}
+        />
+      </Card>
+    </StyledPageWrapper>
   );
 };
 

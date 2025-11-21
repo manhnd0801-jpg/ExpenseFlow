@@ -32,16 +32,16 @@ const categorySlice = createSlice({
         categories: ICategory[];
         total: number;
         page: number;
-        pageSize: number;
+        limit: number;
       }>
     ) => {
-      const { categories, total, page, pageSize } = action.payload;
+      const { categories, total, page, limit } = action.payload;
       state.categories = categories;
       state.pagination = {
         page,
-        pageSize,
+        limit,
         total,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: Math.ceil(total / limit),
       };
       state.isLoading = false;
       state.error = null;

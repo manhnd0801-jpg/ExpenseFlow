@@ -28,7 +28,7 @@ class CategoryService {
       const response = await apiClient.get<ICategoryListResponse>(CATEGORY_ENDPOINTS.LIST, {
         params: filters,
       });
-      return response.data;
+      return response as ICategoryListResponse;
     } catch (error) {
       throw error;
     }
@@ -40,7 +40,7 @@ class CategoryService {
   async getCategory(id: string): Promise<ICategory> {
     try {
       const response = await apiClient.get<ICategory>(CATEGORY_ENDPOINTS.GET(id));
-      return response.data;
+      return response as ICategory;
     } catch (error) {
       throw error;
     }
@@ -55,7 +55,7 @@ class CategoryService {
         showSuccessMessage: true,
         successMessage: 'Category created successfully',
       } as any);
-      return response.data;
+      return response as ICategory;
     } catch (error) {
       throw error;
     }
@@ -70,7 +70,7 @@ class CategoryService {
         showSuccessMessage: true,
         successMessage: 'Category updated successfully',
       } as any);
-      return response.data;
+      return response as ICategory;
     } catch (error) {
       throw error;
     }

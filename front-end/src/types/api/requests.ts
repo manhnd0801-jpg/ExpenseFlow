@@ -87,7 +87,7 @@ export interface IUpdateTransactionRequest {
 
 export interface ITransactionQueryParams {
   page?: number;
-  pageSize?: number;
+  limit?: number;
   type?: number;
   categoryId?: string;
   accountId?: string;

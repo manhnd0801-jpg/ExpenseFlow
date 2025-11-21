@@ -146,4 +146,8 @@ export const {
   resetBudgetState,
 } = budgetSlice.actions;
 
+// Named exports for consistency with other modules
+export const budgetActions = budgetSlice.actions;
+export const budgetReducer = budgetSlice.reducer;
+
 export default budgetSlice.reducer;

@@ -13,14 +13,13 @@ import type { ColumnsType } from 'antd/es/table';
 import React, { useState } from 'react';
 import { DebtStatusLabels } from '../../constants/enum-labels';
 import { DebtStatus, DebtType } from '../../constants/enums';
-import { useAppDispatch } from '../../hooks/useRedux';
 import type { IDebt } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 const { TabPane } = Tabs;
 
 const DebtsListPage: React.FC = () => {
-  const dispatch = useAppDispatch();
+  // const dispatch = useAppDispatch();
   // const { debts, loading } = useAppSelector((state) => state.debts);
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -35,6 +34,8 @@ const DebtsListPage: React.FC = () => {
       type: DebtType.LENDING,
       personName: 'Nguyễn Văn A',
       amount: 5000000,
+      paidAmount: 1000000,
+      remainingAmount: 4000000,
       interestRate: 5,
       borrowedDate: '2024-01-15',
       dueDate: '2024-12-15',
@@ -48,6 +49,8 @@ const DebtsListPage: React.FC = () => {
       type: DebtType.BORROWING,
       personName: 'Ngân hàng ABC',
       amount: 50000000,
+      paidAmount: 10000000,
+      remainingAmount: 40000000,
       interestRate: 12,
       borrowedDate: '2023-06-01',
       dueDate: '2025-06-01',
@@ -85,7 +88,7 @@ const DebtsListPage: React.FC = () => {
     console.log('Make payment for debt:', debt);
   };
 
-  const renderStatus = (status: number) => {
+  const renderStatus = (status: DebtStatus) => {
     let color = 'blue';
     if (status === DebtStatus.COMPLETED) {
       color = 'green';
@@ -95,7 +98,7 @@ const DebtsListPage: React.FC = () => {
       color = 'orange';
     }
 
-    return <Tag color={color}>{DebtStatusLabels[status]}</Tag>;
+    return <Tag color={color}>{DebtStatusLabels[status as keyof typeof DebtStatusLabels]}</Tag>;
   };
 
   const columns: ColumnsType<IDebt> = [

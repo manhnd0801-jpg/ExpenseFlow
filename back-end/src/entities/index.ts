@@ -5,6 +5,8 @@ export { DebtPayment } from './debt-payment.entity';
 export { Debt } from './debt.entity';
 export { Event } from './event.entity';
 export { Goal } from './goal.entity';
+export { LoanPayment } from './loan-payment.entity';
+export { Loan } from './loan.entity';
 export { Notification } from './notification.entity';
 export { RecurringTransaction } from './recurring-transaction.entity';
 export { Reminder } from './reminder.entity';

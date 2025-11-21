@@ -32,16 +32,16 @@ const accountSlice = createSlice({
         accounts: IAccount[];
         total: number;
         page: number;
-        pageSize: number;
+        limit: number;
       }>
     ) => {
-      const { accounts, total, page, pageSize } = action.payload;
+      const { accounts, total, page, limit } = action.payload;
       state.accounts = accounts;
       state.pagination = {
         page,
-        pageSize,
+        limit,
         total,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: Math.ceil(total / limit),
       };
       state.isLoading = false;
       state.error = null;

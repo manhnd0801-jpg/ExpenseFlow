@@ -6,7 +6,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import createSagaMiddleware from 'redux-saga';
 import { accountReducer } from './modules/accounts';
 import { authReducer } from './modules/auth';
-import { budgetReducer } from './modules/budgets';
+import { budgetReducer } from './modules/budgets/budgetSlice';
 import { categoryReducer } from './modules/categories';
 import { debtReducer } from './modules/debts';
 import { eventReducer } from './modules/events';

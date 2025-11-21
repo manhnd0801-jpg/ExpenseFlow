@@ -76,7 +76,7 @@ export interface IAccountFilters {
  */
 export interface IAccountListQuery extends IAccountFilters {
   page?: number;
-  pageSize?: number;
+  limit?: number;
   sortBy?: 'name' | 'balance' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
 }
@@ -86,7 +86,7 @@ export interface IAccountListQuery extends IAccountFilters {
  */
 export interface IAccountPagination {
   page: number;
-  pageSize: number;
+  limit: number;
   total: number;
   totalPages: number;
 }
@@ -117,7 +117,7 @@ export interface IAccountListResponse {
   data: IAccount[];
   total: number;
   page: number;
-  pageSize: number;
+  limit: number;
 }
 
 /**
@@ -136,7 +136,7 @@ export const initialAccountState: IAccountState = {
   },
   pagination: {
     page: 1,
-    pageSize: 10,
+    limit: 10,
     total: 0,
     totalPages: 0,
   },

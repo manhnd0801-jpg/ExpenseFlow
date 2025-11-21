@@ -17,7 +17,7 @@ export const budgetService = {
    */
   getBudgets: async (params: {
     page?: number;
-    pageSize?: number;
+    limit?: number;
   }): Promise<TPaginatedResponse<IBudget>> => {
     return await api.get(API_ENDPOINTS.BUDGETS.LIST, { params });
   },
@@ -26,8 +26,7 @@ export const budgetService = {
    * Get budget by ID
    */
   getBudgetById: async (id: string): Promise<IBudget> => {
-    const url = API_ENDPOINTS.BUDGETS.GET_BY_ID.replace(':id', id);
-    return await api.get(url);
+    return await api.get(API_ENDPOINTS.BUDGETS.GET_BY_ID(id));
   },
 
   /**
@@ -43,8 +42,7 @@ export const budgetService = {
    * Update budget
    */
   updateBudget: async (id: string, data: IUpdateBudgetRequest): Promise<IBudget> => {
-    const url = API_ENDPOINTS.BUDGETS.UPDATE.replace(':id', id);
-    return await api.put(url, data, {
+    return await api.put(API_ENDPOINTS.BUDGETS.UPDATE(id), data, {
       showSuccessMessage: false, // Handled by saga
     });
   },
@@ -53,8 +51,7 @@ export const budgetService = {
    * Delete budget
    */
   deleteBudget: async (id: string): Promise<void> => {
-    const url = API_ENDPOINTS.BUDGETS.DELETE.replace(':id', id);
-    return await api.delete(url, {
+    return await api.delete(API_ENDPOINTS.BUDGETS.DELETE(id), {
       showSuccessMessage: false, // Handled by saga
     });
   },
@@ -63,7 +60,6 @@ export const budgetService = {
    * Get budget progress
    */
   getBudgetProgress: async (budgetId: string): Promise<IBudgetProgressResponse> => {
-    const url = API_ENDPOINTS.BUDGETS.GET_PROGRESS.replace(':id', budgetId);
-    return await api.get(url);
+    return await api.get(API_ENDPOINTS.BUDGETS.GET_PROGRESS(budgetId));
   },
 };

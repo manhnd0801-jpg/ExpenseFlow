@@ -34,10 +34,8 @@ export const lightTheme: ThemeConfig = {
 
     // Typography
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    fontSizeXS: 12,
-    fontSizeSM: 14,
-    fontSize: 16,
-    fontSizeLG: 18,
+    fontSize: 14,
+    fontSizeLG: 16,
     fontSizeXL: 20,
     fontSizeHeading1: 32,
     fontSizeHeading2: 24,
@@ -108,10 +106,8 @@ export const darkTheme: ThemeConfig = {
 
     // Typography
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    fontSizeXS: 12,
-    fontSizeSM: 14,
-    fontSize: 16,
-    fontSizeLG: 18,
+    fontSize: 14,
+    fontSizeLG: 16,
     fontSizeXL: 20,
     fontSizeHeading1: 32,
     fontSizeHeading2: 24,

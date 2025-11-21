@@ -1,0 +1,22 @@
+# ExpenseFlow Project Rules
+
+## Auto-apply Instructions
+
+When coding BACKEND:
+
+- Read and follow: docs/backend-instrucstion.md
+- Use INTEGER enums (1,2,3) in src/common/constants/enums.ts
+- Entity columns: type: 'smallint' for enums
+- DTO validation: @IsInt(), @Min(), @Max() for enum fields
+
+When coding FRONTEND:
+
+- Read and follow: docs/frontend-instrucstion.md
+- Use INTEGER enums in src/constants/enums.ts
+- Type naming: IUser, IProps, TType, TPaginated<T>
+- Path aliases: @hooks, @redux, @services, @utils
+
+## Enum Consistency
+
+Backend and Frontend MUST use same integer enum values.
+Example: AccountType.CASH = 1 (both FE & BE)

@@ -11,7 +11,6 @@ import {
   RecentTransactions,
   SummaryStats,
 } from '../../components/molecules/DashboardWidgets';
-import { DashboardLayout } from '../../components/templates/DashboardLayout';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,39 +19,33 @@ export const DashboardPage: React.FC = () => {
   const mockStats = {
     totalIncome: 50000000,
     totalExpense: 35000000,
-    totalBalance: 15000000,
-    monthlyIncome: 8000000,
-    monthlyExpense: 5500000,
-    monthlyBalance: 2500000,
+    balance: 15000000,
+    incomeChange: 12.5,
+    expenseChange: -8.3,
+    period: 'Tháng 11/2025',
   };
 
   const mockBudgets = [
     {
       id: '1',
-      name: 'Ăn uống',
-      budgetAmount: 2000000,
-      spentAmount: 1200000,
-      category: 'Ăn uống',
-      period: 'monthly',
-      color: '#ff6b6b',
+      categoryName: 'Ăn uống',
+      spent: 3000000,
+      budgetAmount: 5000000,
+      color: '#FF6384',
     },
     {
       id: '2',
-      name: 'Mua sắm',
-      budgetAmount: 1500000,
-      spentAmount: 900000,
-      category: 'Mua sắm',
-      period: 'monthly',
-      color: '#4ecdc4',
+      categoryName: 'Di chuyển',
+      spent: 1500000,
+      budgetAmount: 2000000,
+      color: '#36A2EB',
     },
     {
       id: '3',
-      name: 'Di chuyển',
+      categoryName: 'Giải trí',
+      spent: 800000,
       budgetAmount: 1000000,
-      spentAmount: 800000,
-      category: 'Di chuyển',
-      period: 'monthly',
-      color: '#45b7d1',
+      color: '#FFCE56',
     },
   ];
 
@@ -99,38 +92,32 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div style={{ padding: '24px' }}>
-        <Row gutter={[16, 16]}>
-          {/* Summary Statistics */}
-          <Col span={24}>
-            <SummaryStats {...mockStats} />
-          </Col>
+    <div style={{ padding: '24px' }}>
+      <Row gutter={[16, 16]}>
+        {/* Summary Statistics */}
+        <Col span={24}>
+          <SummaryStats {...mockStats} />
+        </Col>
 
-          {/* Quick Actions */}
-          <Col span={24} lg={8}>
-            <QuickActions {...handleQuickActions} />
-          </Col>
+        {/* Quick Actions */}
+        <Col span={24} lg={8}>
+          <QuickActions {...handleQuickActions} />
+        </Col>
 
-          {/* Budget Progress */}
-          <Col span={24} lg={16}>
-            <BudgetProgress
-              budgets={mockBudgets}
-              onViewAll={() => navigate('/budgets')}
-              onAddNew={() => navigate('/budgets/new')}
-            />
-          </Col>
+        {/* Budget Progress */}
+        <Col span={24} lg={16}>
+          <BudgetProgress budgets={mockBudgets} onViewAll={() => navigate('/budgets')} />
+        </Col>
 
-          {/* Recent Transactions */}
-          <Col span={24}>
-            <RecentTransactions
-              transactions={mockTransactions}
-              onViewAll={() => navigate('/transactions')}
-              onAddNew={() => navigate('/transactions/new')}
-            />
-          </Col>
-        </Row>
-      </div>
-    </DashboardLayout>
+        {/* Recent Transactions */}
+        <Col span={24}>
+          <RecentTransactions
+            transactions={mockTransactions}
+            onViewAll={() => navigate('/transactions')}
+            onAddNew={() => navigate('/transactions/new')}
+          />
+        </Col>
+      </Row>
+    </div>
   );
 };

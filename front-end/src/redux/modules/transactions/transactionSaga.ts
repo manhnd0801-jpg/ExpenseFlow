@@ -29,7 +29,7 @@ function* listTransactionsSaga(
     const response: ITransaction[] = yield transactionService.listTransactions({
       ...filters,
       page: pagination.page,
-      pageSize: pagination.pageSize,
+      limit: pagination.limit,
     });
 
     yield put(
@@ -37,7 +37,7 @@ function* listTransactionsSaga(
         transactions: response,
         total: response.length,
         page: pagination.page,
-        pageSize: pagination.pageSize,
+        limit: pagination.limit,
       })
     );
   } catch (error) {

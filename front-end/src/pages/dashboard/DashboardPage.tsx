@@ -130,6 +130,7 @@ export const DashboardPage: React.FC = () => {
 
   // Get recent transactions (last 5)
   const recentTransactions = useMemo(() => {
+    if (!Array.isArray(transactions)) return [];
     return [...transactions]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5);
@@ -239,7 +240,7 @@ export const DashboardPage: React.FC = () => {
               <div style={{ marginBottom: '8px', fontSize: '12px', color: 'rgba(0,0,0,0.45)' }}>
                 Tỷ lệ chi tiêu
               </div>
-              <Progress type="circle" percent={Math.round(expenseRatio)} width={50} />
+              <Progress type="circle" percent={Math.round(expenseRatio)} size={50} />
             </div>
           </Card>
         </Col>

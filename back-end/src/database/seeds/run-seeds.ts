@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import databaseConfig from '../../config/database.config';
 import { Category } from '../../entities/category.entity';
 import { defaultCategories } from './default-categories.seed';
+import { seedSampleData } from './sample-data.seed';
 
 async function runSeeds() {
   const dataSource = new DataSource(databaseConfig() as any);
@@ -27,6 +28,9 @@ async function runSeeds() {
     } else {
       console.log('Default categories already exist, skipping...');
     }
+
+    // Seed sample data
+    await seedSampleData(dataSource);
   } catch (error) {
     console.error('❌ Error running seeds:', error);
     process.exit(1);

@@ -2,11 +2,15 @@
  * Reports Page
  * Financial reports and analytics
  */
-import { DownloadOutlined } from '@ant-design/icons';
+import { ArrowDownOutlined, ArrowUpOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Button, Card, Col, DatePicker, Row, Statistic, Table } from 'antd';
-import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import dayjs, { Dayjs } from 'dayjs';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { TransactionType } from '../../constants/enums';
+import { useAppDispatch, useAppSelector } from '../../hooks';
+import { transactionActions } from '../../redux/modules/transactions';
+import type { ITransaction } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 
 /**
@@ -58,11 +62,7 @@ const PageWrapper = styled.div`
  */
 export const ReportsPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const transactions = useAppSelector(selectTransactions);
-  const totalIncome = useAppSelector(selectTotalIncome);
-  const totalExpense = useAppSelector(selectTotalExpense);
-  const balance = useAppSelector(selectBalance);
-  const expenseRatio = useAppSelector(selectExpenseRatio);
+  const transactions = useAppSelector((state) => state.transactions.transactions);
 
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
 
@@ -77,7 +77,7 @@ export const ReportsPage: React.FC = () => {
       return transactions;
     }
 
-    return transactions.filter((t) => {
+    return transactions.filter((t: ITransaction) => {
       const transDate = dayjs(t.date);
       return (
         transDate.isAfter(dateRange[0]?.startOf('day')) &&
@@ -89,11 +89,11 @@ export const ReportsPage: React.FC = () => {
   // Calculate statistics from filtered transactions
   const stats = useMemo(() => {
     const income = filteredTransactions
-      .filter((t) => t.type === 'INCOME' || t.type === 1)
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter((t: ITransaction) => t.type === TransactionType.INCOME)
+      .reduce((sum: number, t: ITransaction) => sum + t.amount, 0);
     const expense = filteredTransactions
-      .filter((t) => t.type === 'EXPENSE' || t.type === 2)
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter((t: ITransaction) => t.type === TransactionType.EXPENSE)
+      .reduce((sum: number, t: ITransaction) => sum + t.amount, 0);
     const balance = income - expense;
     const ratio = income > 0 ? (expense / income) * 100 : 0;
 
@@ -104,17 +104,17 @@ export const ReportsPage: React.FC = () => {
   const categoryStats = useMemo(() => {
     const grouped: Record<string, { name: string; income: number; expense: number }> = {};
 
-    filteredTransactions.forEach((t) => {
+    filteredTransactions.forEach((t: ITransaction) => {
       const categoryId = t.categoryId || 'unknown';
-      const categoryName = t.category?.name || 'Không xác định';
+      const categoryName = 'Danh mục'; // Simplified since we don't have populated category
 
       if (!grouped[categoryId]) {
         grouped[categoryId] = { name: categoryName, income: 0, expense: 0 };
       }
 
-      if (t.type === 'INCOME' || t.type === 1) {
+      if (t.type === TransactionType.INCOME) {
         grouped[categoryId].income += t.amount;
-      } else {
+      } else if (t.type === TransactionType.EXPENSE) {
         grouped[categoryId].expense += t.amount;
       }
     });

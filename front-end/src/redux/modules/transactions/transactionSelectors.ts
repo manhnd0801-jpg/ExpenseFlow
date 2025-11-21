@@ -47,7 +47,7 @@ export const selectTransactionPage = createSelector(
 
 export const selectTransactionPageSize = createSelector(
   [selectTransactionState],
-  (state) => state.pagination.pageSize
+  (state) => state.pagination.limit
 );
 
 export const selectTransactionTotal = createSelector(

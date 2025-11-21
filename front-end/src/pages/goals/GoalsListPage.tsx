@@ -82,7 +82,7 @@ const GoalsListPage: React.FC = () => {
     );
   };
 
-  const renderStatus = (status: number) => {
+  const renderStatus = (status: GoalStatus) => {
     let color = 'blue';
     if (status === GoalStatus.COMPLETED) {
       color = 'green';
@@ -90,7 +90,7 @@ const GoalsListPage: React.FC = () => {
       color = 'red';
     }
 
-    return <Tag color={color}>{GoalStatusLabels[status]}</Tag>;
+    return <Tag color={color}>{GoalStatusLabels[status as keyof typeof GoalStatusLabels]}</Tag>;
   };
 
   const columns: ColumnsType<IGoal> = [

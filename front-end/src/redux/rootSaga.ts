@@ -5,7 +5,7 @@
 import { fork } from 'redux-saga/effects';
 import { accountSaga } from './modules/accounts';
 import { authSaga } from './modules/auth';
-import { budgetSaga } from './modules/budgets';
+import budgetSaga from './modules/budgets/budgetSaga';
 import { categorySaga } from './modules/categories';
 import { debtSaga } from './modules/debts';
 import { eventsSaga } from './modules/events';

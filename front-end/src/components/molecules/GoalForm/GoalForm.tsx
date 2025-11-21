@@ -22,7 +22,6 @@ import {
   Progress,
   Radio,
   Row,
-  Select,
   Tag,
 } from 'antd';
 import dayjs from 'dayjs';
@@ -32,7 +31,7 @@ import { GoalType } from '../../../constants/enums';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 
 const { TextArea } = Input;
-const { Option } = Select;
+// const { Option } = Select; // Unused - commented out
 
 interface IGoal {
   id?: string;
@@ -266,7 +265,7 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
 
   const currentAmount = initialValues?.currentAmount || 0;
   const progressPercent = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
-  const remainingAmount = Math.max(0, targetAmount - currentAmount);
+  // const remainingAmount = Math.max(0, targetAmount - currentAmount); // Unused but kept for reference
 
   useEffect(() => {
     if (initialValues) {
@@ -338,18 +337,19 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
     GoalType.OTHER,
   ];
 
-  const getPriorityText = (priorityValue: number) => {
-    switch (priorityValue) {
-      case 1:
-        return 'Thấp';
-      case 2:
-        return 'Trung bình';
-      case 3:
-        return 'Cao';
-      default:
-        return 'Trung bình';
-    }
-  };
+  // Helper function for priority text (currently unused but kept for reference)
+  // const getPriorityText = (priorityValue: number) => {
+  //   switch (priorityValue) {
+  //     case 1:
+  //       return 'Thấp';
+  //     case 2:
+  //       return 'Trung bình';
+  //     case 3:
+  //       return 'Cao';
+  //     default:
+  //       return 'Trung bình';
+  //   }
+  // };
 
   // Calculate time remaining
   const targetDate = form.getFieldValue('targetDate') || dayjs().add(1, 'year');
@@ -470,7 +470,10 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
                 onChange={(value) => setTargetAmount(value || 0)}
                 style={{ width: '100%' }}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                parser={(value) => {
+                  const parsed = value?.replace(/\$\s?|(,*)/g, '');
+                  return parsed ? Number(parsed) : 0;
+                }}
                 placeholder="Nhập số tiền"
                 size="large"
                 min={1000}

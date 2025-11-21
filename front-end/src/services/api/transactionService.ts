@@ -22,10 +22,10 @@ class TransactionService {
    */
   async listTransactions(query: ITransactionListQuery): Promise<ITransaction[]> {
     try {
-      const response = await api.get<{ data: ITransaction[] }>(TRANSACTION_API_URL, {
+      const response = await api.get<ITransaction[]>(TRANSACTION_API_URL, {
         params: query,
       });
-      return response.data.data || [];
+      return response as ITransaction[];
     } catch (error) {
       console.error('Error fetching transactions:', error);
       throw error;
@@ -37,8 +37,8 @@ class TransactionService {
    */
   async getTransaction(id: string): Promise<ITransaction> {
     try {
-      const response = await api.get<{ data: ITransaction }>(`${TRANSACTION_API_URL}/${id}`);
-      return response.data.data;
+      const response = await api.get<ITransaction>(`${TRANSACTION_API_URL}/${id}`);
+      return response as ITransaction;
     } catch (error) {
       console.error('Error fetching transaction:', error);
       throw error;
@@ -50,8 +50,8 @@ class TransactionService {
    */
   async createTransaction(payload: ICreateTransactionPayload): Promise<ITransaction> {
     try {
-      const response = await api.post<{ data: ITransaction }>(TRANSACTION_API_URL, payload);
-      return response.data.data;
+      const response = await api.post<ITransaction>(TRANSACTION_API_URL, payload);
+      return response as ITransaction;
     } catch (error) {
       console.error('Error creating transaction:', error);
       throw error;
@@ -64,8 +64,8 @@ class TransactionService {
   async updateTransaction(payload: IUpdateTransactionPayload): Promise<ITransaction> {
     try {
       const { id, ...data } = payload;
-      const response = await api.put<{ data: ITransaction }>(`${TRANSACTION_API_URL}/${id}`, data);
-      return response.data.data;
+      const response = await api.put<ITransaction>(`${TRANSACTION_API_URL}/${id}`, data);
+      return response as ITransaction;
     } catch (error) {
       console.error('Error updating transaction:', error);
       throw error;
@@ -94,9 +94,11 @@ class TransactionService {
   }> {
     try {
       const response = await api.get<{
-        data: { totalIncome: number; totalExpense: number; balance: number };
+        totalIncome: number;
+        totalExpense: number;
+        balance: number;
       }>(`${TRANSACTION_API_URL}/stats`);
-      return response.data.data;
+      return response as { totalIncome: number; totalExpense: number; balance: number };
     } catch (error) {
       console.error('Error fetching transaction stats:', error);
       throw error;

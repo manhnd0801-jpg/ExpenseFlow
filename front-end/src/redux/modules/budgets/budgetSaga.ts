@@ -36,7 +36,7 @@ import type {
 function* fetchBudgetsSaga(action: PayloadAction<IFetchBudgetsPayload>): Generator<any, void, any> {
   try {
     const { page = 1, pageSize = 20 } = action.payload;
-    const response: any = yield call(budgetService.getBudgets, { page, pageSize });
+    const response: any = yield call(budgetService.getBudgets, { page, limit: pageSize });
     yield put(fetchBudgetsSuccess(response.items));
   } catch (error: any) {
     const errorMessage = error.message || 'Không thể tải danh sách ngân sách';
@@ -50,7 +50,7 @@ function* fetchBudgetsSaga(action: PayloadAction<IFetchBudgetsPayload>): Generat
  */
 function* createBudgetSaga(action: PayloadAction<ICreateBudgetPayload>): Generator<any, void, any> {
   try {
-    const response: any = yield call(budgetService.createBudget, action.payload);
+    const response: any = yield call(() => budgetService.createBudget(action.payload as any));
     yield put(createBudgetSuccess(response));
     message.success('Tạo ngân sách thành công');
   } catch (error: any) {

@@ -28,7 +28,7 @@ class AccountService {
       const response = await apiClient.get<IAccountListResponse>(ACCOUNT_ENDPOINTS.LIST, {
         params: filters,
       });
-      return response.data;
+      return response as IAccountListResponse;
     } catch (error) {
       throw error;
     }
@@ -40,7 +40,7 @@ class AccountService {
   async getAccount(id: string): Promise<IAccount> {
     try {
       const response = await apiClient.get<IAccount>(ACCOUNT_ENDPOINTS.GET(id));
-      return response.data;
+      return response as IAccount;
     } catch (error) {
       throw error;
     }
@@ -55,7 +55,7 @@ class AccountService {
         showSuccessMessage: true,
         successMessage: 'Account created successfully',
       } as any);
-      return response.data;
+      return response as IAccount;
     } catch (error) {
       throw error;
     }
@@ -70,7 +70,7 @@ class AccountService {
         showSuccessMessage: true,
         successMessage: 'Account updated successfully',
       } as any);
-      return response.data;
+      return response as IAccount;
     } catch (error) {
       throw error;
     }

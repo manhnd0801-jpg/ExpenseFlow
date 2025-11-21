@@ -14,6 +14,7 @@ import { Category } from './category.entity';
 import { Debt } from './debt.entity';
 import { Event } from './event.entity';
 import { Goal } from './goal.entity';
+import { Loan } from './loan.entity';
 import { Notification } from './notification.entity';
 import { RecurringTransaction } from './recurring-transaction.entity';
 import { Reminder } from './reminder.entity';
@@ -125,6 +126,9 @@ export class User {
 
   @OneToMany(() => RecurringTransaction, (recurring) => recurring.user)
   recurringTransactions: RecurringTransaction[];
+
+  @OneToMany(() => Loan, (loan) => loan.user)
+  loans: Loan[];
 
   // Virtual properties
   get fullName(): string {

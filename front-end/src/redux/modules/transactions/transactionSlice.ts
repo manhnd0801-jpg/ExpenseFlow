@@ -32,16 +32,16 @@ const transactionSlice = createSlice({
         transactions: ITransaction[];
         total: number;
         page: number;
-        pageSize: number;
+        limit: number;
       }>
     ) => {
-      const { transactions, total, page, pageSize } = action.payload;
+      const { transactions, total, page, limit } = action.payload;
       state.transactions = transactions;
       state.pagination = {
         page,
-        pageSize,
+        limit,
         total,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: Math.ceil(total / limit),
       };
       state.isLoading = false;
       state.error = null;
@@ -177,7 +177,7 @@ const transactionSlice = createSlice({
     },
 
     setTransactionPageSize: (state, action: PayloadAction<number>) => {
-      state.pagination.pageSize = action.payload;
+      state.pagination.limit = action.payload;
       state.pagination.page = 1;
     },
 

@@ -283,20 +283,21 @@ export const BudgetForm: React.FC<IBudgetFormProps> = ({
     }
   };
 
-  const getPeriodText = (periodValue: number) => {
-    switch (periodValue) {
-      case BudgetPeriod.WEEKLY:
-        return 'Hàng tuần';
-      case BudgetPeriod.MONTHLY:
-        return 'Hàng tháng';
-      case BudgetPeriod.QUARTERLY:
-        return 'Hàng quý';
-      case BudgetPeriod.YEARLY:
-        return 'Hàng năm';
-      default:
-        return 'Hàng tháng';
-    }
-  };
+  // Helper function to get period text (currently unused but kept for future use)
+  // const getPeriodText = (periodValue: number) => {
+  //   switch (periodValue) {
+  //     case BudgetPeriod.WEEKLY:
+  //       return 'Hàng tuần';
+  //     case BudgetPeriod.MONTHLY:
+  //       return 'Hàng tháng';
+  //     case BudgetPeriod.QUARTERLY:
+  //       return 'Hàng quý';
+  //     case BudgetPeriod.YEARLY:
+  //       return 'Hàng năm';
+  //     default:
+  //       return 'Hàng tháng';
+  //   }
+  // };
 
   const periodOptions = [
     { value: BudgetPeriod.WEEKLY, label: 'Tuần' },
@@ -330,7 +331,10 @@ export const BudgetForm: React.FC<IBudgetFormProps> = ({
                 onChange={(value) => setBudgetAmount(value || 0)}
                 style={{ width: '100%' }}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                parser={(value) => {
+                  const parsed = value?.replace(/\$\s?|(,*)/g, '');
+                  return parsed ? Number(parsed) : 0;
+                }}
                 placeholder="Nhập số tiền"
                 size="large"
               />
@@ -443,7 +447,10 @@ export const BudgetForm: React.FC<IBudgetFormProps> = ({
                   max={100}
                   style={{ width: '100%' }}
                   formatter={(value) => `${value}%`}
-                  parser={(value) => value!.replace('%', '')}
+                  parser={(value) => {
+                    const parsed = value?.replace('%', '');
+                    return parsed ? Number(parsed) : 0;
+                  }}
                 />
               </Form.Item>
             </div>

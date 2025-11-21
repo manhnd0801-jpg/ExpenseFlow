@@ -21,10 +21,10 @@ interface IExpenseChartProps {
   height?: number;
 }
 
-const ChartWrapper = styled.div`
+const ChartWrapper = styled.div<{ $height?: number }>`
   .chart-container {
     position: relative;
-    height: ${(props) => props.height || 300}px;
+    height: ${(props) => props.$height || 300}px;
     margin: 16px 0;
   }
 
@@ -179,7 +179,7 @@ export const ExpenseChart: React.FC<IExpenseChartProps> = ({
 
   return (
     <Card title={title}>
-      <ChartWrapper height={height}>
+      <ChartWrapper $height={height}>
         <div className="chart-container">
           <canvas ref={canvasRef}></canvas>
         </div>

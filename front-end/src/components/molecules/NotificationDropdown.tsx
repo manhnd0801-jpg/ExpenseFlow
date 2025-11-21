@@ -215,7 +215,12 @@ const NotificationDropdown: React.FC = () => {
   );
 
   return (
-    <Dropdown dropdownRender={() => dropdownContent} trigger={['click']} placement="bottomRight">
+    <Dropdown
+      menu={{ items: [] }}
+      dropdownRender={() => dropdownContent}
+      trigger={['click']}
+      placement="bottomRight"
+    >
       <Badge count={unreadCount} overflowCount={99}>
         <Button
           type="text"

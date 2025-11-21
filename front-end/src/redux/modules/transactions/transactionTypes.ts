@@ -3,20 +3,10 @@
  * Defines all TypeScript interfaces and enums for transaction management
  */
 
-// ============================================
-// TRANSACTION ENUMS
-// ============================================
+import { TransactionType } from '../../../constants/enums';
 
-export enum TransactionType {
-  INCOME = 'INCOME',
-  EXPENSE = 'EXPENSE',
-}
-
-export enum TransactionStatus {
-  PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
-}
+// Re-export TransactionType enum for use in components
+export { TransactionType };
 
 // ============================================
 // TRANSACTION INTERFACES
@@ -34,7 +24,6 @@ export interface ITransaction {
   amount: number;
   description: string;
   date: string; // ISO 8601 format
-  status: TransactionStatus;
   notes?: string;
   tags?: string[];
   createdAt: string;
@@ -66,7 +55,6 @@ export interface IUpdateTransactionPayload {
   amount?: number;
   description?: string;
   date?: string;
-  status?: TransactionStatus;
   notes?: string;
   tags?: string[];
 }
@@ -87,7 +75,6 @@ export interface ITransactionFilters {
   categoryId?: string;
   accountId?: string;
   type?: TransactionType;
-  status?: TransactionStatus;
   searchText?: string;
   minAmount?: number;
   maxAmount?: number;
@@ -98,7 +85,7 @@ export interface ITransactionFilters {
  */
 export interface ITransactionListQuery extends ITransactionFilters {
   page?: number;
-  pageSize?: number;
+  limit?: number;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
 }
@@ -113,7 +100,7 @@ export interface ITransactionResponse {
   error?: string;
   pagination?: {
     page: number;
-    pageSize: number;
+    limit: number;
     total: number;
     totalPages: number;
   };
@@ -133,7 +120,7 @@ export interface ITransactionState {
   // Pagination
   pagination: {
     page: number;
-    pageSize: number;
+    limit: number;
     total: number;
     totalPages: number;
   };
@@ -167,7 +154,7 @@ export const initialTransactionState: ITransactionState = {
   filters: {},
   pagination: {
     page: 1,
-    pageSize: 10,
+    limit: 10,
     total: 0,
     totalPages: 0,
   },

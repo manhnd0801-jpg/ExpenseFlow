@@ -26,7 +26,6 @@ import {
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { DashboardLayout } from '../../components/templates/DashboardLayout';
 import { EventStatus, EventType } from '../../constants/enums';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
@@ -363,147 +362,145 @@ export const EventsListPage: React.FC = () => {
   const completedEvents = events.filter((event) => event.status === EventStatus.COMPLETED).length;
 
   return (
-    <DashboardLayout>
-      <PageWrapper>
-        <div className="page-header">
-          <h1>Quản lý Sự kiện & Dự án</h1>
-          <Button type="primary" icon={<PlusOutlined />}>
-            Tạo sự kiện mới
-          </Button>
-        </div>
+    <PageWrapper>
+      <div className="page-header">
+        <h1>Quản lý Sự kiện & Dự án</h1>
+        <Button type="primary" icon={<PlusOutlined />}>
+          Tạo sự kiện mới
+        </Button>
+      </div>
 
-        {/* Summary Statistics */}
-        <Row gutter={16} className="stats-row">
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="Tổng ngân sách"
-                value={totalBudget}
-                formatter={(value) => formatCurrency(value as number)}
-                prefix={<DollarOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="Đã chi tiêu"
-                value={totalActual}
-                formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#cf1322' }}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="Đang diễn ra"
-                value={activeEvents}
-                suffix="sự kiện"
-                valueStyle={{ color: '#52c41a' }}
-                prefix={<CalendarOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="Đã hoàn thành"
-                value={completedEvents}
-                suffix="sự kiện"
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-        </Row>
+      {/* Summary Statistics */}
+      <Row gutter={16} className="stats-row">
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="Tổng ngân sách"
+              value={totalBudget}
+              formatter={(value) => formatCurrency(value as number)}
+              prefix={<DollarOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="Đã chi tiêu"
+              value={totalActual}
+              formatter={(value) => formatCurrency(value as number)}
+              valueStyle={{ color: '#cf1322' }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="Đang diễn ra"
+              value={activeEvents}
+              suffix="sự kiện"
+              valueStyle={{ color: '#52c41a' }}
+              prefix={<CalendarOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="Đã hoàn thành"
+              value={completedEvents}
+              suffix="sự kiện"
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+      </Row>
 
-        {/* Events Table */}
-        <Card title="Danh sách sự kiện">
-          <Table
-            columns={columns}
-            dataSource={events}
-            rowKey="id"
-            loading={loading}
-            className="event-table"
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sự kiện`,
-            }}
-          />
-        </Card>
+      {/* Events Table */}
+      <Card title="Danh sách sự kiện">
+        <Table
+          columns={columns}
+          dataSource={events}
+          rowKey="id"
+          loading={loading}
+          className="event-table"
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sự kiện`,
+          }}
+        />
+      </Card>
 
-        {/* Event Details Modal */}
-        <Modal
-          title={selectedEvent?.name}
-          open={modalVisible}
-          onCancel={() => setModalVisible(false)}
-          footer={null}
-          width={600}
-        >
-          {selectedEvent && (
-            <div>
-              <Row gutter={16} style={{ marginBottom: 16 }}>
-                <Col span={12}>
-                  <div>
-                    <strong>Loại:</strong> {getTypeText(selectedEvent.type)}
-                  </div>
-                </Col>
-                <Col span={12}>
-                  <div>
-                    <strong>Trạng thái:</strong> {getStatusText(selectedEvent.status)}
-                  </div>
-                </Col>
-              </Row>
-
-              <Row gutter={16} style={{ marginBottom: 16 }}>
-                <Col span={12}>
-                  <div>
-                    <strong>Bắt đầu:</strong> {formatDate(selectedEvent.startDate)}
-                  </div>
-                </Col>
-                <Col span={12}>
-                  <div>
-                    <strong>Kết thúc:</strong> {formatDate(selectedEvent.endDate)}
-                  </div>
-                </Col>
-              </Row>
-
-              <Row gutter={16} style={{ marginBottom: 16 }}>
-                <Col span={12}>
-                  <div>
-                    <strong>Ngân sách:</strong> {formatCurrency(selectedEvent.budgetAmount)}
-                  </div>
-                </Col>
-                <Col span={12}>
-                  <div>
-                    <strong>Đã chi:</strong> {formatCurrency(selectedEvent.actualAmount)}
-                  </div>
-                </Col>
-              </Row>
-
-              {selectedEvent.location && (
-                <div style={{ marginBottom: 16 }}>
-                  <strong>Địa điểm:</strong> {selectedEvent.location}
+      {/* Event Details Modal */}
+      <Modal
+        title={selectedEvent?.name}
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        {selectedEvent && (
+          <div>
+            <Row gutter={16} style={{ marginBottom: 16 }}>
+              <Col span={12}>
+                <div>
+                  <strong>Loại:</strong> {getTypeText(selectedEvent.type)}
                 </div>
-              )}
-
-              {selectedEvent.participants && (
-                <div style={{ marginBottom: 16 }}>
-                  <strong>Số người tham gia:</strong> {selectedEvent.participants}
+              </Col>
+              <Col span={12}>
+                <div>
+                  <strong>Trạng thái:</strong> {getStatusText(selectedEvent.status)}
                 </div>
-              )}
+              </Col>
+            </Row>
 
-              {selectedEvent.description && (
-                <div style={{ marginBottom: 16 }}>
-                  <strong>Mô tả:</strong> {selectedEvent.description}
+            <Row gutter={16} style={{ marginBottom: 16 }}>
+              <Col span={12}>
+                <div>
+                  <strong>Bắt đầu:</strong> {formatDate(selectedEvent.startDate)}
                 </div>
-              )}
-            </div>
-          )}
-        </Modal>
-      </PageWrapper>
-    </DashboardLayout>
+              </Col>
+              <Col span={12}>
+                <div>
+                  <strong>Kết thúc:</strong> {formatDate(selectedEvent.endDate)}
+                </div>
+              </Col>
+            </Row>
+
+            <Row gutter={16} style={{ marginBottom: 16 }}>
+              <Col span={12}>
+                <div>
+                  <strong>Ngân sách:</strong> {formatCurrency(selectedEvent.budgetAmount)}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div>
+                  <strong>Đã chi:</strong> {formatCurrency(selectedEvent.actualAmount)}
+                </div>
+              </Col>
+            </Row>
+
+            {selectedEvent.location && (
+              <div style={{ marginBottom: 16 }}>
+                <strong>Địa điểm:</strong> {selectedEvent.location}
+              </div>
+            )}
+
+            {selectedEvent.participants && (
+              <div style={{ marginBottom: 16 }}>
+                <strong>Số người tham gia:</strong> {selectedEvent.participants}
+              </div>
+            )}
+
+            {selectedEvent.description && (
+              <div style={{ marginBottom: 16 }}>
+                <strong>Mô tả:</strong> {selectedEvent.description}
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+    </PageWrapper>
   );
 };

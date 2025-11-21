@@ -6,6 +6,7 @@ import { Button, Card, Modal, Progress, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
 import { BudgetPeriodLabels } from '../../constants/enum-labels';
+import { BudgetPeriod } from '../../constants/enums';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { deleteBudgetStart, fetchBudgetsStart } from '../../redux/modules/budgets/budgetSlice';
 import type { IBudget } from '../../types';
@@ -95,7 +96,9 @@ const BudgetListPage: React.FC = () => {
       title: 'Kỳ hạn',
       dataIndex: 'period',
       key: 'period',
-      render: (period: number) => <Tag>{BudgetPeriodLabels[period]}</Tag>,
+      render: (period: BudgetPeriod) => (
+        <Tag>{BudgetPeriodLabels[period as keyof typeof BudgetPeriodLabels]}</Tag>
+      ),
     },
     {
       title: 'Thời gian',

@@ -18,13 +18,8 @@ import type {
 export type TId = string;
 export type TTimestamp = string;
 
-export interface TPaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
+// Re-export TPaginatedResponse from api/common to avoid duplication
+export type { TPaginatedResponse } from '../api/common';
 
 export interface IUser {
   id: TId;
@@ -121,7 +116,7 @@ export interface ITransaction {
 
 export interface ITransactionFilters {
   page?: number;
-  pageSize?: number;
+  limit?: number;
   type?: TransactionType;
   categoryId?: TId;
   accountId?: TId;

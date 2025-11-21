@@ -18,7 +18,7 @@ export interface TPaginatedResponse<T> {
   items: T[];
   total: number;
   page: number;
-  pageSize: number;
+  limit: number;
   totalPages: number;
 }
 

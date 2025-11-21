@@ -296,7 +296,7 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
             <div className="amount-label">Số tiền</div>
             <CurrencyInput
               value={amount}
-              onChange={setAmount}
+              onChange={(val) => setAmount(val ?? 0)}
               className="amount-input"
               placeholder="0"
               size="large"

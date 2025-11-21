@@ -103,9 +103,13 @@ export const API_ENDPOINTS = {
   // Auth
   AUTH: {
     REGISTER: '/auth/register',
+    SIGNUP: '/auth/register', // Alias for REGISTER
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
+    REFRESH_TOKEN: '/auth/refresh', // Alias for REFRESH
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
   },
 
   // Users
@@ -153,6 +157,7 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id: string) => `/budgets/${id}`,
     UPDATE: (id: string) => `/budgets/${id}`,
     DELETE: (id: string) => `/budgets/${id}`,
+    GET_PROGRESS: (id: string) => `/budgets/${id}/progress`,
   },
 
   // Goals

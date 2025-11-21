@@ -70,7 +70,7 @@ export interface ICategoryFilters {
  */
 export interface ICategoryListQuery extends ICategoryFilters {
   page?: number;
-  pageSize?: number;
+  limit?: number;
   sortBy?: 'name' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
 }
@@ -80,7 +80,7 @@ export interface ICategoryListQuery extends ICategoryFilters {
  */
 export interface ICategoryPagination {
   page: number;
-  pageSize: number;
+  limit: number;
   total: number;
   totalPages: number;
 }
@@ -111,7 +111,7 @@ export interface ICategoryListResponse {
   data: ICategory[];
   total: number;
   page: number;
-  pageSize: number;
+  limit: number;
 }
 
 /**
@@ -130,7 +130,7 @@ export const initialCategoryState: ICategoryState = {
   },
   pagination: {
     page: 1,
-    pageSize: 10,
+    limit: 10,
     total: 0,
     totalPages: 0,
   },

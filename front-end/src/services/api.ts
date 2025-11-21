@@ -85,7 +85,12 @@ axiosInstance.interceptors.response.use(
       message.success(config.successMessage);
     }
 
-    // Extract data field from response
+    // Extract data field from backend response structure { success, data, message }
+    // If response has a 'data' field, return that, otherwise return the whole response
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      return response.data.data;
+    }
+
     return response.data;
   },
   (error) => {

@@ -10,12 +10,13 @@ import {
   selectIsTransactionFetching,
   transactionActions,
 } from '@redux/modules/transactions';
-import { formatCurrency, formatDate } from '@utils/formatters';
 import { ROUTES } from '@utils/constants';
+import { formatCurrency, formatDate } from '@utils/formatters';
 import { Button, Card, Descriptions, Empty, Popconfirm, Space, Tag, message } from 'antd';
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
+import { TransactionType } from '../../constants/enums';
 
 /**
  * Styled Components
@@ -124,7 +125,7 @@ export const TransactionDetailPage: React.FC = () => {
     );
   }
 
-  const isIncome = transaction.type === 'INCOME' || transaction.type === 1;
+  const isIncome = transaction.type === TransactionType.INCOME;
 
   return (
     <PageWrapper>
@@ -144,25 +145,22 @@ export const TransactionDetailPage: React.FC = () => {
         </div>
 
         <Descriptions bordered column={1}>
-          <Descriptions.Item label="Mô tả">{transaction.description || transaction.note || '-'}</Descriptions.Item>
+          <Descriptions.Item label="Mô tả">
+            {transaction.description || transaction.notes || '-'}
+          </Descriptions.Item>
           <Descriptions.Item label="Loại giao dịch">
-            <Tag color={isIncome ? 'green' : 'red'}>
-              {isIncome ? 'Thu nhập' : 'Chi tiêu'}
-            </Tag>
+            <Tag color={isIncome ? 'green' : 'red'}>{isIncome ? 'Thu nhập' : 'Chi tiêu'}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Danh mục">
-            {transaction.category?.name || 'N/A'}
+            {/* Category would need to be fetched separately or included in response */}
+            Danh mục #{transaction.categoryId}
           </Descriptions.Item>
           <Descriptions.Item label="Tài khoản">
-            {transaction.account?.name || 'N/A'}
+            {/* Account would need to be fetched separately or included in response */}
+            Tài khoản #{transaction.accountId}
           </Descriptions.Item>
           <Descriptions.Item label="Ngày giao dịch">
             {formatDate(new Date(transaction.date), 'DD/MM/YYYY HH:mm')}
-          </Descriptions.Item>
-          <Descriptions.Item label="Trạng thái">
-            <Tag color={transaction.status === 'COMPLETED' ? 'green' : 'orange'}>
-              {transaction.status === 'COMPLETED' ? 'Hoàn thành' : 'Đang xử lý'}
-            </Tag>
           </Descriptions.Item>
           {transaction.notes && (
             <Descriptions.Item label="Ghi chú">{transaction.notes}</Descriptions.Item>
@@ -201,4 +199,3 @@ export const TransactionDetailPage: React.FC = () => {
 };
 
 export default TransactionDetailPage;
-
