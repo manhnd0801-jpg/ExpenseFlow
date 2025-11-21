@@ -1,7 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import * as request from 'supertest';
+import request from 'supertest';
 import { Repository } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { RecurringTransaction } from '../src/entities/recurring-transaction.entity';
