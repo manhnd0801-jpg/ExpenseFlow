@@ -9,7 +9,11 @@ import { authReducer } from './modules/auth';
 import { budgetReducer } from './modules/budgets';
 import { categoryReducer } from './modules/categories';
 import { debtReducer } from './modules/debts';
+import { eventReducer } from './modules/events';
 import { goalReducer } from './modules/goals';
+import { notificationReducer } from './modules/notifications';
+import { reminderReducer } from './modules/reminders';
+import { reportReducer } from './modules/reports';
 import { transactionReducer } from './modules/transactions';
 import rootSaga from './rootSaga';
 
@@ -28,6 +32,10 @@ export const store = configureStore({
     budgets: budgetReducer,
     goals: goalReducer,
     debts: debtReducer,
+    events: eventReducer,
+    reminders: reminderReducer,
+    notifications: notificationReducer,
+    reports: reportReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

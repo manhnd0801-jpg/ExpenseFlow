@@ -15,3 +15,12 @@ export { Radio, type IRadioOption, type IRadioProps } from './Radio';
 export { Select, type ISelectOption, type ISelectProps } from './Select';
 export { StatusTag, type IStatusTagProps } from './StatusTag';
 export { Tooltip, type ITooltipProps } from './Tooltip';
+
+// New components for ExpenseFlow
+export { AccountSelect } from './AccountSelect';
+export { AmountInput } from './AmountInput';
+export { CategorySelect } from './CategorySelect';
+export { ChartCard } from './ChartCard';
+export { EnumSelect } from './EnumSelect';
+export { ProgressCard } from './ProgressCard';
+export { StatCard } from './StatCard';

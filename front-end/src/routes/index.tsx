@@ -21,6 +21,7 @@ import { CategoryListPage } from '@pages/categories';
 import { DebtsListPage } from '@pages/debts';
 import { EventsListPage } from '@pages/events';
 import { GoalsListPage } from '@pages/goals';
+import { RemindersListPage } from '@pages/reminders';
 import { ReportsPage } from '@pages/reports';
 import { TransactionDetailPage } from '@pages/transactions';
 
@@ -158,6 +159,18 @@ export const AppRoutes: React.FC = () => {
           <PrivateRoute>
             <DashboardLayout>
               <EventsListPage />
+            </DashboardLayout>
+          </PrivateRoute>
+        }
+      />
+
+      {/* Private Routes - Reminders */}
+      <Route
+        path="/reminders"
+        element={
+          <PrivateRoute>
+            <DashboardLayout>
+              <RemindersListPage />
             </DashboardLayout>
           </PrivateRoute>
         }

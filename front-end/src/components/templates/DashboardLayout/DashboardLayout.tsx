@@ -18,6 +18,7 @@ import {
   UserOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
+import { NotificationDropdown } from '@components/molecules';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import { authActions, selectUser } from '@redux/modules/auth';
 import { ROUTES } from '@utils/constants';
@@ -192,12 +193,13 @@ export const DashboardLayout: React.FC<IDashboardLayoutProps> = ({ children }) =
         </div>
 
         <div className="header-right">
+          <NotificationDropdown />
           <Dropdown menu={{ items: userMenuItems } as any}>
             <Avatar
               icon={<UserOutlined />}
               style={{ backgroundColor: 'var(--primary-color)', cursor: 'pointer' }}
             >
-              {user?.fullName?.[0]?.toUpperCase()}
+              {user?.name?.[0]?.toUpperCase()}
             </Avatar>
           </Dropdown>
         </div>

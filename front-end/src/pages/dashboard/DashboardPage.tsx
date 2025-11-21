@@ -2,9 +2,43 @@
  * Dashboard Page Component
  * Main dashboard with widgets and overview
  */
-import { Col, Row } from 'antd';
-import React, { useEffect } from 'react';
+import { ROUTES } from '@/utils/constants';
+import { ArrowDownOutlined, ArrowUpOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
+import { transactionActions } from '@redux/modules/transactions';
+import { Button, Card, Col, Empty, Progress, Row, Statistic, Table } from 'antd';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+
+// Helper functions
+const formatDate = (date: Date, _format: string): string => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const formatCurrency = (amount: number, currency: string = 'VND'): string => {
+  if (currency === 'VND') {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(amount);
+  }
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+  }).format(amount);
+};
+
+// Selectors (placeholder - need to be implemented in transaction slice)
+const selectTransactions = (state: any) => state.transactions.transactions || [];
+const selectIsTransactionLoading = (state: any) => state.transactions.loading || false;
+const selectTotalIncome = (state: any) => state.transactions.totalIncome || 0;
+const selectTotalExpense = (state: any) => state.transactions.totalExpense || 0;
+const selectBalance = (state: any) => state.transactions.balance || 0;
+const selectExpenseRatio = (state: any) => state.transactions.expenseRatio || 0;
 
 /**
  * Styled Components

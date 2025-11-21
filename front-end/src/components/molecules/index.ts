@@ -15,3 +15,6 @@ export { TransactionForm } from './TransactionForm';
 
 // Charts
 export { ExpenseChart } from './ExpenseChart';
+
+// Utilities
+export { default as NotificationDropdown } from './NotificationDropdown';

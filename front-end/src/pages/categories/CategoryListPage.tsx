@@ -4,14 +4,15 @@
  */
 
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { useAppDispatch, useAppSelector, useNotification } from '@hooks/useRedux';
+import { useNotification } from '@hooks/useNotification';
+import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import {
   categoryActions,
   ICategory,
   selectCategories,
   selectIsCategoryLoading,
 } from '@redux/modules/categories';
-import { Button, Card, Col, Empty, Modal, Popconfirm, Row, Space, Table, Tag } from 'antd';
+import { Button, Card, Empty, Popconfirm, Space, Table, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -108,10 +109,7 @@ export const CategoryListPage: React.FC = () => {
       render: (text: string, record: ICategory) => (
         <div style={{ display: 'flex', alignItems: 'center' }}>
           {record.color && (
-            <span
-              className="category-color"
-              style={{ backgroundColor: record.color }}
-            />
+            <span className="category-color" style={{ backgroundColor: record.color }} />
           )}
           <div>
             <div style={{ fontWeight: 600 }}>{text}</div>
@@ -131,11 +129,7 @@ export const CategoryListPage: React.FC = () => {
           INCOME: 'Thu nhập',
           EXPENSE: 'Chi tiêu',
         };
-        return (
-          <Tag color={type === 'INCOME' ? 'green' : 'blue'}>
-            {typeLabels[type] || type}
-          </Tag>
-        );
+        return <Tag color={type === 'INCOME' ? 'green' : 'blue'}>{typeLabels[type] || type}</Tag>;
       },
     },
     {
@@ -143,9 +137,7 @@ export const CategoryListPage: React.FC = () => {
       dataIndex: 'isDefault',
       key: 'isDefault',
       render: (isDefault: boolean) => (
-        <Tag color={isDefault ? 'orange' : 'default'}>
-          {isDefault ? 'Có' : 'Không'}
-        </Tag>
+        <Tag color={isDefault ? 'orange' : 'default'}>{isDefault ? 'Có' : 'Không'}</Tag>
       ),
     },
     {
@@ -153,9 +145,7 @@ export const CategoryListPage: React.FC = () => {
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Hoạt động' : 'Không hoạt động'}
-        </Tag>
+        <Tag color={isActive ? 'green' : 'red'}>{isActive ? 'Hoạt động' : 'Không hoạt động'}</Tag>
       ),
     },
     {
@@ -238,4 +228,3 @@ export const CategoryListPage: React.FC = () => {
 };
 
 export default CategoryListPage;
-

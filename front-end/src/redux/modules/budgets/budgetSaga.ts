@@ -33,10 +33,10 @@ import type {
 /**
  * Fetch budgets saga
  */
-function* fetchBudgetsSaga(action: PayloadAction<IFetchBudgetsPayload>) {
+function* fetchBudgetsSaga(action: PayloadAction<IFetchBudgetsPayload>): Generator<any, void, any> {
   try {
     const { page = 1, pageSize = 20 } = action.payload;
-    const response = yield call(budgetService.getBudgets, { page, pageSize });
+    const response: any = yield call(budgetService.getBudgets, { page, pageSize });
     yield put(fetchBudgetsSuccess(response.items));
   } catch (error: any) {
     const errorMessage = error.message || 'Không thể tải danh sách ngân sách';
@@ -48,9 +48,9 @@ function* fetchBudgetsSaga(action: PayloadAction<IFetchBudgetsPayload>) {
 /**
  * Create budget saga
  */
-function* createBudgetSaga(action: PayloadAction<ICreateBudgetPayload>) {
+function* createBudgetSaga(action: PayloadAction<ICreateBudgetPayload>): Generator<any, void, any> {
   try {
-    const response = yield call(budgetService.createBudget, action.payload);
+    const response: any = yield call(budgetService.createBudget, action.payload);
     yield put(createBudgetSuccess(response));
     message.success('Tạo ngân sách thành công');
   } catch (error: any) {
@@ -63,10 +63,10 @@ function* createBudgetSaga(action: PayloadAction<ICreateBudgetPayload>) {
 /**
  * Update budget saga
  */
-function* updateBudgetSaga(action: PayloadAction<IUpdateBudgetPayload>) {
+function* updateBudgetSaga(action: PayloadAction<IUpdateBudgetPayload>): Generator<any, void, any> {
   try {
     const { id, updates } = action.payload;
-    const response = yield call(budgetService.updateBudget, id, updates);
+    const response: any = yield call(budgetService.updateBudget, id, updates);
     yield put(updateBudgetSuccess(response));
     message.success('Cập nhật ngân sách thành công');
   } catch (error: any) {
@@ -95,10 +95,12 @@ function* deleteBudgetSaga(action: PayloadAction<IDeleteBudgetPayload>) {
 /**
  * Fetch budget progress saga
  */
-function* fetchBudgetProgressSaga(action: PayloadAction<IFetchBudgetProgressPayload>) {
+function* fetchBudgetProgressSaga(
+  action: PayloadAction<IFetchBudgetProgressPayload>
+): Generator<any, void, any> {
   try {
     const { budgetId } = action.payload;
-    const response = yield call(budgetService.getBudgetProgress, budgetId);
+    const response: any = yield call(budgetService.getBudgetProgress, budgetId);
     yield put(fetchBudgetProgressSuccess(response));
   } catch (error: any) {
     const errorMessage = error.message || 'Không thể tải tiến độ ngân sách';
@@ -110,7 +112,7 @@ function* fetchBudgetProgressSaga(action: PayloadAction<IFetchBudgetProgressPayl
 /**
  * Budget saga watcher
  */
-export function* budgetSaga() {
+export default function* budgetSaga() {
   yield takeLatest(fetchBudgetsStart.type, fetchBudgetsSaga);
   yield takeLatest(createBudgetStart.type, createBudgetSaga);
   yield takeLatest(updateBudgetStart.type, updateBudgetSaga);

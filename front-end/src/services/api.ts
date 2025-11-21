@@ -5,7 +5,7 @@
 
 import { APP_CONFIG, STORAGE_KEYS } from '@utils/constants';
 import { message } from 'antd';
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 /**
  * API Request Config with custom options
@@ -16,22 +16,39 @@ export interface IApiRequestConfig extends AxiosRequestConfig {
 }
 
 /**
+ * Extended Axios Instance with custom methods
+ */
+interface IApiInstance extends AxiosInstance {
+  get<T = any>(url: string, config?: IApiRequestConfig): Promise<T>;
+  post<T = any>(url: string, data?: any, config?: IApiRequestConfig): Promise<T>;
+  put<T = any>(url: string, data?: any, config?: IApiRequestConfig): Promise<T>;
+  patch<T = any>(url: string, data?: any, config?: IApiRequestConfig): Promise<T>;
+  delete<T = any>(url: string, config?: IApiRequestConfig): Promise<T>;
+  upload<T = any>(
+    url: string,
+    formData: FormData,
+    onProgress?: (progress: number) => void
+  ): Promise<T>;
+  download(url: string, filename: string, params?: any): Promise<void>;
+}
+
+/**
  * Create axios instance
  */
-const api: AxiosInstance = axios.create({
+const axiosInstance = axios.create({
   baseURL: APP_CONFIG.apiBaseUrl,
   timeout: APP_CONFIG.apiTimeout,
   headers: {
     'Content-Type': 'application/json',
   },
-});
+}) as IApiInstance;
 
 /**
  * Request Interceptor
  * - Auto-attach Bearer token
  * - Log requests in development
  */
-api.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (token) {
@@ -52,13 +69,20 @@ api.interceptors.request.use(
 /**
  * Response Interceptor
  * - Extract data field
+ * - Handle custom success messages
  * - Handle errors with user-friendly messages
  * - Handle token expiration
  */
-api.interceptors.response.use(
-  (response) => {
+axiosInstance.interceptors.response.use(
+  (response: AxiosResponse & { config: IApiRequestConfig }) => {
     if (import.meta.env.DEV) {
       console.log('✅ API Response:', response.config.url, response.data);
+    }
+
+    // Show success message if configured
+    const config = response.config as IApiRequestConfig;
+    if (config.showSuccessMessage && config.successMessage) {
+      message.success(config.successMessage);
     }
 
     // Extract data field from response
@@ -104,5 +128,45 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * Upload file with progress tracking
+ */
+axiosInstance.upload = async <T = any>(
+  url: string,
+  formData: FormData,
+  onProgress?: (progress: number) => void
+): Promise<T> => {
+  return axiosInstance.post<T>(url, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress && progressEvent.total) {
+        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress(progress);
+      }
+    },
+  });
+};
+
+/**
+ * Download file
+ */
+axiosInstance.download = async (url: string, filename: string, params?: any): Promise<void> => {
+  const response = await axiosInstance.get(url, {
+    params,
+    responseType: 'blob',
+  });
+
+  const blob = new Blob([response as any]);
+  const link = document.createElement('a');
+  link.href = window.URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  window.URL.revokeObjectURL(link.href);
+};
+
+const api = axiosInstance;
 
 export default api;

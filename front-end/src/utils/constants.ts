@@ -102,120 +102,122 @@ export const ROUTES = {
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
+    REGISTER: '/auth/register',
     LOGIN: '/auth/login',
-    SIGNUP: '/auth/signup',
     LOGOUT: '/auth/logout',
-    REFRESH_TOKEN: '/auth/refresh',
-    FORGOT_PASSWORD: '/auth/forgot-password',
-    RESET_PASSWORD: '/auth/reset-password',
+    REFRESH: '/auth/refresh',
   },
 
   // Users
   USERS: {
-    GET_PROFILE: '/users/profile',
+    PROFILE: '/users/profile',
     UPDATE_PROFILE: '/users/profile',
-    GET_BY_ID: '/users/:id',
+    DELETE_PROFILE: '/users/profile',
+    CHANGE_PASSWORD: '/users/change-password',
+    UPLOAD_AVATAR: '/users/upload-avatar',
   },
 
   // Accounts
   ACCOUNTS: {
     LIST: '/accounts',
     CREATE: '/accounts',
-    GET_BY_ID: '/accounts/:id',
-    UPDATE: '/accounts/:id',
-    DELETE: '/accounts/:id',
+    GET_BY_ID: (id: string) => `/accounts/${id}`,
+    UPDATE: (id: string) => `/accounts/${id}`,
+    DELETE: (id: string) => `/accounts/${id}`,
+    TOTAL_BALANCE: '/accounts/total-balance',
   },
 
   // Categories
   CATEGORIES: {
     LIST: '/categories',
     CREATE: '/categories',
-    GET_BY_ID: '/categories/:id',
-    UPDATE: '/categories/:id',
-    DELETE: '/categories/:id',
+    GET_BY_ID: (id: string) => `/categories/${id}`,
+    UPDATE: (id: string) => `/categories/${id}`,
+    DELETE: (id: string) => `/categories/${id}`,
   },
 
   // Transactions
   TRANSACTIONS: {
     LIST: '/transactions',
     CREATE: '/transactions',
-    GET_BY_ID: '/transactions/:id',
-    UPDATE: '/transactions/:id',
-    DELETE: '/transactions/:id',
+    GET_BY_ID: (id: string) => `/transactions/${id}`,
+    UPDATE: (id: string) => `/transactions/${id}`,
+    DELETE: (id: string) => `/transactions/${id}`,
+    SUMMARY: '/transactions/summary',
   },
 
   // Budgets
   BUDGETS: {
     LIST: '/budgets',
     CREATE: '/budgets',
-    GET_BY_ID: '/budgets/:id',
-    UPDATE: '/budgets/:id',
-    DELETE: '/budgets/:id',
-    GET_PROGRESS: '/budgets/:id/progress',
+    GET_BY_ID: (id: string) => `/budgets/${id}`,
+    UPDATE: (id: string) => `/budgets/${id}`,
+    DELETE: (id: string) => `/budgets/${id}`,
   },
 
   // Goals
   GOALS: {
     LIST: '/goals',
     CREATE: '/goals',
-    GET_BY_ID: '/goals/:id',
-    UPDATE: '/goals/:id',
-    DELETE: '/goals/:id',
-    CONTRIBUTE: '/goals/:id/contribute',
+    GET_BY_ID: (id: string) => `/goals/${id}`,
+    UPDATE: (id: string) => `/goals/${id}`,
+    DELETE: (id: string) => `/goals/${id}`,
+    CONTRIBUTE: (id: string) => `/goals/${id}/contribute`,
   },
 
   // Debts
   DEBTS: {
     LIST: '/debts',
     CREATE: '/debts',
-    GET_BY_ID: '/debts/:id',
-    UPDATE: '/debts/:id',
-    DELETE: '/debts/:id',
-    PAYMENTS: '/debts/:id/payments',
-    MAKE_PAYMENT: '/debts/:id/payments',
+    GET_BY_ID: (id: string) => `/debts/${id}`,
+    UPDATE: (id: string) => `/debts/${id}`,
+    DELETE: (id: string) => `/debts/${id}`,
+    PAYMENTS: (id: string) => `/debts/${id}/payments`,
+    CREATE_PAYMENT: (id: string) => `/debts/${id}/payments`,
   },
 
   // Events
   EVENTS: {
     LIST: '/events',
     CREATE: '/events',
-    GET_BY_ID: '/events/:id',
-    UPDATE: '/events/:id',
-    DELETE: '/events/:id',
-    TRANSACTIONS: '/events/:id/transactions',
-  },
-
-  // Loans
-  LOANS: {
-    LIST: '/loans',
-    CREATE: '/loans',
-    GET_BY_ID: '/loans/:id',
-    UPDATE: '/loans/:id',
-    DELETE: '/loans/:id',
-    SCHEDULE: '/loans/:id/schedule',
-    PREPAYMENT: '/loans/:id/prepayment',
-    PAYMENTS: '/loans/:id/payments',
+    GET_BY_ID: (id: string) => `/events/${id}`,
+    SUMMARY: (id: string) => `/events/${id}/summary`,
+    UPDATE: (id: string) => `/events/${id}`,
+    DELETE: (id: string) => `/events/${id}`,
   },
 
   // Reminders
   REMINDERS: {
     LIST: '/reminders',
     CREATE: '/reminders',
-    GET_BY_ID: '/reminders/:id',
-    UPDATE: '/reminders/:id',
-    DELETE: '/reminders/:id',
-    MARK_DONE: '/reminders/:id/done',
+    GET_BY_ID: (id: string) => `/reminders/${id}`,
+    UPDATE: (id: string) => `/reminders/${id}`,
+    DELETE: (id: string) => `/reminders/${id}`,
+    UPCOMING: '/reminders/upcoming',
+    BY_TYPE: '/reminders/by-type',
+    COMPLETE: (id: string) => `/reminders/${id}/complete`,
   },
 
   // Reports
   REPORTS: {
-    DASHBOARD: '/reports/dashboard',
-    SUMMARY: '/reports/summary',
-    TRANSACTIONS: '/reports/transactions',
     INCOME_EXPENSE: '/reports/income-expense',
-    CATEGORY_BREAKDOWN: '/reports/category-breakdown',
-    TREND_ANALYSIS: '/reports/trend-analysis',
-    EXPORT: '/reports/export',
+    CATEGORY_DISTRIBUTION: '/reports/category-distribution',
+    MONTHLY_TREND: '/reports/monthly-trend',
+    ACCOUNT_BALANCE: '/reports/account-balance',
+    CASH_FLOW: '/reports/cash-flow',
+    TOP_SPENDING: '/reports/top-spending',
+    FINANCIAL_SUMMARY: '/reports/financial-summary',
+  },
+
+  // Notifications
+  NOTIFICATIONS: {
+    LIST: '/notifications',
+    UNREAD: '/notifications/unread',
+    UNREAD_COUNT: '/notifications/unread/count',
+    MARK_READ: (id: string) => `/notifications/${id}/read`,
+    MARK_ALL_READ: '/notifications/read-all',
+    DELETE: (id: string) => `/notifications/${id}`,
+    DELETE_ALL_READ: '/notifications/read/all',
   },
 };
 
