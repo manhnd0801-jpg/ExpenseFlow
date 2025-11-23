@@ -21,6 +21,9 @@ import { CategoryListPage } from '@pages/categories';
 import { DebtsListPage } from '@pages/debts';
 import { EventsListPage } from '@pages/events';
 import { GoalsListPage } from '@pages/goals';
+import LoanDetailPage from '@pages/loans/LoanDetailPage';
+import LoanForm from '@pages/loans/LoanForm';
+import LoansListPage from '@pages/loans/LoansListPage';
 import { RemindersListPage } from '@pages/reminders';
 import { ReportsPage } from '@pages/reports';
 import { TransactionDetailPage } from '@pages/transactions';
@@ -147,6 +150,48 @@ export const AppRoutes: React.FC = () => {
           <PrivateRoute>
             <DashboardLayout>
               <DebtsListPage />
+            </DashboardLayout>
+          </PrivateRoute>
+        }
+      />
+
+      {/* Private Routes - Loans */}
+      <Route
+        path="/loans"
+        element={
+          <PrivateRoute>
+            <DashboardLayout>
+              <LoansListPage />
+            </DashboardLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/loans/create"
+        element={
+          <PrivateRoute>
+            <DashboardLayout>
+              <LoanForm />
+            </DashboardLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/loans/:id"
+        element={
+          <PrivateRoute>
+            <DashboardLayout>
+              <LoanDetailPage />
+            </DashboardLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/loans/:id/edit"
+        element={
+          <PrivateRoute>
+            <DashboardLayout>
+              <LoanForm />
             </DashboardLayout>
           </PrivateRoute>
         }

@@ -2,23 +2,19 @@
  * Dashboard Page Component
  * Main dashboard with widgets and overview
  */
+import { TransactionType } from '@/constants/enums';
 import { ROUTES } from '@/utils/constants';
 import { ArrowDownOutlined, ArrowUpOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import { transactionActions } from '@redux/modules/transactions';
+import type { ITransaction } from '@redux/modules/transactions/transactionTypes';
 import { Button, Card, Col, Empty, Progress, Row, Statistic, Table } from 'antd';
+import dayjs from 'dayjs';
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 // Helper functions
-const formatDate = (date: Date, _format: string): string => {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
-
 const formatCurrency = (amount: number, currency: string = 'VND'): string => {
   if (currency === 'VND') {
     return new Intl.NumberFormat('vi-VN', {
@@ -31,14 +27,6 @@ const formatCurrency = (amount: number, currency: string = 'VND'): string => {
     currency: currency,
   }).format(amount);
 };
-
-// Selectors (placeholder - need to be implemented in transaction slice)
-const selectTransactions = (state: any) => state.transactions.transactions || [];
-const selectIsTransactionLoading = (state: any) => state.transactions.loading || false;
-const selectTotalIncome = (state: any) => state.transactions.totalIncome || 0;
-const selectTotalExpense = (state: any) => state.transactions.totalExpense || 0;
-const selectBalance = (state: any) => state.transactions.balance || 0;
-const selectExpenseRatio = (state: any) => state.transactions.expenseRatio || 0;
 
 /**
  * Styled Components
@@ -116,17 +104,35 @@ const DashboardWrapper = styled.div`
 export const DashboardPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const transactions = useAppSelector(selectTransactions);
-  const isLoading = useAppSelector(selectIsTransactionLoading);
-  const totalIncome = useAppSelector(selectTotalIncome);
-  const totalExpense = useAppSelector(selectTotalExpense);
-  const balance = useAppSelector(selectBalance);
-  const expenseRatio = useAppSelector(selectExpenseRatio);
+
+  // Get state from Redux
+  const transactions = useAppSelector((state) => state.transactions.transactions) || [];
+  const isLoading = useAppSelector((state) => state.transactions.isLoading);
 
   // Load transactions on mount
   useEffect(() => {
     dispatch(transactionActions.listTransactionsRequest({}));
   }, [dispatch]);
+
+  // Calculate statistics from transactions
+  const stats = useMemo(() => {
+    if (!Array.isArray(transactions)) {
+      return { totalIncome: 0, totalExpense: 0, balance: 0, expenseRatio: 0 };
+    }
+
+    const totalIncome = transactions
+      .filter((t: ITransaction) => t.type === TransactionType.INCOME)
+      .reduce((sum: number, t: ITransaction) => sum + t.amount, 0);
+
+    const totalExpense = transactions
+      .filter((t: ITransaction) => t.type === TransactionType.EXPENSE)
+      .reduce((sum: number, t: ITransaction) => sum + t.amount, 0);
+
+    const balance = totalIncome - totalExpense;
+    const expenseRatio = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
+
+    return { totalIncome, totalExpense, balance, expenseRatio };
+  }, [transactions]);
 
   // Get recent transactions (last 5)
   const recentTransactions = useMemo(() => {
@@ -143,14 +149,14 @@ export const DashboardPage: React.FC = () => {
       dataIndex: 'date',
       key: 'date',
       width: 120,
-      render: (date: string) => formatDate(new Date(date), 'DD/MM/YYYY'),
+      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
       title: 'Danh mục',
       dataIndex: 'category',
       key: 'category',
       width: 120,
-      render: (_: any, record: any) => record.category?.name || 'N/A',
+      render: (_: any, record: ITransaction) => record.category?.name || 'N/A',
     },
     {
       title: 'Mô tả',
@@ -163,7 +169,7 @@ export const DashboardPage: React.FC = () => {
       dataIndex: 'account',
       key: 'account',
       width: 150,
-      render: (_: any, record: any) => record.account?.name || 'N/A',
+      render: (_: any, record: ITransaction) => record.account?.name || 'N/A',
     },
     {
       title: 'Số tiền',
@@ -171,8 +177,8 @@ export const DashboardPage: React.FC = () => {
       key: 'amount',
       width: 120,
       align: 'right' as const,
-      render: (amount: number, record: any) => {
-        const isIncome = record.type === 'INCOME' || record.type === 1;
+      render: (amount: number, record: ITransaction) => {
+        const isIncome = record.type === TransactionType.INCOME;
         return (
           <span className={`amount ${isIncome ? 'income' : 'expense'}`}>
             {isIncome ? '+' : '-'}
@@ -185,7 +191,7 @@ export const DashboardPage: React.FC = () => {
       title: 'Thao tác',
       key: 'action',
       width: 100,
-      render: (_: any, record: any) => (
+      render: (_: any, record: ITransaction) => (
         <Button
           type="text"
           size="small"
@@ -206,7 +212,7 @@ export const DashboardPage: React.FC = () => {
           <Card className="stat-card balance" size="small">
             <Statistic
               title="Số dư"
-              value={balance}
+              value={stats.balance}
               prefix="₫"
               valueStyle={{ color: 'var(--primary-color)' }}
             />
@@ -216,7 +222,7 @@ export const DashboardPage: React.FC = () => {
           <Card className="stat-card income" size="small">
             <Statistic
               title="Tổng thu nhập"
-              value={totalIncome}
+              value={stats.totalIncome}
               prefix="₫"
               suffix={<ArrowUpOutlined style={{ color: '#52c41a' }} />}
               valueStyle={{ color: '#52c41a' }}
@@ -227,7 +233,7 @@ export const DashboardPage: React.FC = () => {
           <Card className="stat-card expense" size="small">
             <Statistic
               title="Tổng chi tiêu"
-              value={totalExpense}
+              value={stats.totalExpense}
               prefix="₫"
               suffix={<ArrowDownOutlined style={{ color: '#ff4d4f' }} />}
               valueStyle={{ color: '#ff4d4f' }}
@@ -240,7 +246,7 @@ export const DashboardPage: React.FC = () => {
               <div style={{ marginBottom: '8px', fontSize: '12px', color: 'rgba(0,0,0,0.45)' }}>
                 Tỷ lệ chi tiêu
               </div>
-              <Progress type="circle" percent={Math.round(expenseRatio)} size={50} />
+              <Progress type="circle" percent={Math.round(stats.expenseRatio)} size={50} />
             </div>
           </Card>
         </Col>

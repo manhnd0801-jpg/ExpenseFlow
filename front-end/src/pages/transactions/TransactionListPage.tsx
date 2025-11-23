@@ -28,6 +28,8 @@ import React, { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { useAppDispatch, useAppSelector, useDebounce, useNotification } from '@/hooks';
+import { accountActions } from '@/redux/modules/accounts';
+import { categoryActions } from '@/redux/modules/categories';
 import {
   ICreateTransactionPayload,
   ITransaction,
@@ -105,73 +107,6 @@ const TransactionTypeTag = styled(Tag)<{ type: TransactionType }>`
 `;
 
 // ============================================
-// MOCK DATA - For demo purposes
-// ============================================
-
-const MOCK_TRANSACTIONS: ITransaction[] = [
-  {
-    id: '1',
-    userId: 'user-1',
-    categoryId: 'cat-1',
-    accountId: 'acc-1',
-    type: TransactionType.INCOME,
-    amount: 5000000,
-    description: 'Lương tháng 11',
-    date: dayjs().subtract(5, 'days').toISOString(),
-    createdAt: dayjs().subtract(5, 'days').toISOString(),
-    updatedAt: dayjs().subtract(5, 'days').toISOString(),
-  },
-  {
-    id: '2',
-    userId: 'user-1',
-    categoryId: 'cat-2',
-    accountId: 'acc-1',
-    type: TransactionType.EXPENSE,
-    amount: 500000,
-    description: 'Ăn trưa',
-    date: dayjs().subtract(2, 'days').toISOString(),
-    createdAt: dayjs().subtract(2, 'days').toISOString(),
-    updatedAt: dayjs().subtract(2, 'days').toISOString(),
-  },
-  {
-    id: '3',
-    userId: 'user-1',
-    categoryId: 'cat-3',
-    accountId: 'acc-1',
-    type: TransactionType.EXPENSE,
-    amount: 1500000,
-    description: 'Điện nước tháng 11',
-    date: dayjs().subtract(1, 'days').toISOString(),
-    createdAt: dayjs().subtract(1, 'days').toISOString(),
-    updatedAt: dayjs().subtract(1, 'days').toISOString(),
-  },
-  {
-    id: '4',
-    userId: 'user-1',
-    categoryId: 'cat-4',
-    accountId: 'acc-1',
-    type: TransactionType.INCOME,
-    amount: 2000000,
-    description: 'Freelance project',
-    date: dayjs().toISOString(),
-    createdAt: dayjs().toISOString(),
-    updatedAt: dayjs().toISOString(),
-  },
-  {
-    id: '5',
-    userId: 'user-1',
-    categoryId: 'cat-5',
-    accountId: 'acc-1',
-    type: TransactionType.EXPENSE,
-    amount: 300000,
-    description: 'Xăng xe',
-    date: dayjs().toISOString(),
-    createdAt: dayjs().toISOString(),
-    updatedAt: dayjs().toISOString(),
-  },
-];
-
-// ============================================
 // COMPONENT
 // ============================================
 
@@ -184,6 +119,10 @@ const TransactionListPage: React.FC = () => {
   const isLoading = useAppSelector(selectIsTransactionLoading);
   const pagination = useAppSelector(selectTransactionPagination);
   const error = useAppSelector(selectTransactionError);
+  const accounts = useAppSelector((state) => state.accounts.accounts);
+  const categories = useAppSelector((state) => state.categories.categories);
+  const isLoadingAccounts = useAppSelector((state) => state.accounts.isLoading);
+  const isLoadingCategories = useAppSelector((state) => state.categories.isLoading);
 
   // Local states
   const [filters, setFilters] = React.useState<ITransactionFilters>({});
@@ -197,9 +136,9 @@ const TransactionListPage: React.FC = () => {
   // Debounce search
   const debouncedSearchText = useDebounce(searchText, 500);
 
-  // Use Redux data (fallback to mock if empty)
+  // Display transactions from Redux (no mock data)
   const displayTransactions = useMemo(() => {
-    let result = transactions.length > 0 ? transactions : MOCK_TRANSACTIONS;
+    let result = transactions || [];
 
     // Filter by search text
     if (debouncedSearchText) {
@@ -229,9 +168,11 @@ const TransactionListPage: React.FC = () => {
     return result;
   }, [debouncedSearchText, dateRange, filters]);
 
-  // Load transactions on mount
+  // Load transactions, accounts, categories on mount
   useEffect(() => {
     dispatch(transactionActions.listTransactionsRequest(filters));
+    dispatch(accountActions.listAccountsRequest({ page: 1, limit: 100 }));
+    dispatch(categoryActions.listCategoriesRequest({ page: 1, limit: 100 }));
   }, []);
 
   // Handle filters
@@ -257,7 +198,7 @@ const TransactionListPage: React.FC = () => {
         amount: values.amount,
         description: values.description,
         date: values.date?.toISOString() || new Date().toISOString(),
-        notes: values.notes,
+        note: values.note || '', // Fixed: note not notes
       };
       dispatch(transactionActions.createTransactionRequest(payload));
       setIsCreateModalVisible(false);
@@ -416,8 +357,31 @@ const TransactionListPage: React.FC = () => {
 
       {/* Transactions Table */}
       <div className="table-wrapper">
-        {displayTransactions.length === 0 ? (
-          <Empty description="Không có giao dịch nào" style={{ padding: '50px 20px' }} />
+        {isLoading && !transactions.length ? (
+          <Card style={{ padding: '50px 20px', textAlign: 'center' }}>
+            <p>Đang tải dữ liệu...</p>
+          </Card>
+        ) : displayTransactions.length === 0 && transactions.length === 0 ? (
+          <Empty
+            description={
+              <div>
+                <p>Chưa có giao dịch nào</p>
+                <p style={{ fontSize: '12px', color: '#9ca3af' }}>
+                  {accounts.length === 0 || categories.length === 0 ? (
+                    <>Vui lòng tạo tài khoản và danh mục trước khi thêm giao dịch</>
+                  ) : (
+                    <>Nhấn nút "Thêm mới" để tạo giao dịch đầu tiên</>
+                  )}
+                </p>
+              </div>
+            }
+            style={{ padding: '50px 20px' }}
+          />
+        ) : displayTransactions.length === 0 ? (
+          <Empty
+            description="Không tìm thấy giao dịch phù hợp với bộ lọc"
+            style={{ padding: '50px 20px' }}
+          />
         ) : (
           <Table
             columns={columns}
@@ -481,13 +445,15 @@ const TransactionListPage: React.FC = () => {
           >
             <Select
               placeholder="Chọn danh mục"
-              options={[
-                { label: 'Lương', value: 'cat-1' },
-                { label: 'Ăn uống', value: 'cat-2' },
-                { label: 'Điện nước', value: 'cat-3' },
-                { label: 'Freelance', value: 'cat-4' },
-                { label: 'Xăng xe', value: 'cat-5' },
-              ]}
+              loading={isLoadingCategories}
+              options={categories.map((cat) => ({
+                label: cat.name,
+                value: cat.id,
+              }))}
+              showSearch
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
             />
           </Form.Item>
 
@@ -498,10 +464,15 @@ const TransactionListPage: React.FC = () => {
           >
             <Select
               placeholder="Chọn tài khoản"
-              options={[
-                { label: 'Ngân hàng A', value: 'acc-1' },
-                { label: 'Tiền mặt', value: 'acc-2' },
-              ]}
+              loading={isLoadingAccounts}
+              options={accounts.map((acc) => ({
+                label: acc.name,
+                value: acc.id,
+              }))}
+              showSearch
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
             />
           </Form.Item>
 

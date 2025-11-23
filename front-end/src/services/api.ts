@@ -40,6 +40,10 @@ const axiosInstance = axios.create({
   timeout: APP_CONFIG.apiTimeout,
   headers: {
     'Content-Type': 'application/json',
+    // Disable cache in development
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
   },
 }) as IApiInstance;
 

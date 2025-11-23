@@ -35,6 +35,15 @@ export enum BudgetPeriod {
   CUSTOM = 6,
 }
 
+// Currency Types
+export enum Currency {
+  VND = 1,
+  USD = 2,
+  EUR = 3,
+  JPY = 4,
+  CNY = 5,
+}
+
 // Goal Status
 export enum GoalStatus {
   ACTIVE = 1,
@@ -69,18 +78,18 @@ export enum DebtStatus {
 // Loan Types
 export enum LoanType {
   PERSONAL = 1,
-  HOME = 2,
+  MORTGAGE = 2,
   AUTO = 3,
-  EDUCATIONAL = 4,
-  OTHER = 5,
+  STUDENT = 4,
+  BUSINESS = 5,
+  OTHER = 6,
 }
 
 // Loan Status
 export enum LoanStatus {
   ACTIVE = 1,
-  COMPLETED = 2,
+  PAID_OFF = 2,
   DEFAULTED = 3,
-  REFINANCED = 4,
 }
 
 // Payment Status
@@ -127,8 +136,8 @@ export enum EventType {
 
 // Event Status
 export enum EventStatus {
-  PLANNING = 1,
-  ACTIVE = 2,
-  COMPLETED = 3,
-  CANCELLED = 4,
+  PLANNED = 1, // Đã lên kế hoạch
+  ACTIVE = 2, // Đang diễn ra
+  COMPLETED = 3, // Đã hoàn thành
+  CANCELLED = 4, // Đã hủy
 }

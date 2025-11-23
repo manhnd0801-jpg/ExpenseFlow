@@ -3,35 +3,49 @@
  * Handles side effects for category operations (API calls, etc.)
  */
 
+import { categoryService } from '@/services/categoryService';
 import { PayloadAction } from '@reduxjs/toolkit';
-import { put, takeEvery } from 'redux-saga/effects';
+import { call, put, takeEvery } from 'redux-saga/effects';
 import { categoryActions } from './categorySlice';
 import {
   ICategory,
+  ICategoryListQuery,
   ICreateCategoryPayload,
   IDeleteCategoryPayload,
   IUpdateCategoryPayload,
 } from './categoryTypes';
 
-// Placeholder for category service (will be implemented)
-// import categoryService from '@/services/categoryService';
-
 /**
- * Watch List Categories
+ * List Categories Saga
  */
-function* watchListCategories() {
+function* listCategoriesSaga(action: PayloadAction<ICategoryListQuery>): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // const response = yield call(categoryService.listCategories, action.payload);
+    const response: any = yield call(categoryService.getCategories);
 
-    // Placeholder: Mock data
-    const mockCategories: ICategory[] = [];
+    // Handle both array response and paginated response from backend
+    let categories: ICategory[] = [];
+    let total = 0;
+    let page = action.payload.page || 1;
+    let limit = action.payload.limit || 10;
+
+    if (Array.isArray(response)) {
+      // Direct array response
+      categories = response;
+      total = response.length;
+    } else if (response && typeof response === 'object') {
+      // Paginated response: { data: [], pagination: {...} }
+      categories = response.data || response;
+      total = response.pagination?.total || response.total || categories.length;
+      page = response.pagination?.page || response.page || page;
+      limit = response.pagination?.limit || response.limit || limit;
+    }
+
     yield put(
       categoryActions.listCategoriesSuccess({
-        categories: mockCategories,
-        total: 0,
-        page: 1,
-        limit: 10,
+        categories,
+        total,
+        page,
+        limit,
       })
     );
   } catch (error: any) {
@@ -42,95 +56,70 @@ function* watchListCategories() {
 }
 
 /**
- * Watch Create Category
+ * Create Category Saga
  */
-function* watchCreateCategory(action: PayloadAction<ICreateCategoryPayload>) {
+function* createCategorySaga(
+  action: PayloadAction<ICreateCategoryPayload>
+): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // const response = yield call(categoryService.createCategory, action.payload);
+    const newCategory: ICategory = yield call(categoryService.createCategory, action.payload);
 
-    // Placeholder: Mock data
-    const mockCategory: ICategory = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: '',
-      name: action.payload.name,
-      type: action.payload.type,
-      icon: action.payload.icon,
-      color: action.payload.color,
-      description: action.payload.description,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    yield put(categoryActions.createCategorySuccess(newCategory));
 
-    yield put(categoryActions.createCategorySuccess(mockCategory));
+    // Refresh category list
+    yield put(categoryActions.listCategoriesRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(categoryActions.createCategoryFailure(error?.message || 'Failed to create category'));
   }
 }
 
 /**
- * Watch Update Category
+ * Update Category Saga
  */
-function* watchUpdateCategory(action: PayloadAction<IUpdateCategoryPayload>) {
+function* updateCategorySaga(
+  action: PayloadAction<IUpdateCategoryPayload>
+): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // const response = yield call(categoryService.updateCategory, action.payload.id, action.payload);
+    const { id, ...updateData } = action.payload;
+    const updatedCategory: ICategory = yield call(categoryService.updateCategory, id, updateData);
 
-    // Placeholder: Mock data
-    const mockCategory: ICategory = {
-      id: action.payload.id,
-      userId: '',
-      name: action.payload.name || '',
-      type: action.payload.type || 1,
-      icon: action.payload.icon,
-      color: action.payload.color,
-      description: action.payload.description,
-      isActive: action.payload.isActive !== undefined ? action.payload.isActive : true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    yield put(categoryActions.updateCategorySuccess(updatedCategory));
 
-    yield put(categoryActions.updateCategorySuccess(mockCategory));
+    // Refresh category list
+    yield put(categoryActions.listCategoriesRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(categoryActions.updateCategoryFailure(error?.message || 'Failed to update category'));
   }
 }
 
 /**
- * Watch Delete Category
+ * Delete Category Saga
  */
-function* watchDeleteCategory(action: PayloadAction<IDeleteCategoryPayload>) {
+function* deleteCategorySaga(
+  action: PayloadAction<IDeleteCategoryPayload>
+): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // yield call(categoryService.deleteCategory, action.payload.id);
+    const { id } = action.payload;
+    yield call(categoryService.deleteCategory, id);
 
-    yield put(categoryActions.deleteCategorySuccess({ id: action.payload.id }));
+    yield put(categoryActions.deleteCategorySuccess({ id }));
+
+    // Refresh category list
+    yield put(categoryActions.listCategoriesRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(categoryActions.deleteCategoryFailure(error?.message || 'Failed to delete category'));
   }
 }
 
 /**
- * Watch Get Category Detail
+ * Get Category Detail Saga
  */
-function* watchGetCategoryDetail(action: PayloadAction<{ id: string }>) {
+function* getCategoryDetailSaga(action: PayloadAction<{ id: string }>): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // const response = yield call(categoryService.getCategoryDetail, action.payload.id);
+    const { id } = action.payload;
+    const category: ICategory = yield call(categoryService.getCategoryById, id);
 
-    // Placeholder: Mock data
-    const mockCategory: ICategory = {
-      id: action.payload.id,
-      userId: '',
-      name: 'My Category',
-      type: 1,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    yield put(categoryActions.getCategoryDetailSuccess(mockCategory));
+    yield put(categoryActions.getCategoryDetailSuccess(category));
   } catch (error: any) {
     yield put(
       categoryActions.getCategoryDetailFailure(error?.message || 'Failed to fetch category')
@@ -142,9 +131,9 @@ function* watchGetCategoryDetail(action: PayloadAction<{ id: string }>) {
  * Root Category Saga
  */
 export default function* categorySaga() {
-  yield takeEvery(categoryActions.listCategoriesRequest.type, watchListCategories);
-  yield takeEvery(categoryActions.createCategoryRequest.type, watchCreateCategory);
-  yield takeEvery(categoryActions.updateCategoryRequest.type, watchUpdateCategory);
-  yield takeEvery(categoryActions.deleteCategoryRequest.type, watchDeleteCategory);
-  yield takeEvery(categoryActions.getCategoryDetailRequest.type, watchGetCategoryDetail);
+  yield takeEvery(categoryActions.listCategoriesRequest.type, listCategoriesSaga);
+  yield takeEvery(categoryActions.createCategoryRequest.type, createCategorySaga);
+  yield takeEvery(categoryActions.updateCategoryRequest.type, updateCategorySaga);
+  yield takeEvery(categoryActions.deleteCategoryRequest.type, deleteCategorySaga);
+  yield takeEvery(categoryActions.getCategoryDetailRequest.type, getCategoryDetailSaga);
 }

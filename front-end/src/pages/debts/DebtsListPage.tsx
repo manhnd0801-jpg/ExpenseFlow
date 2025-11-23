@@ -1,6 +1,12 @@
 /**
  * Debts List Page
  */
+import { DebtStatusLabels } from '@/constants/enum-labels';
+import { DebtStatus, DebtType } from '@/constants/enums';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { deleteDebtRequest, fetchDebtsRequest } from '@/redux/modules/debts';
+import { IDebt } from '@/types/models';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 import {
   DeleteOutlined,
   DollarOutlined,
@@ -10,73 +16,45 @@ import {
 } from '@ant-design/icons';
 import { Button, Card, Modal, Space, Table, Tabs, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import React, { useState } from 'react';
-import { DebtStatusLabels } from '../../constants/enum-labels';
-import { DebtStatus, DebtType } from '../../constants/enums';
-import type { IDebt } from '../../types';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import React, { useEffect, useMemo, useState } from 'react';
 
 const { TabPane } = Tabs;
 
 const DebtsListPage: React.FC = () => {
-  // const dispatch = useAppDispatch();
-  // const { debts, loading } = useAppSelector((state) => state.debts);
+  const dispatch = useAppDispatch();
+  const debts = useAppSelector((state) => state.debts.debts);
+  const isLoading = useAppSelector((state) => state.debts.loading);
 
+  const [activeTab, setActiveTab] = useState('1');
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [selectedDebtId, setSelectedDebtId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('1'); // 1: Lending, 2: Borrowing
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Mock data for now
-  const mockDebts: IDebt[] = [
-    {
-      id: '1',
-      userId: 'user1',
-      type: DebtType.LENDING,
-      personName: 'Nguyễn Văn A',
-      amount: 5000000,
-      paidAmount: 1000000,
-      remainingAmount: 4000000,
-      interestRate: 5,
-      borrowedDate: '2024-01-15',
-      dueDate: '2024-12-15',
-      status: DebtStatus.ACTIVE,
-      createdAt: '2024-01-15',
-      updatedAt: '2024-01-15',
-    },
-    {
-      id: '2',
-      userId: 'user1',
-      type: DebtType.BORROWING,
-      personName: 'Ngân hàng ABC',
-      amount: 50000000,
-      paidAmount: 10000000,
-      remainingAmount: 40000000,
-      interestRate: 12,
-      borrowedDate: '2023-06-01',
-      dueDate: '2025-06-01',
-      status: DebtStatus.ACTIVE,
-      createdAt: '2023-06-01',
-      updatedAt: '2024-01-01',
-    },
-  ];
+  // Load debts on mount
+  useEffect(() => {
+    dispatch(fetchDebtsRequest());
+  }, [dispatch]);
 
-  const lending = mockDebts.filter((debt) => debt.type === DebtType.LENDING);
-  const borrowing = mockDebts.filter((debt) => debt.type === DebtType.BORROWING);
+  // Filter debts by type
+  const lending = useMemo(() => debts.filter((debt) => debt.type === DebtType.LENDING), [debts]);
+  const borrowing = useMemo(
+    () => debts.filter((debt) => debt.type === DebtType.BORROWING),
+    [debts]
+  );
 
   const handleEdit = (debt: IDebt) => {
     console.log('Edit debt:', debt);
   };
 
   const handleDelete = (debtId: string) => {
-    setSelectedDebtId(debtId);
+    setDeleteId(debtId);
     setIsDeleteModalVisible(true);
   };
 
   const handleConfirmDelete = () => {
-    if (selectedDebtId) {
-      // dispatch(deleteDebtStart({ id: selectedDebtId }));
+    if (deleteId) {
+      dispatch(deleteDebtRequest(deleteId));
       setIsDeleteModalVisible(false);
-      setSelectedDebtId(null);
+      setDeleteId(null);
     }
   };
 
@@ -211,7 +189,10 @@ const DebtsListPage: React.FC = () => {
               columns={columns}
               dataSource={lending}
               rowKey="id"
-              loading={false}
+              loading={isLoading}
+              locale={{
+                emptyText: isLoading ? 'Đang tải...' : 'Chưa có khoản cho vay nào',
+              }}
               pagination={{
                 showSizeChanger: true,
                 showQuickJumper: true,
@@ -236,7 +217,10 @@ const DebtsListPage: React.FC = () => {
               columns={columns}
               dataSource={borrowing}
               rowKey="id"
-              loading={false}
+              loading={isLoading}
+              locale={{
+                emptyText: isLoading ? 'Đang tải...' : 'Chưa có khoản đi vay nào',
+              }}
               pagination={{
                 showSizeChanger: true,
                 showQuickJumper: true,

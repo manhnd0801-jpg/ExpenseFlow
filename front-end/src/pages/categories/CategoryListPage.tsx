@@ -3,18 +3,15 @@
  * Displays categories with CRUD operations
  */
 
+import { CategoryForm } from '@/components/organisms/CategoryForm';
+import { CategoryTypeLabels } from '@/constants/enum-labels';
+import { CategoryType } from '@/constants/enums';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { useNotification } from '@hooks/useNotification';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
-import {
-  categoryActions,
-  ICategory,
-  selectCategories,
-  selectIsCategoryLoading,
-} from '@redux/modules/categories';
-import { Button, Card, Empty, Popconfirm, Space, Table, Tag } from 'antd';
+import { categoryActions } from '@redux/modules/categories';
+import type { ICategory } from '@redux/modules/categories/categoryTypes';
+import { Button, Card, Empty, Modal, Popconfirm, Space, Table, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 /**
@@ -61,43 +58,60 @@ const PageWrapper = styled.div`
  * Category List Page Component
  */
 export const CategoryListPage: React.FC = () => {
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const notify = useNotification();
 
   // Redux state
-  const categories = useAppSelector(selectCategories);
-  const isLoading = useAppSelector(selectIsCategoryLoading);
+  const categories = useAppSelector((state) => state.categories.categories) || [];
+  const isLoading = useAppSelector((state) => state.categories.isLoading);
 
   // Local state
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<ICategory | null>(null);
 
   // Load categories on mount
   useEffect(() => {
     dispatch(categoryActions.listCategoriesRequest({}));
   }, [dispatch]);
 
-  // Handle delete category
-  const handleDelete = async (categoryId: string) => {
-    try {
-      setDeleteLoading(categoryId);
-      dispatch(categoryActions.deleteCategoryRequest({ id: categoryId }));
-      notify.success('Xóa danh mục thành công!');
-    } catch (err) {
-      notify.error('Lỗi khi xóa danh mục');
-    } finally {
-      setDeleteLoading(null);
+  // Handle create category
+  const handleCreate = (values: any) => {
+    dispatch(categoryActions.createCategoryRequest(values));
+    setIsModalOpen(false);
+  };
+
+  // Handle update category
+  const handleUpdate = (values: any) => {
+    if (editingCategory) {
+      dispatch(
+        categoryActions.updateCategoryRequest({
+          id: editingCategory.id,
+          ...values,
+        })
+      );
+      setEditingCategory(null);
+      setIsModalOpen(false);
     }
   };
 
-  // Handle edit category
-  const handleEdit = (category: ICategory) => {
-    navigate(`/categories/${category.id}/edit`, { state: { category } });
+  // Handle delete category
+  const handleDelete = (categoryId: string) => {
+    dispatch(categoryActions.deleteCategoryRequest({ id: categoryId }));
   };
 
-  // Handle add category
-  const handleAddCategory = () => {
-    navigate('/categories/new');
+  // Handle open modal
+  const handleOpenModal = (category?: ICategory) => {
+    if (category) {
+      setEditingCategory(category);
+    } else {
+      setEditingCategory(null);
+    }
+    setIsModalOpen(true);
+  };
+
+  // Handle close modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingCategory(null);
   };
 
   // Table columns
@@ -108,8 +122,12 @@ export const CategoryListPage: React.FC = () => {
       key: 'name',
       render: (text: string, record: ICategory) => (
         <div style={{ display: 'flex', alignItems: 'center' }}>
+          {record.icon && <span style={{ fontSize: '20px', marginRight: 8 }}>{record.icon}</span>}
           {record.color && (
-            <span className="category-color" style={{ backgroundColor: record.color }} />
+            <span
+              className="category-color"
+              style={{ backgroundColor: record.color, marginRight: 8 }}
+            />
           )}
           <div>
             <div style={{ fontWeight: 600 }}>{text}</div>
@@ -124,13 +142,11 @@ export const CategoryListPage: React.FC = () => {
       title: 'Loại',
       dataIndex: 'type',
       key: 'type',
-      render: (type: string) => {
-        const typeLabels: Record<string, string> = {
-          INCOME: 'Thu nhập',
-          EXPENSE: 'Chi tiêu',
-        };
-        return <Tag color={type === 'INCOME' ? 'green' : 'blue'}>{typeLabels[type] || type}</Tag>;
-      },
+      render: (type: CategoryType) => (
+        <Tag color={type === CategoryType.INCOME ? 'green' : 'blue'}>
+          {CategoryTypeLabels[type]}
+        </Tag>
+      ),
     },
     {
       title: 'Mặc định',
@@ -158,7 +174,7 @@ export const CategoryListPage: React.FC = () => {
             type="text"
             size="small"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
+            onClick={() => handleOpenModal(record)}
             title="Chỉnh sửa"
           />
           <Popconfirm
@@ -167,16 +183,9 @@ export const CategoryListPage: React.FC = () => {
             onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
             cancelText="Hủy"
-            okButtonProps={{ danger: true, loading: deleteLoading === record.id }}
+            okButtonProps={{ danger: true }}
           >
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              loading={deleteLoading === record.id}
-              title="Xóa"
-            />
+            <Button type="text" size="small" danger icon={<DeleteOutlined />} title="Xóa" />
           </Popconfirm>
         </Space>
       ),
@@ -193,7 +202,7 @@ export const CategoryListPage: React.FC = () => {
 
       {/* Actions */}
       <div className="actions-row">
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddCategory}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
           Thêm danh mục
         </Button>
       </div>
@@ -202,11 +211,7 @@ export const CategoryListPage: React.FC = () => {
       <Card>
         <Table
           columns={columns}
-          dataSource={
-            categories && categories.length > 0
-              ? categories.map((cat: ICategory) => ({ ...cat, key: cat.id }))
-              : []
-          }
+          dataSource={categories.map((cat: ICategory) => ({ ...cat, key: cat.id }))}
           loading={isLoading}
           pagination={{
             pageSize: 20,
@@ -223,6 +228,22 @@ export const CategoryListPage: React.FC = () => {
           }}
         />
       </Card>
+
+      {/* Create/Edit Modal */}
+      <Modal
+        title={editingCategory ? 'Chỉnh sửa danh mục' : 'Tạo danh mục mới'}
+        open={isModalOpen}
+        onCancel={handleCloseModal}
+        footer={null}
+        width={600}
+      >
+        <CategoryForm
+          initialValues={editingCategory || undefined}
+          onSubmit={editingCategory ? handleUpdate : handleCreate}
+          onCancel={handleCloseModal}
+          loading={isLoading}
+        />
+      </Modal>
     </PageWrapper>
   );
 };

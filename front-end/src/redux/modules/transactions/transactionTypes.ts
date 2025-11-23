@@ -14,6 +14,7 @@ export { TransactionType };
 
 /**
  * Transaction Entity
+ * IMPORTANT: Backend returns 'date' field (not transactionDate)
  */
 export interface ITransaction {
   id: string;
@@ -23,9 +24,32 @@ export interface ITransaction {
   type: TransactionType;
   amount: number;
   description: string;
-  date: string; // ISO 8601 format
-  notes?: string;
+  date: string; // ISO 8601 format - Backend field name is 'date'
+  note?: string;
   tags?: string[];
+  imageUrl?: string | null;
+  eventId?: string | null;
+
+  // Populated fields from backend (when using relations)
+  category?: {
+    id: string;
+    name: string;
+    type: number;
+    icon?: string;
+    color?: string;
+  };
+  account?: {
+    id: string;
+    name: string;
+    type: number;
+    balance: number;
+    currency: string;
+  };
+  event?: {
+    id: string;
+    name: string;
+  };
+
   createdAt: string;
   updatedAt: string;
 }
@@ -39,9 +63,12 @@ export interface ICreateTransactionPayload {
   type: TransactionType;
   amount: number;
   description: string;
-  date: string;
-  notes?: string;
+  date: string; // Backend expects 'date' field
+  note?: string;
   tags?: string[];
+  imageUrl?: string;
+  eventId?: string;
+  toAccountId?: string; // For transfer transactions
 }
 
 /**
@@ -54,9 +81,11 @@ export interface IUpdateTransactionPayload {
   type?: TransactionType;
   amount?: number;
   description?: string;
-  date?: string;
-  notes?: string;
+  date?: string; // Backend expects 'date' field
+  note?: string;
   tags?: string[];
+  imageUrl?: string;
+  eventId?: string;
 }
 
 /**
@@ -74,8 +103,9 @@ export interface ITransactionFilters {
   endDate?: string; // ISO 8601
   categoryId?: string;
   accountId?: string;
+  eventId?: string;
   type?: TransactionType;
-  searchText?: string;
+  search?: string; // Backend expects 'search' not 'searchText'
   minAmount?: number;
   maxAmount?: number;
 }

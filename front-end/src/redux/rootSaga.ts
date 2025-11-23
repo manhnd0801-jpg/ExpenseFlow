@@ -10,6 +10,7 @@ import { categorySaga } from './modules/categories';
 import { debtSaga } from './modules/debts';
 import { eventsSaga } from './modules/events';
 import { goalSaga } from './modules/goals';
+import { loanSaga } from './modules/loans';
 import { notificationsSaga } from './modules/notifications';
 import { remindersSaga } from './modules/reminders';
 import { reportsSaga } from './modules/reports';
@@ -26,6 +27,7 @@ export function* rootSaga() {
   yield fork(budgetSaga);
   yield fork(goalSaga);
   yield fork(debtSaga);
+  yield fork(loanSaga);
   yield fork(eventsSaga);
   yield fork(remindersSaga);
   yield fork(notificationsSaga);

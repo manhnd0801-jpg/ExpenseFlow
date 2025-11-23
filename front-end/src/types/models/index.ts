@@ -62,11 +62,15 @@ export interface ICreateAccountRequest {
 
 export interface IUpdateAccountRequest {
   name?: string;
-  type?: AccountType;
-  balance?: number;
-  currency?: string;
-  icon?: string;
+  bankName?: string;
+  accountNumber?: string;
+  description?: string;
   color?: string;
+  icon?: string;
+  isActive?: boolean;
+  includeInTotal?: boolean;
+  creditLimit?: number;
+  interestRate?: number;
 }
 
 export interface ICategory {
@@ -292,17 +296,24 @@ export interface IEvent {
   id: TId;
   userId: TId;
   name: string;
-  budget?: number;
-  spent?: number;
-  remaining?: number;
-  startDate: TTimestamp;
-  endDate: TTimestamp;
   description?: string;
-  icon?: string;
+  budget?: number;
+  startDate: TTimestamp;
+  endDate?: TTimestamp;
+  status: number; // EventStatus enum: 1=Planned, 2=Active, 3=Completed, 4=Cancelled
   color?: string;
+  icon?: string;
+  location?: string;
+  tags?: string[];
   createdAt: TTimestamp;
   updatedAt: TTimestamp;
   deletedAt?: TTimestamp;
+  // Virtual properties from backend
+  transactions?: ITransaction[];
+  totalSpent?: number;
+  remainingBudget?: number;
+  budgetUsedPercentage?: number;
+  isOverBudget?: boolean;
 }
 
 export interface IEventSummary {
@@ -318,10 +329,12 @@ export interface ICreateEventRequest {
   name: string;
   budget?: number;
   startDate: string;
-  endDate: string;
+  endDate?: string;
   description?: string;
   icon?: string;
   color?: string;
+  location?: string;
+  tags?: string[];
 }
 
 export interface IUpdateEventRequest {
@@ -332,6 +345,8 @@ export interface IUpdateEventRequest {
   description?: string;
   icon?: string;
   color?: string;
+  location?: string;
+  tags?: string[];
 }
 
 export interface IReminder {

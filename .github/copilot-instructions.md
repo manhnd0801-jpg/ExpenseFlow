@@ -277,4 +277,42 @@ type PaginatedResponse<T> = {}; // Missing T prefix
 
 ---
 
+## Progress Tracking & Documentation
+
+**QUAN TRỌNG:** Khi hoàn thành bất kỳ task nào, PHẢI update file `PROJECT_STATUS.md`:
+
+### Rules for Progress Updates:
+
+1. **KHÔNG tạo file summary mới** - Chỉ update `PROJECT_STATUS.md`
+2. **Update "Latest Updates" section** ở đầu file với:
+   - Timestamp (ngày giờ)
+   - Tasks completed
+   - Files modified
+   - Next steps
+3. **Update progress percentage** (Frontend: X%)
+4. **Update task status** trong section "In Progress" với ✅ và timestamp
+5. **Update "Cập nhật" date** ở header
+
+### Example Update Format:
+
+```markdown
+## 🆕 Latest Updates (22/11/2025 - 08:35 AM)
+
+### Completed Today:
+
+1. ✅ **Feature Name** - Brief description
+2. ✅ **Bug Fix** - What was fixed
+
+### Files Modified:
+
+- `/path/to/file1.ts` (UPDATED)
+- `/path/to/file2.tsx` (NEW)
+
+### Next Steps:
+
+- [ ] Next task to do
+```
+
+---
+
 **Lưu ý:** Khi có conflict giữa instructions và code hiện tại, ưu tiên sửa code để follow instructions (trừ khi có lý do kỹ thuật rõ ràng).

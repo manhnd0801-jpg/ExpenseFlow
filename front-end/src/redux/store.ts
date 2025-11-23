@@ -11,6 +11,7 @@ import { categoryReducer } from './modules/categories';
 import { debtReducer } from './modules/debts';
 import { eventReducer } from './modules/events';
 import { goalReducer } from './modules/goals';
+import { loanReducer } from './modules/loans';
 import { notificationReducer } from './modules/notifications';
 import { reminderReducer } from './modules/reminders';
 import { reportReducer } from './modules/reports';
@@ -32,6 +33,7 @@ export const store = configureStore({
     budgets: budgetReducer,
     goals: goalReducer,
     debts: debtReducer,
+    loans: loanReducer,
     events: eventReducer,
     reminders: reminderReducer,
     notifications: notificationReducer,

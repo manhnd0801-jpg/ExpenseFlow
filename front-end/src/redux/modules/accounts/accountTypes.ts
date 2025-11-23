@@ -3,7 +3,7 @@
  * Defines all TypeScript interfaces for account management
  */
 
-import { AccountType } from '@/constants/enums';
+import { AccountType, Currency } from '@/constants/enums';
 
 // ============================================
 // ACCOUNT INTERFACES
@@ -19,7 +19,7 @@ export interface IAccount {
   type: AccountType;
   balance: number;
   initialBalance: number;
-  currency: string; // ISO 4217 code (VND, USD, etc.)
+  currency: Currency; // Currency enum (1=VND, 2=USD, etc.)
   isActive: boolean;
   color?: string;
   icon?: string;
@@ -35,7 +35,7 @@ export interface ICreateAccountPayload {
   name: string;
   type: AccountType;
   initialBalance: number;
-  currency?: string;
+  currency?: Currency;
   color?: string;
   icon?: string;
   description?: string;
@@ -43,16 +43,20 @@ export interface ICreateAccountPayload {
 
 /**
  * Update Account Payload
+ * Note: type, balance, initialBalance, and currency are immutable after creation
  */
 export interface IUpdateAccountPayload {
   id: string;
   name?: string;
-  type?: AccountType;
-  balance?: number;
-  isActive?: boolean;
+  bankName?: string;
+  accountNumber?: string;
+  description?: string;
   color?: string;
   icon?: string;
-  description?: string;
+  isActive?: boolean;
+  includeInTotal?: boolean;
+  creditLimit?: number;
+  interestRate?: number;
 }
 
 /**

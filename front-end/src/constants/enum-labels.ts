@@ -8,8 +8,10 @@ import {
   BookRole,
   BudgetPeriod,
   CategoryType,
+  Currency,
   DebtStatus,
   DebtType,
+  EventStatus,
   GoalStatus,
   LoanStatus,
   LoanType,
@@ -47,6 +49,23 @@ export const BudgetPeriodLabels: Record<BudgetPeriod, string> = {
   [BudgetPeriod.CUSTOM]: 'Tùy chỉnh',
 };
 
+// Currency Code Mapping - Convert integer enum to ISO currency code
+export const CurrencyCodeMap: Record<Currency, string> = {
+  [Currency.VND]: 'VND',
+  [Currency.USD]: 'USD',
+  [Currency.EUR]: 'EUR',
+  [Currency.JPY]: 'JPY',
+  [Currency.CNY]: 'CNY',
+};
+
+export const CurrencyLabels: Record<Currency, string> = {
+  [Currency.VND]: 'Việt Nam Đồng',
+  [Currency.USD]: 'US Dollar',
+  [Currency.EUR]: 'Euro',
+  [Currency.JPY]: 'Japanese Yen',
+  [Currency.CNY]: 'Chinese Yuan',
+};
+
 export const GoalStatusLabels: Record<GoalStatus, string> = {
   [GoalStatus.ACTIVE]: 'Đang hoạt động',
   [GoalStatus.COMPLETED]: 'Đã hoàn thành',
@@ -67,17 +86,17 @@ export const DebtStatusLabels: Record<DebtStatus, string> = {
 
 export const LoanTypeLabels: Record<LoanType, string> = {
   [LoanType.PERSONAL]: 'Vay cá nhân',
-  [LoanType.HOME]: 'Vay mua nhà',
-  [LoanType.AUTO]: 'Vay mua ô tô',
-  [LoanType.EDUCATIONAL]: 'Vay học tập',
+  [LoanType.MORTGAGE]: 'Vay mua nhà',
+  [LoanType.AUTO]: 'Vay mua xe',
+  [LoanType.STUDENT]: 'Vay học tập',
+  [LoanType.BUSINESS]: 'Vay kinh doanh',
   [LoanType.OTHER]: 'Khác',
 };
 
 export const LoanStatusLabels: Record<LoanStatus, string> = {
   [LoanStatus.ACTIVE]: 'Đang hoạt động',
-  [LoanStatus.COMPLETED]: 'Đã hoàn thành',
-  [LoanStatus.DEFAULTED]: 'Mặc định',
-  [LoanStatus.REFINANCED]: 'Tái cấp vốn',
+  [LoanStatus.PAID_OFF]: 'Đã trả hết',
+  [LoanStatus.DEFAULTED]: 'Vỡ nợ',
 };
 
 export const PaymentStatusLabels: Record<PaymentStatus, string> = {
@@ -106,4 +125,11 @@ export const NotificationTypeLabels: Record<NotificationType, string> = {
   [NotificationType.DEBT_REMINDER]: 'Nhắc công nợ',
   [NotificationType.GOAL_MILESTONE]: 'Mục tiêu đạt được',
   [NotificationType.SYSTEM]: 'Thông báo hệ thống',
+};
+
+export const EventStatusLabels: Record<EventStatus, string> = {
+  [EventStatus.PLANNED]: 'Đã lên kế hoạch',
+  [EventStatus.ACTIVE]: 'Đang diễn ra',
+  [EventStatus.COMPLETED]: 'Đã hoàn thành',
+  [EventStatus.CANCELLED]: 'Đã hủy',
 };

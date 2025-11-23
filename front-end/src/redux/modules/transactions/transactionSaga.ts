@@ -26,18 +26,36 @@ function* listTransactionsSaga(
     const filters = action.payload;
     const pagination = yield select(selectTransactionPagination);
 
-    const response: ITransaction[] = yield transactionService.listTransactions({
+    const response: any = yield transactionService.listTransactions({
       ...filters,
       page: pagination.page,
       limit: pagination.limit,
     });
 
+    // Handle both array response and paginated response from backend
+    let transactions: ITransaction[] = [];
+    let total = 0;
+    let page = pagination.page;
+    let limit = pagination.limit;
+
+    if (Array.isArray(response)) {
+      // Direct array response
+      transactions = response;
+      total = response.length;
+    } else if (response && typeof response === 'object') {
+      // Paginated response: { data: [], pagination: {...} }
+      transactions = response.data || response;
+      total = response.pagination?.total || response.total || transactions.length;
+      page = response.pagination?.page || response.page || page;
+      limit = response.pagination?.limit || response.limit || limit;
+    }
+
     yield put(
       transactionActions.listTransactionsSuccess({
-        transactions: response,
-        total: response.length,
-        page: pagination.page,
-        limit: pagination.limit,
+        transactions,
+        total,
+        page,
+        limit,
       })
     );
   } catch (error) {

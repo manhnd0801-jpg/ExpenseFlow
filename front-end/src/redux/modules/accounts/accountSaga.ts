@@ -3,35 +3,49 @@
  * Handles side effects for account operations (API calls, etc.)
  */
 
+import { accountService } from '@/services/accountService';
 import { PayloadAction } from '@reduxjs/toolkit';
-import { put, takeEvery } from 'redux-saga/effects';
+import { call, put, takeEvery } from 'redux-saga/effects';
 import { accountActions } from './accountSlice';
 import {
   IAccount,
+  IAccountListQuery,
   ICreateAccountPayload,
   IDeleteAccountPayload,
   IUpdateAccountPayload,
 } from './accountTypes';
 
-// Placeholder for account service (will be implemented)
-// import accountService from '@/services/accountService';
-
 /**
- * Watch List Accounts
+ * List Accounts Saga
  */
-function* watchListAccounts() {
+function* listAccountsSaga(action: PayloadAction<IAccountListQuery>): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // const response = yield call(accountService.listAccounts, action.payload);
+    const response: any = yield call(accountService.getAccounts);
 
-    // Placeholder: Mock data
-    const mockAccounts: IAccount[] = [];
+    // Handle both array response and paginated response from backend
+    let accounts: IAccount[] = [];
+    let total = 0;
+    let page = action.payload.page || 1;
+    let limit = action.payload.limit || 10;
+
+    if (Array.isArray(response)) {
+      // Direct array response
+      accounts = response;
+      total = response.length;
+    } else if (response && typeof response === 'object') {
+      // Paginated response: { data: [], pagination: {...} }
+      accounts = response.data || response;
+      total = response.pagination?.total || response.total || accounts.length;
+      page = response.pagination?.page || response.page || page;
+      limit = response.pagination?.limit || response.limit || limit;
+    }
+
     yield put(
       accountActions.listAccountsSuccess({
-        accounts: mockAccounts,
-        total: 0,
-        page: 1,
-        limit: 10,
+        accounts,
+        total,
+        page,
+        limit,
       })
     );
   } catch (error: any) {
@@ -40,104 +54,78 @@ function* watchListAccounts() {
 }
 
 /**
- * Watch Create Account
+ * Create Account Saga
  */
-function* watchCreateAccount(action: PayloadAction<ICreateAccountPayload>) {
+function* createAccountSaga(
+  action: PayloadAction<ICreateAccountPayload>
+): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // const response = yield call(accountService.createAccount, action.payload);
-
-    // Placeholder: Mock data
-    const mockAccount: IAccount = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: '',
-      name: action.payload.name,
-      type: action.payload.type,
-      balance: action.payload.initialBalance,
-      initialBalance: action.payload.initialBalance,
-      currency: action.payload.currency || 'VND',
-      isActive: true,
-      color: action.payload.color,
-      icon: action.payload.icon,
-      description: action.payload.description,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    // Map payload to API request format
+    const { initialBalance, ...restPayload } = action.payload;
+    const requestData = {
+      ...restPayload,
+      balance: initialBalance, // Map initialBalance to balance for API
     };
 
-    yield put(accountActions.createAccountSuccess(mockAccount));
+    // @ts-ignore - Redux Saga call effect type inference issue
+    const newAccount: IAccount = yield call(accountService.createAccount, requestData);
+
+    yield put(accountActions.createAccountSuccess(newAccount));
+
+    // Refresh account list
+    yield put(accountActions.listAccountsRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(accountActions.createAccountFailure(error?.message || 'Failed to create account'));
   }
 }
 
 /**
- * Watch Update Account
+ * Update Account Saga
  */
-function* watchUpdateAccount(action: PayloadAction<IUpdateAccountPayload>) {
+function* updateAccountSaga(
+  action: PayloadAction<IUpdateAccountPayload>
+): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // const response = yield call(accountService.updateAccount, action.payload.id, action.payload);
+    const { id, ...updateData } = action.payload;
+    const updatedAccount: IAccount = yield call(accountService.updateAccount, id, updateData);
 
-    // Placeholder: Mock data
-    const mockAccount: IAccount = {
-      id: action.payload.id,
-      userId: '',
-      name: action.payload.name || '',
-      type: action.payload.type || 1,
-      balance: action.payload.balance || 0,
-      initialBalance: 0,
-      currency: 'VND',
-      isActive: action.payload.isActive !== undefined ? action.payload.isActive : true,
-      color: action.payload.color,
-      icon: action.payload.icon,
-      description: action.payload.description,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    yield put(accountActions.updateAccountSuccess(updatedAccount));
 
-    yield put(accountActions.updateAccountSuccess(mockAccount));
+    // Refresh account list
+    yield put(accountActions.listAccountsRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(accountActions.updateAccountFailure(error?.message || 'Failed to update account'));
   }
 }
 
 /**
- * Watch Delete Account
+ * Delete Account Saga
  */
-function* watchDeleteAccount(action: PayloadAction<IDeleteAccountPayload>) {
+function* deleteAccountSaga(
+  action: PayloadAction<IDeleteAccountPayload>
+): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // yield call(accountService.deleteAccount, action.payload.id);
+    const { id } = action.payload;
+    yield call(accountService.deleteAccount, id);
 
-    yield put(accountActions.deleteAccountSuccess({ id: action.payload.id }));
+    yield put(accountActions.deleteAccountSuccess({ id }));
+
+    // Refresh account list
+    yield put(accountActions.listAccountsRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(accountActions.deleteAccountFailure(error?.message || 'Failed to delete account'));
   }
 }
 
 /**
- * Watch Get Account Detail
+ * Get Account Detail Saga
  */
-function* watchGetAccountDetail(action: PayloadAction<{ id: string }>) {
+function* getAccountDetailSaga(action: PayloadAction<{ id: string }>): Generator<any, void, any> {
   try {
-    // TODO: Implement API call
-    // const response = yield call(accountService.getAccountDetail, action.payload.id);
+    const { id } = action.payload;
+    const account: IAccount = yield call(accountService.getAccountById, id);
 
-    // Placeholder: Mock data
-    const mockAccount: IAccount = {
-      id: action.payload.id,
-      userId: '',
-      name: 'My Account',
-      type: 1,
-      balance: 0,
-      initialBalance: 0,
-      currency: 'VND',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    yield put(accountActions.getAccountDetailSuccess(mockAccount));
+    yield put(accountActions.getAccountDetailSuccess(account));
   } catch (error: any) {
     yield put(accountActions.getAccountDetailFailure(error?.message || 'Failed to fetch account'));
   }
@@ -147,9 +135,9 @@ function* watchGetAccountDetail(action: PayloadAction<{ id: string }>) {
  * Root Account Saga
  */
 export default function* accountSaga() {
-  yield takeEvery(accountActions.listAccountsRequest.type, watchListAccounts);
-  yield takeEvery(accountActions.createAccountRequest.type, watchCreateAccount);
-  yield takeEvery(accountActions.updateAccountRequest.type, watchUpdateAccount);
-  yield takeEvery(accountActions.deleteAccountRequest.type, watchDeleteAccount);
-  yield takeEvery(accountActions.getAccountDetailRequest.type, watchGetAccountDetail);
+  yield takeEvery(accountActions.listAccountsRequest.type, listAccountsSaga);
+  yield takeEvery(accountActions.createAccountRequest.type, createAccountSaga);
+  yield takeEvery(accountActions.updateAccountRequest.type, updateAccountSaga);
+  yield takeEvery(accountActions.deleteAccountRequest.type, deleteAccountSaga);
+  yield takeEvery(accountActions.getAccountDetailRequest.type, getAccountDetailSaga);
 }

@@ -7,6 +7,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   ICategory,
   ICategoryFilters,
+  ICategoryListQuery,
   ICreateCategoryPayload,
   IDeleteCategoryPayload,
   initialCategoryState,
@@ -20,7 +21,7 @@ const categorySlice = createSlice({
     // ==========================================
     // LIST CATEGORIES
     // ==========================================
-    listCategoriesRequest: (state, _action: PayloadAction<ICategoryFilters>) => {
+    listCategoriesRequest: (state, _action: PayloadAction<ICategoryListQuery>) => {
       state.isLoading = true;
       state.error = null;
       state.errors.list = undefined;

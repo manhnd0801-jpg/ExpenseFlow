@@ -10,6 +10,7 @@ import {
   initialTransactionState,
   ITransaction,
   ITransactionFilters,
+  ITransactionListQuery,
   IUpdateTransactionPayload,
 } from './transactionTypes';
 
@@ -20,7 +21,7 @@ const transactionSlice = createSlice({
     // ==========================================
     // LIST TRANSACTIONS
     // ==========================================
-    listTransactionsRequest: (state, _action: PayloadAction<ITransactionFilters>) => {
+    listTransactionsRequest: (state, _action: PayloadAction<ITransactionListQuery>) => {
       state.isLoading = true;
       state.error = null;
       state.errors.list = undefined;

@@ -7,6 +7,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   IAccount,
   IAccountFilters,
+  IAccountListQuery,
   ICreateAccountPayload,
   IDeleteAccountPayload,
   initialAccountState,
@@ -20,7 +21,7 @@ const accountSlice = createSlice({
     // ==========================================
     // LIST ACCOUNTS
     // ==========================================
-    listAccountsRequest: (state, _action: PayloadAction<IAccountFilters>) => {
+    listAccountsRequest: (state, _action: PayloadAction<IAccountListQuery>) => {
       state.isLoading = true;
       state.error = null;
       state.errors.list = undefined;

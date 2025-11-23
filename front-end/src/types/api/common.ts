@@ -3,12 +3,12 @@
  */
 
 /**
- * API Response wrapper
+ * API Response wrapper (matches Backend ResponseInterceptor)
  */
 export interface IApiResponse<T> {
+  success: boolean;
   data: T;
   message: string;
-  code: number;
 }
 
 /**

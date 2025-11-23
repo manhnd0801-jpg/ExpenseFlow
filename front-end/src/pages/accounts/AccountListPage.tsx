@@ -4,22 +4,16 @@
  */
 
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Empty, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Empty, Modal, Popconfirm, Space, Table, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { useAppDispatch, useAppSelector, useNotification } from '@/hooks';
-import {
-  accountActions,
-  IAccount,
-  selectAccountError,
-  selectAccountPagination,
-  selectAccounts,
-  selectIsAccountLoading,
-} from '@/redux/modules/accounts';
-import accountService from '@/services/api/accountService';
-import { formatCurrency } from '@/utils/formatters';
+import { AccountForm } from '@/components/organisms/AccountForm';
+import { AccountTypeLabels, CurrencyCodeMap } from '@/constants/enum-labels';
+import { AccountType, Currency } from '@/constants/enums';
+import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
+import { accountActions } from '@redux/modules/accounts';
+import type { IAccount } from '@redux/modules/accounts/accountTypes';
 
 // ============================================
 // STYLED COMPONENTS
@@ -75,55 +69,89 @@ const AccountTypeTag = styled(Tag)`
 // ============================================
 
 const AccountListPage: React.FC = () => {
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { success, error: showError } = useNotification();
 
   // Redux state
-  const accounts = useAppSelector(selectAccounts);
-  const isLoading = useAppSelector(selectIsAccountLoading);
-  const error = useAppSelector(selectAccountError);
-  const pagination = useAppSelector(selectAccountPagination);
+  const accounts = useAppSelector((state) => state.accounts.accounts) || [];
+  const isLoading = useAppSelector((state) => state.accounts.isLoading);
+  const pagination = useAppSelector((state) => state.accounts.pagination);
 
   // Local state
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<IAccount | null>(null);
 
   // Load accounts on mount
   useEffect(() => {
     dispatch(accountActions.listAccountsRequest({}));
   }, [dispatch]);
 
-  // Handle error
-  useEffect(() => {
-    if (error) {
-      showError('Failed to load accounts', { duration: 3 });
+  // Handle create account
+  const handleCreate = (values: any) => {
+    dispatch(accountActions.createAccountRequest(values));
+    setIsModalOpen(false);
+  };
+
+  // Handle update account
+  const handleUpdate = (values: any) => {
+    if (editingAccount) {
+      dispatch(
+        accountActions.updateAccountRequest({
+          id: editingAccount.id,
+          ...values,
+        })
+      );
+      setEditingAccount(null);
+      setIsModalOpen(false);
     }
-  }, [error, showError]);
+  };
 
   // Handle delete account
-  const handleDelete = async (accountId: string) => {
-    try {
-      setDeleteLoading(accountId);
-      await accountService.deleteAccount(accountId);
-      dispatch(accountActions.deleteAccountSuccess({ id: accountId }));
-      success('Account deleted successfully');
-      // Reload accounts
-      dispatch(accountActions.listAccountsRequest({}));
-    } catch (err: any) {
-      showError('Failed to delete account', { duration: 3 });
-    } finally {
-      setDeleteLoading(null);
+  const handleDelete = (accountId: string) => {
+    dispatch(accountActions.deleteAccountRequest({ id: accountId }));
+  };
+
+  // Handle open modal
+  const handleOpenModal = (account?: IAccount) => {
+    if (account) {
+      setEditingAccount(account);
+    } else {
+      setEditingAccount(null);
     }
+    setIsModalOpen(true);
   };
 
-  // Handle edit account
-  const handleEdit = (account: IAccount) => {
-    navigate(`/accounts/${account.id}/edit`, { state: { account } });
+  // Handle close modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingAccount(null);
   };
 
-  // Handle add account
-  const handleAddAccount = () => {
-    navigate('/accounts/new');
+  // Format currency
+  const formatCurrency = (amount: number, currencyEnum: number | string = 1): string => {
+    // Convert enum number to currency code string
+    let currencyCode = 'VND'; // Default
+
+    if (typeof currencyEnum === 'number') {
+      // It's a Currency enum value - convert to string code
+      currencyCode = CurrencyCodeMap[currencyEnum as Currency] || 'VND';
+    } else if (typeof currencyEnum === 'string' && currencyEnum.length === 3) {
+      // Already a valid currency code string
+      currencyCode = currencyEnum.toUpperCase();
+    }
+
+    try {
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: currencyCode,
+      }).format(amount);
+    } catch (error) {
+      // Fallback if currency code is invalid
+      console.warn(`Invalid currency: ${currencyEnum}, falling back to VND`);
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+      }).format(amount);
+    }
   };
 
   // Table columns
@@ -134,8 +162,13 @@ const AccountListPage: React.FC = () => {
       key: 'name',
       render: (text: string, record: IAccount) => (
         <div>
-          <div style={{ fontWeight: 600 }}>{text}</div>
-          <div style={{ fontSize: '12px', color: '#9ca3af' }}>{record.description}</div>
+          <div style={{ fontWeight: 600 }}>
+            {record.icon && <span style={{ marginRight: 8 }}>{record.icon}</span>}
+            {text}
+          </div>
+          {record.description && (
+            <div style={{ fontSize: '12px', color: '#9ca3af' }}>{record.description}</div>
+          )}
         </div>
       ),
     },
@@ -143,7 +176,7 @@ const AccountListPage: React.FC = () => {
       title: 'Type',
       dataIndex: 'type',
       key: 'type',
-      render: (type: string) => <AccountTypeTag>{type}</AccountTypeTag>,
+      render: (type: AccountType) => <AccountTypeTag>{AccountTypeLabels[type]}</AccountTypeTag>,
     },
     {
       title: 'Balance',
@@ -154,7 +187,7 @@ const AccountListPage: React.FC = () => {
         <div>
           <StyledBalanceCell>{formatCurrency(balance, record.currency)}</StyledBalanceCell>
           <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-            Init: {formatCurrency(record.initialBalance, record.currency)}
+            Init: {formatCurrency(record.initialBalance || 0, record.currency)}
           </div>
         </div>
       ),
@@ -183,7 +216,7 @@ const AccountListPage: React.FC = () => {
             type="text"
             size="small"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
+            onClick={() => handleOpenModal(record)}
           />
           <Popconfirm
             title="Delete Account"
@@ -191,15 +224,9 @@ const AccountListPage: React.FC = () => {
             onConfirm={() => handleDelete(record.id)}
             okText="Yes"
             cancelText="No"
-            okButtonProps={{ danger: true, loading: deleteLoading === record.id }}
+            okButtonProps={{ danger: true }}
           >
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              loading={deleteLoading === record.id}
-            />
+            <Button type="text" size="small" danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
       ),
@@ -216,7 +243,7 @@ const AccountListPage: React.FC = () => {
 
       {/* Actions */}
       <div className="actions-row">
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddAccount}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
           Add Account
         </Button>
       </div>
@@ -225,20 +252,16 @@ const AccountListPage: React.FC = () => {
       <Card className="table-wrapper">
         <Table
           columns={columns}
-          dataSource={
-            accounts && accounts.length > 0
-              ? accounts.map((acc: IAccount) => ({ ...acc, key: acc.id }))
-              : []
-          }
+          dataSource={accounts.map((acc: IAccount) => ({ ...acc, key: acc.id }))}
           loading={isLoading}
           pagination={{
             current: pagination.page,
-            pageSize: pagination.pageSize,
+            pageSize: pagination.limit,
             total: pagination.total,
             showSizeChanger: true,
             showTotal: (total) => `Total ${total} accounts`,
-            onChange: (page) => {
-              dispatch(accountActions.setAccountPage(page));
+            onChange: (page, pageSize) => {
+              dispatch(accountActions.listAccountsRequest({ page, limit: pageSize }));
             },
           }}
           locale={{
@@ -251,6 +274,22 @@ const AccountListPage: React.FC = () => {
           }}
         />
       </Card>
+
+      {/* Create/Edit Modal */}
+      <Modal
+        title={editingAccount ? 'Edit Account' : 'Create Account'}
+        open={isModalOpen}
+        onCancel={handleCloseModal}
+        footer={null}
+        width={600}
+      >
+        <AccountForm
+          initialValues={editingAccount || undefined}
+          onSubmit={editingAccount ? handleUpdate : handleCreate}
+          onCancel={handleCloseModal}
+          loading={isLoading}
+        />
+      </Modal>
     </StyledPageWrapper>
   );
 };

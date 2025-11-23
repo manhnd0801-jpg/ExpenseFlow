@@ -20,12 +20,22 @@ export async function seedSampleData(dataSource: DataSource) {
   const budgetRepo = dataSource.getRepository(Budget);
   const goalRepo = dataSource.getRepository(Goal);
 
-  // Find test user
-  let user = await userRepo.findOne({ where: { email: 'test@expenseflow.com' } });
+  // Find test user (try multiple test accounts)
+  let user = await userRepo.findOne({
+    where: [{ email: 'demo@expenseflow.com' }, { email: 'test@expenseflow.com' }],
+  });
+
   if (!user) {
-    console.log('❌ Test user not found. Please login first to create the user.');
+    // Get any user as fallback
+    user = await userRepo.findOne({ order: { createdAt: 'DESC' } });
+  }
+
+  if (!user) {
+    console.log('❌ No user found. Please register a user first.');
     return;
   }
+
+  console.log(`✅ Using user: ${user.email}`);
 
   // Get categories (including default ones)
   const categories = await categoryRepo.find();
