@@ -109,12 +109,15 @@ export const ReportsPage: React.FC = () => {
         ? [dateRange[0]?.format('YYYY-MM-DD'), dateRange[1]?.format('YYYY-MM-DD')]
         : null,
       summary: stats,
-      transactions: filteredTransactions.map((t) => ({
-        date: t.date,
-        type: t.type === TransactionType.INCOME ? 'Thu nhập' : 'Chi tiêu',
-        amount: t.amount,
-        category: 'Danh mục', // Simplified
-        note: t.note || '',
+      transactions: filteredTransactions.map((transaction) => ({
+        date: transaction.date,
+        type:
+          transaction.type === TransactionType.INCOME
+            ? t('transactions.income')
+            : t('transactions.expense'),
+        amount: transaction.amount,
+        category: t('categories.category'), // Simplified
+        note: transaction.note || '',
       })),
     };
 

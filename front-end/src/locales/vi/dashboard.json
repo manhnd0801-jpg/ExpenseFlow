@@ -1,0 +1,14 @@
+{
+  "title": "Tổng quan",
+  "welcome": "Xin chào",
+  "monthlyOverview": "Tổng quan tháng",
+  "income": "Thu nhập",
+  "expense": "Chi tiêu",
+  "balance": "Số dư",
+  "budgetProgress": "Tiến độ ngân sách",
+  "recentTransactions": "Giao dịch gần đây",
+  "budgetAlert": "Cảnh báo ngân sách",
+  "reminders": "Nhắc nhở",
+  "spendingChart": "Biểu đồ chi tiêu",
+  "noData": "Không có dữ liệu"
+}

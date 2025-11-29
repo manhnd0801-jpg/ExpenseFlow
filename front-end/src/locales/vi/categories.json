@@ -1,0 +1,23 @@
+{
+  "title": "Danh mục",
+  "category": "Danh mục",
+  "addCategory": "Thêm danh mục",
+  "createCategory": "Tạo danh mục",
+  "editCategory": "Sửa danh mục",
+  "categoryName": "Tên danh mục",
+  "categoryType": "Loại danh mục",
+  "icon": "Biểu tượng",
+  "color": "Màu sắc",
+  "description": "Mô tả",
+  "noCategories": "Chưa có danh mục nào",
+  "deleteCategory": "Xóa danh mục?",
+  "deleteConfirmMessage": "Bạn có chắc muốn xóa danh mục này không?",
+  "nameRequired": "Vui lòng nhập tên danh mục",
+  "nameMinLength": "Tên phải có ít nhất 2 ký tự",
+  "namePlaceholder": "Ví dụ: Ăn uống, Xăng xe, Lương...",
+  "typeRequired": "Vui lòng chọn loại danh mục",
+  "selectType": "Chọn loại",
+  "iconPlaceholder": "Ví dụ: 🍔, ⛽, 💰...",
+  "descriptionPlaceholder": "Ghi chú về danh mục (tùy chọn)",
+  "totalCategories": "Tổng {{total}} danh mục"
+}

@@ -1,0 +1,99 @@
+{
+  "accountType": {
+    "cash": "Cash",
+    "bank": "Bank",
+    "creditCard": "Credit Card",
+    "digitalWallet": "Digital Wallet",
+    "investment": "Investment"
+  },
+  "transactionType": {
+    "income": "Income",
+    "expense": "Expense",
+    "transfer": "Transfer"
+  },
+  "categoryType": {
+    "income": "Income",
+    "expense": "Expense"
+  },
+  "budgetPeriod": {
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "yearly": "Yearly",
+    "custom": "Custom"
+  },
+  "currency": {
+    "vnd": "Vietnamese Dong",
+    "usd": "US Dollar",
+    "eur": "Euro",
+    "jpy": "Japanese Yen",
+    "cny": "Chinese Yuan"
+  },
+  "goalStatus": {
+    "active": "Active",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "goalType": {
+    "saving": "Saving",
+    "purchase": "Purchase",
+    "investment": "Investment",
+    "debtPayoff": "Debt Payoff",
+    "emergency": "Emergency",
+    "other": "Other"
+  },
+  "debtType": {
+    "lending": "Lending",
+    "borrowing": "Borrowing"
+  },
+  "debtStatus": {
+    "active": "Active",
+    "partialPaid": "Partial Paid",
+    "completed": "Completed",
+    "overdue": "Overdue"
+  },
+  "loanType": {
+    "personal": "Personal Loan",
+    "mortgage": "Mortgage",
+    "auto": "Auto Loan",
+    "student": "Student Loan",
+    "business": "Business Loan",
+    "other": "Other"
+  },
+  "loanStatus": {
+    "active": "Active",
+    "paidOff": "Paid Off",
+    "defaulted": "Defaulted"
+  },
+  "paymentStatus": {
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "skipped": "Skipped"
+  },
+  "reminderType": {
+    "payment": "Payment Reminder",
+    "budget": "Budget Reminder",
+    "debt": "Debt Reminder",
+    "custom": "Custom Reminder"
+  },
+  "bookRole": {
+    "viewer": "Viewer",
+    "editor": "Editor",
+    "admin": "Administrator"
+  },
+  "notificationType": {
+    "budgetAlert": "Budget Alert",
+    "paymentDue": "Payment Due",
+    "debtReminder": "Debt Reminder",
+    "goalMilestone": "Goal Milestone",
+    "system": "System Notification"
+  },
+  "eventStatus": {
+    "planned": "Planned",
+    "active": "Active",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  }
+}

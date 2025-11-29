@@ -304,7 +304,6 @@ export const GoalDetailModal: React.FC<IGoalDetailModalProps> = ({ visible, goal
                 </Tag>
               )}
             </div>
-            . Khi
           </div>
         </div>
 

@@ -33,8 +33,10 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BudgetPeriodLabels } from '../../constants/enum-labels';
+import { useI18n } from '../../hooks/useI18n';
 
 const BudgetDetailPage: React.FC = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
@@ -223,17 +225,17 @@ const BudgetDetailPage: React.FC = () => {
           <Descriptions.Item label="Danh mục">
             {budgetData.category?.name || budgetData.categoryId || 'Tổng ngân sách'}
           </Descriptions.Item>
-          <Descriptions.Item label="Chu kỳ">
+          <Descriptions.Item label={t('budgets.period')}>
             {BudgetPeriodLabels[budgetData.period as keyof typeof BudgetPeriodLabels] ||
               budgetData.period}
           </Descriptions.Item>
-          <Descriptions.Item label="Ngày bắt đầu">
+          <Descriptions.Item label={t('budgets.startDate')}>
             {formatDate(budgetData.startDate)}
           </Descriptions.Item>
-          <Descriptions.Item label="Ngày kết thúc">
+          <Descriptions.Item label={t('budgets.endDate')}>
             {formatDate(budgetData.endDate)}
           </Descriptions.Item>
-          <Descriptions.Item label="Tạo lúc" span={2}>
+          <Descriptions.Item label={t('common.createdAt')} span={2}>
             {formatDate(budgetData.createdAt)}
           </Descriptions.Item>
         </Descriptions>
@@ -246,7 +248,7 @@ const BudgetDetailPage: React.FC = () => {
           bordered
           columns={[
             {
-              title: 'Ngày',
+              title: t('transactions.date'),
               dataIndex: 'date',
               key: 'date',
               render: (date) => formatDate(date),

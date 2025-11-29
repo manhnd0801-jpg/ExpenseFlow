@@ -1,0 +1,13 @@
+{
+  "required": {
+    "contributionAmount": "Please enter contribution amount",
+    "account": "Please select an account"
+  },
+  "min": {
+    "contributionAmount": "Minimum contribution amount is 1,000 VND"
+  },
+  "max": {
+    "contributionAmount": "Contribution amount cannot exceed remaining amount"
+  },
+  "insufficientBalance": "Insufficient account balance"
+}

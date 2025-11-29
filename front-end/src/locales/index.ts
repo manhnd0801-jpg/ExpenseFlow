@@ -1,5 +1,6 @@
-import en from './en.json';
-import vi from './vi.json';
+// Import modular translations
+import en from './en';
+import vi from './vi';
 
 export const resources = {
   en: {

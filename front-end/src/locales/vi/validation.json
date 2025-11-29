@@ -1,0 +1,22 @@
+{
+  "required": {
+    "contributionAmount": "Vui lòng nhập số tiền đóng góp",
+    "account": "Vui lòng chọn tài khoản",
+    "eventName": "Vui lòng nhập tên sự kiện",
+    "eventType": "Vui lòng chọn loại sự kiện",
+    "eventDates": "Vui lòng chọn thời gian diễn ra",
+    "debtType": "Vui lòng chọn loại công nợ",
+    "personName": "Vui lòng nhập tên người liên quan",
+    "originalAmount": "Vui lòng nhập số tiền gốc",
+    "borrowedDate": "Vui lòng chọn ngày vay"
+  },
+  "min": {
+    "contributionAmount": "Số tiền đóng góp tối thiểu là 1,000 VND",
+    "budget": "Ngân sách phải lớn hơn 0",
+    "originalAmount": "Số tiền gốc tối thiểu là 1,000 VND"
+  },
+  "max": {
+    "contributionAmount": "Số tiền đóng góp không được vượt quá số tiền còn lại"
+  },
+  "insufficientBalance": "Số dư tài khoản không đủ"
+}

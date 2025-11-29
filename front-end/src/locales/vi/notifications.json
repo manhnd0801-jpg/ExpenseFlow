@@ -1,0 +1,43 @@
+{
+  "success": {
+    "added": "Thêm thành công",
+    "updated": "Cập nhật thành công",
+    "deleted": "Xóa thành công",
+    "saved": "Lưu thành công",
+    "paymentRecorded": "Ghi nhận thanh toán thành công",
+    "contributedToGoal": "Đóng góp vào mục tiêu thành công",
+    "markedCompleted": "Đánh dấu hoàn thành thành công",
+    "deletedAllReadNotifications": "Xóa tất cả thông báo đã đọc thành công"
+  },
+  "error": {
+    "addFailed": "Thêm thất bại",
+    "updateFailed": "Cập nhật thất bại",
+    "deleteFailed": "Xóa thất bại",
+    "saveFailed": "Lưu thất bại",
+    "loadFailed": "Tải dữ liệu thất bại",
+    "networkError": "Lỗi mạng",
+    "fetchReminders": "Lỗi khi tải danh sách nhắc nhở",
+    "fetchUpcomingReminders": "Lỗi khi tải nhắc nhở sắp tới",
+    "fetchRemindersByType": "Lỗi khi tải nhắc nhở theo loại",
+    "createReminder": "Lỗi khi tạo nhắc nhở",
+    "updateReminder": "Lỗi khi cập nhật nhắc nhở",
+    "deleteReminder": "Lỗi khi xóa nhắc nhở",
+    "markReminderComplete": "Lỗi khi đánh dấu hoàn thành",
+    "fetchEvents": "Lỗi khi tải danh sách sự kiện",
+    "createEvent": "Lỗi khi tạo sự kiện",
+    "updateEvent": "Lỗi khi cập nhật sự kiện",
+    "deleteEvent": "Lỗi khi xóa sự kiện",
+    "fetchIncomeExpenseReport": "Lỗi khi tải báo cáo thu chi",
+    "fetchCategoryDistribution": "Lỗi khi tải phân bổ danh mục",
+    "fetchMonthlyTrend": "Lỗi khi tải xu hướng theo tháng",
+    "fetchCashFlowReport": "Lỗi khi tải báo cáo dòng tiền",
+    "fetchTopSpendingCategories": "Lỗi khi tải danh mục chi tiêu cao",
+    "fetchFinancialSummary": "Lỗi khi tải tổng quan tài chính",
+    "fetchAccountBalanceReport": "Lỗi khi tải báo cáo số dư",
+    "fetchGoals": "Lỗi khi tải danh sách mục tiêu",
+    "createGoal": "Lỗi khi tạo mục tiêu",
+    "updateGoal": "Lỗi khi cập nhật mục tiêu",
+    "deleteGoal": "Lỗi khi xóa mục tiêu",
+    "contributeGoal": "Lỗi khi đóng góp vào mục tiêu"
+  }
+}

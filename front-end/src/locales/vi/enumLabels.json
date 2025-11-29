@@ -1,0 +1,99 @@
+{
+  "accountType": {
+    "cash": "Tiền mặt",
+    "bank": "Ngân hàng",
+    "creditCard": "Thẻ tín dụng",
+    "digitalWallet": "Ví điện tử",
+    "investment": "Đầu tư"
+  },
+  "transactionType": {
+    "income": "Thu nhập",
+    "expense": "Chi tiêu",
+    "transfer": "Chuyển khoản"
+  },
+  "categoryType": {
+    "income": "Thu nhập",
+    "expense": "Chi tiêu"
+  },
+  "budgetPeriod": {
+    "daily": "Hàng ngày",
+    "weekly": "Hàng tuần",
+    "monthly": "Hàng tháng",
+    "quarterly": "Hàng quý",
+    "yearly": "Hàng năm",
+    "custom": "Tùy chỉnh"
+  },
+  "currency": {
+    "vnd": "Việt Nam Đồng",
+    "usd": "US Dollar",
+    "eur": "Euro",
+    "jpy": "Japanese Yen",
+    "cny": "Chinese Yuan"
+  },
+  "goalStatus": {
+    "active": "Đang hoạt động",
+    "completed": "Đã hoàn thành",
+    "cancelled": "Đã hủy"
+  },
+  "goalType": {
+    "saving": "Tiết kiệm",
+    "purchase": "Mua sắm",
+    "investment": "Đầu tư",
+    "debtPayoff": "Trả nợ",
+    "emergency": "Khẩn cấp",
+    "other": "Khác"
+  },
+  "debtType": {
+    "lending": "Cho vay",
+    "borrowing": "Đi vay"
+  },
+  "debtStatus": {
+    "active": "Đang hoạt động",
+    "partialPaid": "Đã trả một phần",
+    "completed": "Đã hoàn thành",
+    "overdue": "Quá hạn"
+  },
+  "loanType": {
+    "personal": "Vay cá nhân",
+    "mortgage": "Vay mua nhà",
+    "auto": "Vay mua xe",
+    "student": "Vay học tập",
+    "business": "Vay kinh doanh",
+    "other": "Khác"
+  },
+  "loanStatus": {
+    "active": "Đang hoạt động",
+    "paidOff": "Đã trả hết",
+    "defaulted": "Vỡ nợ"
+  },
+  "paymentStatus": {
+    "pending": "Đang chờ",
+    "completed": "Đã hoàn thành",
+    "failed": "Thất bại",
+    "skipped": "Bỏ qua"
+  },
+  "reminderType": {
+    "payment": "Nhắc thanh toán",
+    "budget": "Nhắc ngân sách",
+    "debt": "Nhắc công nợ",
+    "custom": "Nhắc khác"
+  },
+  "bookRole": {
+    "viewer": "Chỉ xem",
+    "editor": "Chỉnh sửa",
+    "admin": "Quản trị viên"
+  },
+  "notificationType": {
+    "budgetAlert": "Cảnh báo ngân sách",
+    "paymentDue": "Thanh toán đến hạn",
+    "debtReminder": "Nhắc công nợ",
+    "goalMilestone": "Mục tiêu đạt được",
+    "system": "Thông báo hệ thống"
+  },
+  "eventStatus": {
+    "planned": "Đã lên kế hoạch",
+    "active": "Đang diễn ra",
+    "completed": "Đã hoàn thành",
+    "cancelled": "Đã hủy"
+  }
+}

@@ -25,6 +25,7 @@ import styled from 'styled-components';
 import { LoanTypeLabels } from '@/constants/enum-labels';
 import { LoanType } from '@/constants/enums';
 import { useAppDispatch, useAppSelector, useNotification } from '@/hooks';
+import { useI18n } from '@/hooks/useI18n';
 import {
   ICreateLoanPayload,
   loanActions,
@@ -131,6 +132,7 @@ interface ILoanCalculation {
 
 const LoanForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const notify = useNotification();
@@ -335,11 +337,23 @@ const LoanForm: React.FC = () => {
 
                 <Col xs={24} sm={12}>
                   <Form.Item
-                    label="Lãi suất (%/năm)"
+                    label={
+                      t('loans.interestRate') + ' (%/' + t('common.thisYear').toLowerCase() + ')'
+                    }
                     name="interestRate"
                     rules={[
-                      { required: true, message: 'Vui lòng nhập lãi suất' },
-                      { type: 'number', min: 0.1, max: 100, message: 'Lãi suất từ 0.1% đến 100%' },
+                      {
+                        required: true,
+                        message: t('validationMessages.required', {
+                          field: t('loans.interestRate'),
+                        }),
+                      },
+                      {
+                        type: 'number',
+                        min: 0.1,
+                        max: 100,
+                        message: t('loans.validation.interestRateRange'),
+                      },
                     ]}
                   >
                     <InputNumber
@@ -356,11 +370,19 @@ const LoanForm: React.FC = () => {
               <Row gutter={16}>
                 <Col xs={24} sm={12}>
                   <Form.Item
-                    label="Kỳ hạn (tháng)"
+                    label={t('loans.term') + ' (' + t('common.thisMonth').toLowerCase() + ')'}
                     name="termMonths"
                     rules={[
-                      { required: true, message: 'Vui lòng nhập kỳ hạn' },
-                      { type: 'number', min: 1, max: 360, message: 'Kỳ hạn từ 1 đến 360 tháng' },
+                      {
+                        required: true,
+                        message: t('validationMessages.required', { field: t('loans.term') }),
+                      },
+                      {
+                        type: 'number',
+                        min: 1,
+                        max: 360,
+                        message: t('loans.validation.termRange'),
+                      },
                     ]}
                   >
                     <InputNumber
@@ -373,14 +395,19 @@ const LoanForm: React.FC = () => {
 
                 <Col xs={24} sm={12}>
                   <Form.Item
-                    label="Ngày bắt đầu"
+                    label={t('loans.startDate')}
                     name="startDate"
-                    rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu' }]}
+                    rules={[
+                      {
+                        required: true,
+                        message: t('validationMessages.required', { field: t('loans.startDate') }),
+                      },
+                    ]}
                   >
                     <DatePicker
                       style={{ width: '100%' }}
                       format="DD/MM/YYYY"
-                      placeholder="Chọn ngày"
+                      placeholder={t('common.selectDate')}
                       disabled={isEditMode}
                     />
                   </Form.Item>
@@ -423,7 +450,7 @@ const LoanForm: React.FC = () => {
                 <Row gutter={16}>
                   <Col span={24}>
                     <Statistic
-                      title="Trả hàng tháng"
+                      title={t('loans.monthlyPayment')}
                       value={calculation.monthlyPayment}
                       formatter={(value) => formatCurrency(Number(value))}
                       valueStyle={{ color: '#3b82f6', fontSize: '28px' }}
@@ -432,33 +459,35 @@ const LoanForm: React.FC = () => {
                 </Row>
 
                 <div className="calculator-result">
-                  <div className="result-title">Chi tiết khoản vay</div>
+                  <div className="result-title">{t('loans.loanDetails')}</div>
 
                   <div className="result-item">
-                    <span className="label">Tổng phải trả:</span>
+                    <span className="label">{t('loans.totalPayment')}:</span>
                     <span className="value danger">{formatCurrency(calculation.totalPayment)}</span>
                   </div>
 
                   <div className="result-item">
-                    <span className="label">Tổng tiền lãi:</span>
+                    <span className="label">{t('loans.totalInterest')}:</span>
                     <span className="value">{formatCurrency(calculation.totalInterest)}</span>
                   </div>
 
                   <div className="result-item">
-                    <span className="label">Lãi suất thực tế:</span>
+                    <span className="label">{t('loans.effectiveRate')}:</span>
                     <span className="value">{calculation.effectiveRate}%</span>
                   </div>
 
                   <div className="result-item">
-                    <span className="label">Số tiền vay:</span>
+                    <span className="label">{t('loans.loanAmount')}:</span>
                     <span className="value">
                       {formatCurrency(form.getFieldValue('principal') || 0)}
                     </span>
                   </div>
 
                   <div className="result-item">
-                    <span className="label">Kỳ hạn:</span>
-                    <span className="value">{form.getFieldValue('termMonths') || 0} tháng</span>
+                    <span className="label">{t('loans.term')}:</span>
+                    <span className="value">
+                      {form.getFieldValue('termMonths') || 0} {t('common.thisMonth').toLowerCase()}
+                    </span>
                   </div>
                 </div>
 

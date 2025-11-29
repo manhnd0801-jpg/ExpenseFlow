@@ -1,0 +1,23 @@
+{
+  "title": "Categories",
+  "category": "Category",
+  "addCategory": "Add Category",
+  "createCategory": "Create Category",
+  "editCategory": "Edit Category",
+  "categoryName": "Category Name",
+  "categoryType": "Category Type",
+  "icon": "Icon",
+  "color": "Color",
+  "description": "Description",
+  "noCategories": "No categories yet",
+  "deleteCategory": "Delete category?",
+  "deleteConfirmMessage": "Are you sure you want to delete this category?",
+  "nameRequired": "Please enter category name",
+  "nameMinLength": "Name must be at least 2 characters",
+  "namePlaceholder": "E.g.: Food, Gas, Salary...",
+  "typeRequired": "Please select category type",
+  "selectType": "Select type",
+  "iconPlaceholder": "E.g.: 🍔, ⛽, 💰...",
+  "descriptionPlaceholder": "Notes about category (optional)",
+  "totalCategories": "Total {{total}} categories"
+}

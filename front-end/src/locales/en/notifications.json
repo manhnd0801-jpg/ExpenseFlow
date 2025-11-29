@@ -1,0 +1,43 @@
+{
+  "success": {
+    "added": "Added successfully",
+    "updated": "Updated successfully",
+    "deleted": "Deleted successfully",
+    "saved": "Saved successfully",
+    "paymentRecorded": "Payment recorded successfully",
+    "contributedToGoal": "Contributed to goal successfully",
+    "markedCompleted": "Marked completed successfully",
+    "deletedAllReadNotifications": "Deleted all read notifications successfully"
+  },
+  "error": {
+    "addFailed": "Failed to add",
+    "updateFailed": "Failed to update",
+    "deleteFailed": "Failed to delete",
+    "saveFailed": "Failed to save",
+    "loadFailed": "Failed to load data",
+    "networkError": "Network error",
+    "fetchReminders": "Failed to load reminders",
+    "fetchUpcomingReminders": "Failed to load upcoming reminders",
+    "fetchRemindersByType": "Failed to load reminders by type",
+    "createReminder": "Failed to create reminder",
+    "updateReminder": "Failed to update reminder",
+    "deleteReminder": "Failed to delete reminder",
+    "markReminderComplete": "Failed to mark reminder complete",
+    "fetchEvents": "Failed to load events",
+    "createEvent": "Failed to create event",
+    "updateEvent": "Failed to update event",
+    "deleteEvent": "Failed to delete event",
+    "fetchIncomeExpenseReport": "Failed to load income expense report",
+    "fetchCategoryDistribution": "Failed to load category distribution",
+    "fetchMonthlyTrend": "Failed to load monthly trend",
+    "fetchCashFlowReport": "Failed to load cash flow report",
+    "fetchTopSpendingCategories": "Failed to load top spending categories",
+    "fetchFinancialSummary": "Failed to load financial summary",
+    "fetchAccountBalanceReport": "Failed to load account balance report",
+    "fetchGoals": "Failed to load goals",
+    "createGoal": "Failed to create goal",
+    "updateGoal": "Failed to update goal",
+    "deleteGoal": "Failed to delete goal",
+    "contributeGoal": "Failed to contribute to goal"
+  }
+}

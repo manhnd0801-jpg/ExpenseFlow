@@ -1,0 +1,15 @@
+{
+  "title": "Settings",
+  "profile": "Profile",
+  "language": "Language",
+  "currency": "Currency",
+  "theme": "Theme",
+  "notifications": "Notifications",
+  "security": "Security",
+  "backup": "Backup",
+  "about": "About",
+  "darkMode": "Dark Mode",
+  "lightMode": "Light Mode",
+  "vietnamese": "Vietnamese",
+  "english": "English"
+}

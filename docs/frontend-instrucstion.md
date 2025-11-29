@@ -317,6 +317,7 @@ types/
 const response: any = yield call(apiCall);
 function handleData(data: any): any { ... }
 interface IComponentProps { data: any; }
+function* saga(): Generator<any, void, any> { ... } // ❌ BAD
 
 // ✅ GOOD - Proper TypeScript typing
 const response: IApiResponse<IUser> = yield call(userService.getUser);
@@ -331,6 +332,17 @@ interface IApiResponse<T> {
   data: T;
   success: boolean;
   message: string;
+}
+
+// ✅ GOOD - Proper Redux-Saga typing
+function* fetchUserSaga(action: PayloadAction<string>): Generator<CallEffect | PutEffect, void, IUser> {
+  try {
+    const user: IUser = yield call(userService.getUser, action.payload);
+    yield put(fetchUserSuccess(user));
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    yield put(fetchUserFailure(errorMessage));
+  }
 }
 ```
 
@@ -360,6 +372,13 @@ interface IApiResponse<T> {
 - **Generic types:** Single uppercase letter or PascalCase
   - ✅ `<T>`, `<K, V>`, `<TData>`, `<TResponse>`
 
+**CRITICAL: Interface vs Type Naming Rule:**
+
+- Use `interface I...` for object shapes (entities, props, API responses)
+- Use `type T...` for unions, intersections, and derived types
+- ❌ NEVER use `interface T...` - type aliases must use `type` keyword
+- ❌ NEVER use `type I...` - object shapes should use `interface` keyword
+
 **Examples:**
 
 ```typescript
@@ -371,9 +390,18 @@ interface IUser {
 
 type TTransactionType = 'income' | 'expense' | 'transfer';
 
+// Paginated response should be TYPE not INTERFACE
+type TPaginatedResponse<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
 enum AccountType {
-  CASH = 'cash',
-  BANK = 'bank',
+  CASH = 1,
+  BANK = 2,
 }
 
 interface IApiResponse<T> {
@@ -383,7 +411,10 @@ interface IApiResponse<T> {
 
 // ❌ INCORRECT
 interface User {} // Missing I prefix
+interface TransactionType {} // Should be type T...
 type Status = 'active' | 'inactive'; // Missing T prefix
+type PaginatedResponse<T> = {}; // Missing T prefix
+export interface TPaginatedResponse<T> {} // Should be "type" not "interface"
 ```
 
 ---
@@ -868,6 +899,239 @@ interface ButtonProps {}
 - Check user permissions before rendering actions
 - Disable actions user doesn't have access to
 - Redirect unauthorized users appropriately
+
+---
+
+## 🐛 13A. Debugging & Logging Standards (CRITICAL)
+
+### 13A.1. Console Logging Rules
+
+**❌ STRICTLY PROHIBITED in Production Code:**
+
+- ❌ `console.log()` - Remove ALL debug logs before committing
+- ❌ `console.warn()` - Use proper user notifications instead
+- ❌ `console.error()` - Use proper error handling mechanisms
+- ❌ Debug emojis (✅, ❌, 🔵, etc.) in console logs
+
+**✅ ALLOWED Only During Development:**
+
+```typescript
+// ✅ GOOD - Environment-based logging (if needed)
+if (import.meta.env.DEV) {
+  console.log('Debug info:', data);
+}
+
+// ❌ BAD - Permanent console logs
+console.log('User data:', userData);
+console.error('Error occurred:', error);
+console.log('✅ Success'); // Remove emojis
+```
+
+### 13A.2. Error Handling & User Feedback
+
+**MUST use proper error handling instead of console:**
+
+```typescript
+// ❌ BAD - Using console.error
+try {
+  await api.call();
+} catch (error) {
+  console.error('API error:', error);
+}
+
+// ✅ GOOD - Proper error handling
+import { message } from 'antd';
+
+try {
+  await api.call();
+  message.success('Thao tác thành công');
+} catch (error) {
+  const errorMessage = error instanceof Error ? error.message : 'Đã xảy ra lỗi';
+  message.error(errorMessage);
+}
+```
+
+### 13A.3. Saga Error Pattern
+
+```typescript
+// ✅ CORRECT
+function* fetchDataSaga(
+  action: PayloadAction<string>
+): Generator<CallEffect | PutEffect, void, IData> {
+  try {
+    const data: IData = yield call(dataService.fetch, action.payload);
+    yield put(fetchDataSuccess(data));
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Lỗi không xác định';
+    yield put(fetchDataFailure(msg));
+  }
+}
+
+// ❌ INCORRECT
+function* fetchDataSaga(): Generator<any, void, any> {
+  try {
+    const response: any = yield call(service.fetch);
+    console.log('✅ Success'); // ❌ Remove
+  } catch (error: any) {
+    console.error('❌ Error:', error); // ❌ Remove
+  }
+}
+```
+
+---
+
+## 🔄 13B. Async/Await Standards (CRITICAL)
+
+### 13B.1. Always Use Async/Await
+
+**❌ NEVER use .then() or .catch() chains:**
+
+```typescript
+// ❌ PROHIBITED
+api
+  .get('/users')
+  .then((response) => response.data)
+  .catch((error) => console.error(error));
+
+// ✅ REQUIRED
+async function getUsers(): Promise<IUser[]> {
+  try {
+    return await api.get<IUser[]>('/users');
+  } catch (error) {
+    throw error; // Let interceptor handle
+  }
+}
+```
+
+### 13B.2. Service Layer Pattern
+
+```typescript
+// ✅ CORRECT - All services use async/await
+export const userService = {
+  getUser: async (id: string): Promise<IUser> => {
+    return api.get<IUser>(`${API_ENDPOINTS.USERS.BASE}/${id}`);
+  },
+
+  updateUser: async (id: string, data: IUpdateUserRequest): Promise<IUser> => {
+    return api.put<IUser>(`${API_ENDPOINTS.USERS.BASE}/${id}`, data);
+  },
+};
+```
+
+---
+
+## 📝 13C. Code Comments Standards
+
+### 13C.1. JSDoc for Exports
+
+```typescript
+/**
+ * Fetch user transactions with optional filters
+ * @param userId - User ID
+ * @param filters - Optional date/type filters
+ * @returns Paginated transaction list
+ */
+export async function fetchTransactions(
+  userId: string,
+  filters?: ITransactionFilters
+): Promise<TPaginatedResponse<ITransaction>> {
+  // Implementation
+}
+```
+
+### 13C.2. Inline Comments for Complex Logic
+
+```typescript
+// ✅ GOOD - Explains business logic
+// Refund contributions back to source account when goal is deleted
+if (transaction.type === TransactionType.EXPENSE) {
+  account.balance += transaction.amount;
+}
+
+// ❌ BAD - States the obvious
+// Set the user name
+setUserName(name);
+```
+
+---
+
+## 🚀 13D. Performance Standards
+
+### 13D.1. React Optimization
+
+```typescript
+// ✅ Use React.memo for expensive renders
+export const ExpensiveList = React.memo<IProps>(({ items }) => {
+  return (
+    <div>
+      {items.map((item) => (
+        <Item key={item.id} {...item} />
+      ))}
+    </div>
+  );
+});
+
+// ✅ Use useMemo for calculations
+const total = useMemo(() => items.reduce((sum, item) => sum + item.amount, 0), [items]);
+
+// ✅ Use useCallback for handlers
+const handleDelete = useCallback((id: string) => deleteItem(id), [deleteItem]);
+```
+
+### 13D.2. List Keys
+
+```typescript
+// ✅ ALWAYS use stable unique keys
+{
+  items.map((item) => <Item key={item.id} data={item} />);
+}
+
+// ❌ NEVER use index as key
+{
+  items.map((item, i) => <Item key={i} data={item} />);
+}
+```
+
+---
+
+## 🎯 13E. Common Anti-Patterns to AVOID
+
+### 13E.1. Type Safety Violations
+
+```typescript
+// ❌ NEVER
+const data: any = await api.call();
+const user = users.find((u) => u.id === id)!; // Non-null assertion without check
+
+// ✅ ALWAYS
+const data: IApiResponse = await api.call();
+const user = users.find((u) => u.id === id);
+if (!user) throw new Error('Not found');
+```
+
+### 13E.2. State Mutation
+
+```typescript
+// ❌ NEVER mutate
+state.items.push(newItem);
+state.user.name = 'New';
+
+// ✅ ALWAYS create new reference
+state.items = [...state.items, newItem];
+state.user = { ...state.user, name: 'New' };
+```
+
+### 13E.3. Inline Definitions in JSX
+
+```typescript
+// ❌ NEVER - Causes re-renders
+<Component data={{ name: 'test' }} onClick={() => doSomething()} />;
+
+// ✅ ALWAYS - Use memo/callback
+const data = useMemo(() => ({ name: 'test' }), []);
+const handleClick = useCallback(() => doSomething(), []);
+<Component data={data} onClick={handleClick} />;
+```
 
 ---
 

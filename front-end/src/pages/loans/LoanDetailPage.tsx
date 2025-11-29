@@ -33,6 +33,7 @@ import styled from 'styled-components';
 import { LoanStatusLabels, LoanTypeLabels } from '@/constants/enum-labels';
 import { LoanStatus } from '@/constants/enums';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useI18n } from '@/hooks/useI18n';
 import {
   IAmortizationScheduleItem,
   ILoanPayment,
@@ -130,6 +131,7 @@ const LoanDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { t } = useI18n();
 
   // Redux selectors
   const loan = useAppSelector(selectCurrentLoan);
@@ -158,7 +160,7 @@ const LoanDetailPage: React.FC = () => {
       <StyledPageWrapper>
         <Card>
           <div style={{ textAlign: 'center', padding: '40px' }}>
-            {isLoading ? 'Đang tải...' : 'Không tìm thấy khoản vay'}
+            {isLoading ? t('loans.loading') : t('loans.notFound')}
           </div>
         </Card>
       </StyledPageWrapper>
@@ -172,21 +174,21 @@ const LoanDetailPage: React.FC = () => {
   // Amortization schedule columns
   const scheduleColumns: ColumnsType<IAmortizationScheduleItem> = [
     {
-      title: 'Tháng',
+      title: t('loans.month'),
       dataIndex: 'month',
       key: 'month',
       width: 80,
       render: (month: number) => <strong>#{month}</strong>,
     },
     {
-      title: 'Ngày',
+      title: t('loans.date'),
       dataIndex: 'date',
       key: 'date',
       width: 120,
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
-      title: 'Trả hàng tháng',
+      title: t('loans.monthlyPayment'),
       dataIndex: 'payment',
       key: 'payment',
       align: 'right',
@@ -195,14 +197,14 @@ const LoanDetailPage: React.FC = () => {
       ),
     },
     {
-      title: 'Gốc',
+      title: t('loans.principal'),
       dataIndex: 'principal',
       key: 'principal',
       align: 'right',
-      render: (principal: number) => formatCurrency(principal),
+      render: (principal: number) => <span>{formatCurrency(principal)}</span>,
     },
     {
-      title: 'Lãi',
+      title: t('loans.interest'),
       dataIndex: 'interest',
       key: 'interest',
       align: 'right',
@@ -211,7 +213,7 @@ const LoanDetailPage: React.FC = () => {
       ),
     },
     {
-      title: 'Số dư còn lại',
+      title: t('loans.balance'),
       dataIndex: 'balance',
       key: 'balance',
       align: 'right',
@@ -224,13 +226,13 @@ const LoanDetailPage: React.FC = () => {
   // Payment history columns
   const paymentColumns: ColumnsType<ILoanPayment> = [
     {
-      title: 'Ngày thanh toán',
+      title: t('loans.paymentDate'),
       dataIndex: 'paymentDate',
       key: 'paymentDate',
       render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
     },
     {
-      title: 'Số tiền',
+      title: t('transactions.amount'),
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
@@ -239,21 +241,21 @@ const LoanDetailPage: React.FC = () => {
       ),
     },
     {
-      title: 'Gốc',
+      title: t('loans.principal'),
       dataIndex: 'principal',
       key: 'principal',
       align: 'right',
       render: (principal: number) => formatCurrency(principal),
     },
     {
-      title: 'Lãi',
+      title: t('loans.interest'),
       dataIndex: 'interest',
       key: 'interest',
       align: 'right',
       render: (interest: number) => formatCurrency(interest),
     },
     {
-      title: 'Ghi chú',
+      title: t('transactions.note'),
       dataIndex: 'note',
       key: 'note',
       render: (note: string) => note || '-',
@@ -266,13 +268,13 @@ const LoanDetailPage: React.FC = () => {
       <div className="page-header">
         <Space style={{ marginBottom: 16 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/loans')}>
-            Quay lại
+            {t('common.back')}
           </Button>
           <Button icon={<EditOutlined />} onClick={() => navigate(`/loans/${id}/edit`)}>
-            Chỉnh sửa
+            {t('common.edit')}
           </Button>
           <Button type="primary" icon={<PlusOutlined />}>
-            Ghi nhận thanh toán
+            {t('debts.recordPayment')}
           </Button>
         </Space>
 
@@ -280,7 +282,9 @@ const LoanDetailPage: React.FC = () => {
           {loan.name}
           <LoanStatusTag $status={loan.status}>{LoanStatusLabels[loan.status]}</LoanStatusTag>
         </h1>
-        <p>Chi tiết khoản vay và lịch trả nợ</p>
+        <p>
+          {t('loans.loanDetails')} {t('loans.amortizationSchedule').toLowerCase()}
+        </p>
       </div>
 
       {/* Summary Cards */}
@@ -288,7 +292,7 @@ const LoanDetailPage: React.FC = () => {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Số dư còn lại"
+              title={t('loans.remainingBalance')}
               value={loan.remainingBalance}
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ color: '#ef4444' }}
@@ -299,7 +303,7 @@ const LoanDetailPage: React.FC = () => {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Trả hàng tháng"
+              title={t('loans.monthlyPayment')}
               value={loan.monthlyPayment}
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ color: '#3b82f6' }}
@@ -310,7 +314,7 @@ const LoanDetailPage: React.FC = () => {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Tổng tiền lãi"
+              title={t('loans.totalInterest')}
               value={loan.totalInterest}
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ color: '#f59e0b' }}
@@ -321,7 +325,7 @@ const LoanDetailPage: React.FC = () => {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Đã trả"
+              title={t('loans.paid')}
               value={paidPercentage.toFixed(1)}
               suffix="%"
               valueStyle={{ color: '#10b981' }}
@@ -338,42 +342,46 @@ const LoanDetailPage: React.FC = () => {
       </Row>
 
       {/* Loan Details */}
-      <Card className="details-card" title="Thông tin khoản vay">
+      <Card className="details-card" title={t('loans.loanInformation')}>
         <Descriptions bordered column={{ xs: 1, sm: 2, md: 3 }}>
-          <Descriptions.Item label="Loại khoản vay">
+          <Descriptions.Item label={t('loans.loanType')}>
             <Tag color="blue">{LoanTypeLabels[loan.type]}</Tag>
           </Descriptions.Item>
-          <Descriptions.Item label="Số tiền vay">
+          <Descriptions.Item label={t('loans.loanAmount')}>
             <strong>{formatCurrency(loan.principal)}</strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Lãi suất">
-            <strong>{loan.interestRate}% / năm</strong>
+          <Descriptions.Item label={t('loans.interestRate')}>
+            <strong>
+              {loan.interestRate}% / {t('common.thisYear').toLowerCase()}
+            </strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Kỳ hạn">
-            <strong>{loan.termMonths} tháng</strong>
+          <Descriptions.Item label={t('loans.term')}>
+            <strong>
+              {loan.termMonths} {t('common.thisMonth').toLowerCase()}
+            </strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Ngày bắt đầu">
+          <Descriptions.Item label={t('loans.startDate')}>
             {dayjs(loan.startDate).format('DD/MM/YYYY')}
           </Descriptions.Item>
-          <Descriptions.Item label="Ngày kết thúc dự kiến">
+          <Descriptions.Item label={t('loans.dueDate')}>
             {dayjs(loan.startDate).add(loan.termMonths, 'month').format('DD/MM/YYYY')}
           </Descriptions.Item>
-          <Descriptions.Item label="Tổng phải trả">
+          <Descriptions.Item label={t('loans.totalPayment')}>
             <strong style={{ color: '#ef4444' }}>{formatCurrency(loan.totalPayment)}</strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Đã trả">
+          <Descriptions.Item label={t('loans.paid')}>
             <strong style={{ color: '#10b981' }}>{formatCurrency(paidAmount)}</strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Còn lại">
+          <Descriptions.Item label={t('budgets.remaining')}>
             <strong style={{ color: '#ef4444' }}>{formatCurrency(loan.remainingBalance)}</strong>
           </Descriptions.Item>
           {loan.lender && (
-            <Descriptions.Item label="Người cho vay" span={3}>
+            <Descriptions.Item label={t('loans.lenderName')} span={3}>
               {loan.lender}
             </Descriptions.Item>
           )}
           {loan.description && (
-            <Descriptions.Item label="Ghi chú" span={3}>
+            <Descriptions.Item label={t('transactions.note')} span={3}>
               {loan.description}
             </Descriptions.Item>
           )}
@@ -388,7 +396,9 @@ const LoanDetailPage: React.FC = () => {
           items={[
             {
               key: 'schedule',
-              label: `Lịch trả nợ (${amortizationSchedule.length} tháng)`,
+              label: `${t('loans.amortizationSchedule')} (${amortizationSchedule.length} ${t(
+                'common.thisMonth'
+              ).toLowerCase()})`,
               children: (
                 <Table
                   bordered
@@ -399,7 +409,7 @@ const LoanDetailPage: React.FC = () => {
                   pagination={{
                     pageSize: 12,
                     showSizeChanger: false,
-                    showTotal: (total) => `Tổng ${total} kỳ`,
+                    showTotal: (total) => t('loans.totalPeriods', { total }),
                   }}
                   scroll={{ x: 800 }}
                 />
@@ -407,7 +417,7 @@ const LoanDetailPage: React.FC = () => {
             },
             {
               key: 'payments',
-              label: `Lịch sử thanh toán (${payments.length})`,
+              label: `${t('loans.paymentHistory')} (${payments.length})`,
               children: (
                 <Table
                   bordered
@@ -417,10 +427,10 @@ const LoanDetailPage: React.FC = () => {
                   loading={isLoading}
                   pagination={{
                     pageSize: 10,
-                    showTotal: (total) => `Tổng ${total} giao dịch`,
+                    showTotal: (total) => t('loans.totalTransactions', { total }),
                   }}
                   locale={{
-                    emptyText: 'Chưa có thanh toán nào',
+                    emptyText: t('loans.noPayments'),
                   }}
                 />
               ),

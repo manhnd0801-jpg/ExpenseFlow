@@ -1,0 +1,14 @@
+{
+  "dashboard": "Dashboard",
+  "transactions": "Transactions",
+  "budgets": "Budgets",
+  "accounts": "Accounts",
+  "categories": "Categories",
+  "reports": "Reports",
+  "goals": "Goals",
+  "debts": "Debts",
+  "loans": "Loans",
+  "events": "Events",
+  "reminders": "Reminders",
+  "settings": "Settings"
+}

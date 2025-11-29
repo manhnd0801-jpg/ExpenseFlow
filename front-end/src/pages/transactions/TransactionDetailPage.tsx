@@ -4,6 +4,7 @@
  */
 
 import { ArrowLeftOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { useI18n } from '@hooks/useI18n';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import {
   selectCurrentTransaction,
@@ -67,6 +68,7 @@ export const TransactionDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { t } = useI18n();
   const transaction = useAppSelector(selectCurrentTransaction);
   const isLoading = useAppSelector(selectIsTransactionFetching);
 
@@ -85,7 +87,7 @@ export const TransactionDetailPage: React.FC = () => {
   const handleDelete = () => {
     if (id) {
       dispatch(transactionActions.deleteTransactionRequest({ id }));
-      message.success('Xóa giao dịch thành công!');
+      message.success(t('transactions.deleteSuccess'));
       navigate(ROUTES.TRANSACTIONS);
     }
   };
@@ -109,7 +111,7 @@ export const TransactionDetailPage: React.FC = () => {
   if (isLoading) {
     return (
       <PageWrapper>
-        <div style={{ textAlign: 'center', padding: '40px' }}>Đang tải...</div>
+        <div style={{ textAlign: 'center', padding: '40px' }}>{t('transactions.loading')}</div>
       </PageWrapper>
     );
   }
@@ -117,9 +119,9 @@ export const TransactionDetailPage: React.FC = () => {
   if (!transaction) {
     return (
       <PageWrapper>
-        <Empty description="Không tìm thấy giao dịch" />
+        <Empty description={t('transactions.notFound')} />
         <div style={{ marginTop: '24px', textAlign: 'center' }}>
-          <Button onClick={handleBack}>Quay lại</Button>
+          <Button onClick={handleBack}>{t('common.back')}</Button>
         </div>
       </PageWrapper>
     );
@@ -132,9 +134,9 @@ export const TransactionDetailPage: React.FC = () => {
       {/* Page Header */}
       <div className="page-header">
         <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
-          Quay lại
+          {t('common.back')}
         </Button>
-        <h1>Chi tiết giao dịch</h1>
+        <h1>{t('transactions.detail')}</h1>
       </div>
 
       {/* Transaction Info Card */}
@@ -145,36 +147,38 @@ export const TransactionDetailPage: React.FC = () => {
         </div>
 
         <Descriptions bordered column={1}>
-          <Descriptions.Item label="Mô tả">
+          <Descriptions.Item label={t('transactions.description')}>
             {transaction.description || transaction.note || '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="Loại giao dịch">
-            <Tag color={isIncome ? 'green' : 'red'}>{isIncome ? 'Thu nhập' : 'Chi tiêu'}</Tag>
+          <Descriptions.Item label={t('transactions.type')}>
+            <Tag color={isIncome ? 'green' : 'red'}>
+              {isIncome ? t('transactions.income') : t('transactions.expense')}
+            </Tag>
           </Descriptions.Item>
-          <Descriptions.Item label="Danh mục">
+          <Descriptions.Item label={t('transactions.category')}>
             {/* Prefer showing category name if available (backend now returns full object) */}
             {transaction.category?.name
               ? transaction.category.name
-              : `Danh mục #${transaction.categoryId}`}
+              : `${t('transactions.category')} #${transaction.categoryId}`}
           </Descriptions.Item>
-          <Descriptions.Item label="Tài khoản">
+          <Descriptions.Item label={t('transactions.account')}>
             {/* Prefer showing account name if available (backend now returns full object) */}
             {transaction.account?.name
               ? transaction.account.name
-              : `Tài khoản #${transaction.accountId}`}
+              : `${t('transactions.account')} #${transaction.accountId}`}
           </Descriptions.Item>
-          <Descriptions.Item label="Ngày giao dịch">
+          <Descriptions.Item label={t('transactions.transactionDate')}>
             {transaction.date ? formatDate(new Date(transaction.date), 'DD/MM/YYYY HH:mm') : '-'}
           </Descriptions.Item>
           {transaction.note && (
-            <Descriptions.Item label="Ghi chú">{transaction.note}</Descriptions.Item>
+            <Descriptions.Item label={t('transactions.note')}>{transaction.note}</Descriptions.Item>
           )}
-          <Descriptions.Item label="Ngày tạo">
+          <Descriptions.Item label={t('transactions.createdDate')}>
             {transaction.createdAt
               ? formatDate(new Date(transaction.createdAt), 'DD/MM/YYYY HH:mm')
               : '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="Cập nhật lần cuối">
+          <Descriptions.Item label={t('transactions.updatedDate')}>
             {transaction.updatedAt
               ? formatDate(new Date(transaction.updatedAt), 'DD/MM/YYYY HH:mm')
               : '-'}
@@ -185,18 +189,18 @@ export const TransactionDetailPage: React.FC = () => {
         <div className="action-buttons">
           <Space>
             <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
-              Chỉnh sửa
+              {t('common.edit')}
             </Button>
             <Popconfirm
-              title="Xóa giao dịch?"
-              description="Bạn có chắc muốn xóa giao dịch này không?"
+              title={t('transactions.deleteTransaction')}
+              description={t('transactions.deleteConfirmation')}
               onConfirm={handleDelete}
-              okText="Xóa"
-              cancelText="Hủy"
+              okText={t('common.delete')}
+              cancelText={t('common.cancel')}
               okButtonProps={{ danger: true }}
             >
               <Button danger icon={<DeleteOutlined />}>
-                Xóa
+                {t('common.delete')}
               </Button>
             </Popconfirm>
           </Space>

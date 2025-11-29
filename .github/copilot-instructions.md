@@ -141,22 +141,37 @@ ExpenseFlow là ứng dụng quản lý chi tiêu cá nhân với:
 
 1. **Type Safety**
 
-   - ❌ KHÔNG dùng `any` type
+   - ❌ KHÔNG dùng `any` type (BẮT BUỘC)
    - ✅ Dùng strict TypeScript mode
    - ✅ Validate tất cả inputs
+   - ❌ KHÔNG dùng `Generator<any, void, any>` - phải type cụ thể
 
 2. **Error Handling**
 
    - PHẢI handle errors với try/catch
    - PHẢI show user-friendly messages
-   - PHẢI log errors properly
+   - PHẢI log errors properly với Logger (không dùng console)
 
-3. **Performance**
+3. **Debugging & Logging (CRITICAL)**
+
+   - ❌ **STRICTLY PROHIBITED:** `console.log()`, `console.error()`, `console.warn()`
+   - ❌ **KHÔNG dùng emojis trong logs:** ✅ ❌ 🔵 🔴 🟢 ⚠️
+   - ✅ **Backend:** Dùng NestJS Logger service
+   - ✅ **Frontend:** Dùng Ant Design message/notification, hoặc environment-gated logger
+   - ✅ **REMOVE ALL console statements before committing**
+
+4. **Async/Await (Frontend CRITICAL)**
+
+   - ❌ **NEVER use .then() or .catch() chains**
+   - ✅ **ALWAYS use async/await** for all asynchronous operations
+   - ✅ Use try/catch for error handling
+
+5. **Performance**
 
    - Backend: Dùng Redis caching, pagination
    - Frontend: useMemo/useCallback, lazy loading
 
-4. **Security**
+6. **Security**
    - PHẢI validate/sanitize inputs
    - PHẢI hash passwords (bcrypt)
    - PHẢI implement rate limiting
@@ -262,6 +277,81 @@ interface User {} // Missing I prefix
 interface ButtonProps {} // Missing I prefix
 type TransactionType = 'income' | 'expense'; // Missing T prefix
 type PaginatedResponse<T> = {}; // Missing T prefix
+export interface TPaginatedResponse<T> {} // Should be "type" not "interface"
+```
+
+### Async/Await (Frontend):
+
+```typescript
+// ✅ CORRECT - Always use async/await
+async function fetchData(): Promise<IData> {
+  try {
+    const data = await api.get<IData>('/data');
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Redux-Saga with proper typing
+function* fetchDataSaga(action: PayloadAction<string>): Generator<CallEffect | PutEffect, void, IData> {
+  try {
+    const data: IData = yield call(api.fetchData, action.payload);
+    yield put(fetchDataSuccess(data));
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Error';
+    yield put(fetchDataFailure(msg));
+  }
+}
+
+// ❌ INCORRECT - Don't use .then()
+api.get('/data')
+  .then(data => console.log(data))
+  .catch(error => console.error(error));
+
+// ❌ INCORRECT - Wrong saga typing
+function* saga(): Generator<any, void, any> { ... }
+```
+
+### Logging Examples:
+
+```typescript
+// ❌ INCORRECT - Console logs
+console.log('🔵 Processing...');
+console.error('❌ Error:', error);
+console.log('✅ Success');
+
+// ✅ CORRECT - Backend (NestJS Logger)
+@Injectable()
+export class MyService {
+  private readonly logger = new Logger(MyService.name);
+
+  async process() {
+    this.logger.log('Processing started');
+    try {
+      // logic
+      this.logger.log('Processing completed');
+    } catch (error) {
+      this.logger.error('Processing failed', error.stack);
+      throw error;
+    }
+  }
+}
+
+// ✅ CORRECT - Frontend (Ant Design)
+import { message } from 'antd';
+
+try {
+  await api.call();
+  message.success('Thành công');
+} catch (error) {
+  message.error('Đã xảy ra lỗi');
+}
+
+// ✅ CORRECT - Frontend development logging (optional)
+if (import.meta.env.DEV) {
+  console.log('Debug:', data);
+}
 ```
 
 ---

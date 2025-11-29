@@ -1,0 +1,14 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome",
+  "monthlyOverview": "Monthly Overview",
+  "income": "Income",
+  "expense": "Expense",
+  "balance": "Balance",
+  "budgetProgress": "Budget Progress",
+  "recentTransactions": "Recent Transactions",
+  "budgetAlert": "Budget Alert",
+  "reminders": "Reminders",
+  "spendingChart": "Spending Chart",
+  "noData": "No data available"
+}

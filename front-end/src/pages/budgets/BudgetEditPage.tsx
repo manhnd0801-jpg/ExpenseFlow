@@ -5,6 +5,7 @@
 
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { BudgetForm } from '@components/molecules/BudgetForm';
+import { useI18n } from '@hooks/useI18n';
 import { updateBudgetStart } from '@redux/modules/budgets/budgetSlice';
 import { categoryActions } from '@redux/modules/categories/categorySlice';
 import type { RootState } from '@redux/store';
@@ -18,6 +19,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 const BudgetEditPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const [budgetData, setBudgetData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ const BudgetEditPage: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!id) {
-        message.error('ID ngân sách không hợp lệ');
+        message.error(t('budgets.invalidId'));
         navigate('/budgets');
         return;
       }
@@ -53,7 +55,7 @@ const BudgetEditPage: React.FC = () => {
         setBudgetData(transformedBudget);
         setBudgetData(transformedBudget);
       } catch (error: any) {
-        message.error(error.message || 'Không thể tải thông tin ngân sách');
+        message.error(error.message || t('budgets.loadError'));
         navigate('/budgets');
       } finally {
         setLoading(false);

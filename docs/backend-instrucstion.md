@@ -717,19 +717,49 @@ getUsers() { }
 
 ---
 
-## 📝 8. Logging Standards
+## 📝 8. Logging Standards (UPDATED - CRITICAL)
 
-### 8.1. Logging Levels
+### 8.1. Console Logging PROHIBITED
+
+**❌ NEVER use console.log/error/warn in production code:**
+
+```typescript
+// ❌ STRICTLY PROHIBITED
+console.log('🔵 Processing data...');
+console.error('🔴 Error:', error);
+console.log('✅ Success');
+console.warn('⚠️ Warning');
+```
+
+**✅ ALWAYS use NestJS Logger:**
+
+```typescript
+import { Injectable, Logger } from '@nestjs/common';
+
+@Injectable()
+export class MyService {
+  private readonly logger = new Logger(MyService.name);
+
+  async myMethod() {
+    this.logger.log('Processing started');
+    this.logger.error('Error occurred', error.stack);
+    this.logger.warn('Warning condition');
+    this.logger.debug('Debug info'); // Development only
+  }
+}
+```
+
+### 8.2. Logging Levels
 
 **MUST use appropriate log levels:**
 
 - `error` - Errors that need immediate attention
 - `warn` - Warning messages
-- `info` - General information (startup, shutdown)
+- `log` - General information (startup, operations)
 - `debug` - Debugging information (development only)
 - `verbose` - Detailed logs (development only)
 
-### 8.2. What to Log
+### 8.3. What to Log
 
 **MUST log:**
 
@@ -747,7 +777,91 @@ getUsers() { }
 - Access tokens or refresh tokens
 - Credit card numbers
 - Personal sensitive data (unless encrypted)
--
+
+### 8.4. Remove Debug Logs Before Committing
+
+**CRITICAL: Clean up before commit:**
+
+```bash
+# Search for console statements to remove
+grep -rn "console\." src/
+
+# Remove these patterns:
+# console.log('🔍 FindOne Goal:', ...);
+# console.log('✅ Success');
+# console.error('🔴 Error:', ...);
+# console.log(`🔵 Found ${count} transactions`);
+```
+
+### 8.5. Guards & Interceptors Logging
+
+**❌ Remove debug logs from guards/interceptors:**
+
+```typescript
+// ❌ BAD - jwt-auth.guard.ts
+export class JwtAuthGuard {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    console.log('🔐 JWT Guard - Token:', token); // ❌ Remove
+    console.log('✅ JWT Guard - User set'); // ❌ Remove
+    console.log('❌ JWT Guard - Error:', error); // ❌ Remove
+  }
+}
+
+// ✅ GOOD - Only log critical errors
+export class JwtAuthGuard {
+  private readonly logger = new Logger(JwtAuthGuard.name);
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    try {
+      // Validation logic - no debug logs
+      return true;
+    } catch (error) {
+      this.logger.error('JWT validation failed', error.stack);
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
+}
+```
+
+### 8.6. Service Layer Logging
+
+```typescript
+@Injectable()
+export class GoalsService {
+  private readonly logger = new Logger(GoalsService.name);
+
+  async deleteGoal(userId: string, id: string): Promise<void> {
+    // ❌ Remove ALL console.log statements
+    // console.log('🔵 Deleting goal:', ...);
+    // console.log(`✅ REFUND: ...`);
+
+    // ✅ GOOD - Minimal logging
+    this.logger.log(`Deleting goal ${id} for user ${userId}`);
+
+    try {
+      await this.performDelete(id);
+      this.logger.log(`Goal ${id} deleted successfully`);
+    } catch (error) {
+      this.logger.error(`Failed to delete goal ${id}`, error.stack);
+      throw error;
+    }
+  }
+}
+```
+
+### 8.7. Production Logger Configuration
+
+```typescript
+// main.ts
+const app = await NestFactory.create(AppModule, {
+  logger:
+    process.env.NODE_ENV === 'production'
+      ? ['error', 'warn', 'log']
+      : ['error', 'warn', 'log', 'debug', 'verbose'],
+});
+```
+
+---
 
 ### 8.3. Log Format
 

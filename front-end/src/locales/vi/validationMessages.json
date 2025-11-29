@@ -1,0 +1,11 @@
+{
+  "required": "Trường này là bắt buộc",
+  "email": "Email không hợp lệ",
+  "minLength": "Tối thiểu {{count}} ký tự",
+  "maxLength": "Tối đa {{count}} ký tự",
+  "min": "Tối thiểu {{min}}",
+  "max": "Tối đa {{max}}",
+  "positiveNumber": "Phải là số dương",
+  "invalidDate": "Ngày không hợp lệ",
+  "passwordMatch": "Mật khẩu không khớp"
+}
