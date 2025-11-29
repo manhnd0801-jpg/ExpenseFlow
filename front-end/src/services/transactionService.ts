@@ -3,16 +3,16 @@
  * Handles transaction-related API calls
  */
 
-import api from './api';
-import { API_ENDPOINTS } from '@utils/constants';
 import type {
-  ITransaction,
   ICreateTransactionRequest,
-  IUpdateTransactionRequest,
-  ITransactionSummary,
-  TPaginatedResponse,
+  ITransaction,
   ITransactionFilters,
+  ITransactionSummary,
+  IUpdateTransactionRequest,
+  TPaginatedResponse,
 } from '@/types/models';
+import { API_ENDPOINTS } from '@utils/constants';
+import api from './api';
 
 export const transactionService = {
   /**
@@ -56,10 +56,7 @@ export const transactionService = {
   /**
    * Update existing transaction
    */
-  updateTransaction: async (
-    id: string,
-    data: IUpdateTransactionRequest
-  ): Promise<ITransaction> => {
+  updateTransaction: async (id: string, data: IUpdateTransactionRequest): Promise<ITransaction> => {
     return api.patch<ITransaction>(API_ENDPOINTS.TRANSACTIONS.UPDATE(id), data, {
       showSuccessMessage: true,
       successMessage: 'Cập nhật giao dịch thành công',

@@ -12,6 +12,7 @@ import type {
 } from '@/types/models';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { IReportDateRange, reportService } from '@services/reportService';
+import { translate } from '@utils/i18nService';
 import { call, put, takeLatest } from 'redux-saga/effects';
 import {
   fetchAccountBalanceReportFailure,
@@ -46,7 +47,11 @@ function* fetchIncomeExpenseReportSaga(action: PayloadAction<IReportDateRange>) 
     );
     yield put(fetchIncomeExpenseReportSuccess(report));
   } catch (error: any) {
-    yield put(fetchIncomeExpenseReportFailure(error.message || 'Lỗi khi tải báo cáo thu chi'));
+    yield put(
+      fetchIncomeExpenseReportFailure(
+        error.message || translate('notifications.error.fetchIncomeExpenseReport')
+      )
+    );
   }
 }
 
@@ -59,7 +64,11 @@ function* fetchCategoryDistributionSaga(action: PayloadAction<IReportDateRange>)
     );
     yield put(fetchCategoryDistributionSuccess(report));
   } catch (error: any) {
-    yield put(fetchCategoryDistributionFailure(error.message || 'Lỗi khi tải phân bổ danh mục'));
+    yield put(
+      fetchCategoryDistributionFailure(
+        error.message || translate('notifications.error.fetchCategoryDistribution')
+      )
+    );
   }
 }
 
@@ -69,7 +78,9 @@ function* fetchMonthlyTrendSaga(action: PayloadAction<IReportDateRange>) {
     const report: IMonthlyTrendReport = yield call(reportService.getMonthlyTrend, action.payload);
     yield put(fetchMonthlyTrendSuccess(report));
   } catch (error: any) {
-    yield put(fetchMonthlyTrendFailure(error.message || 'Lỗi khi tải xu hướng theo tháng'));
+    yield put(
+      fetchMonthlyTrendFailure(error.message || translate('notifications.error.fetchMonthlyTrend'))
+    );
   }
 }
 
@@ -79,7 +90,11 @@ function* fetchCashFlowReportSaga(action: PayloadAction<IReportDateRange>) {
     const report: ICashFlowReport = yield call(reportService.getCashFlowReport, action.payload);
     yield put(fetchCashFlowReportSuccess(report));
   } catch (error: any) {
-    yield put(fetchCashFlowReportFailure(error.message || 'Lỗi khi tải báo cáo dòng tiền'));
+    yield put(
+      fetchCashFlowReportFailure(
+        error.message || translate('notifications.error.fetchCashFlowReport')
+      )
+    );
   }
 }
 
@@ -95,7 +110,9 @@ function* fetchTopSpendingCategoriesSaga(
     yield put(fetchTopSpendingCategoriesSuccess(report));
   } catch (error: any) {
     yield put(
-      fetchTopSpendingCategoriesFailure(error.message || 'Lỗi khi tải danh mục chi tiêu cao')
+      fetchTopSpendingCategoriesFailure(
+        error.message || translate('notifications.error.fetchTopSpendingCategories')
+      )
     );
   }
 }
@@ -109,7 +126,11 @@ function* fetchFinancialSummarySaga(action: PayloadAction<IReportDateRange>) {
     );
     yield put(fetchFinancialSummarySuccess(report));
   } catch (error: any) {
-    yield put(fetchFinancialSummaryFailure(error.message || 'Lỗi khi tải tổng quan tài chính'));
+    yield put(
+      fetchFinancialSummaryFailure(
+        error.message || translate('notifications.error.fetchFinancialSummary')
+      )
+    );
   }
 }
 
@@ -119,7 +140,11 @@ function* fetchAccountBalanceReportSaga(): Generator<any, void, any> {
     const report = yield call(reportService.getAccountBalanceReport);
     yield put(fetchAccountBalanceReportSuccess(report));
   } catch (error: any) {
-    yield put(fetchAccountBalanceReportFailure(error.message || 'Lỗi khi tải báo cáo số dư'));
+    yield put(
+      fetchAccountBalanceReportFailure(
+        error.message || translate('notifications.error.fetchAccountBalanceReport')
+      )
+    );
   }
 }
 

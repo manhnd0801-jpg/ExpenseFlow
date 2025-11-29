@@ -3,14 +3,15 @@
  * Handles account-related API calls
  */
 
-import api from './api';
-import { API_ENDPOINTS } from '@utils/constants';
 import type {
   IAccount,
+  IAccountBalance,
   ICreateAccountRequest,
   IUpdateAccountRequest,
-  IAccountBalance,
 } from '@/types/models';
+import { API_ENDPOINTS } from '@utils/constants';
+import { getServiceMessages } from '@utils/i18nService';
+import api from './api';
 
 export const accountService = {
   /**
@@ -38,9 +39,10 @@ export const accountService = {
    * Create new account
    */
   createAccount: async (data: ICreateAccountRequest): Promise<IAccount> => {
+    const messages = getServiceMessages();
     return api.post<IAccount>(API_ENDPOINTS.ACCOUNTS.CREATE, data, {
       showSuccessMessage: true,
-      successMessage: 'Tạo tài khoản thành công',
+      successMessage: messages.accounts.created,
     });
   },
 
@@ -48,9 +50,10 @@ export const accountService = {
    * Update existing account
    */
   updateAccount: async (id: string, data: IUpdateAccountRequest): Promise<IAccount> => {
+    const messages = getServiceMessages();
     return api.patch<IAccount>(API_ENDPOINTS.ACCOUNTS.UPDATE(id), data, {
       showSuccessMessage: true,
-      successMessage: 'Cập nhật tài khoản thành công',
+      successMessage: messages.accounts.updated,
     });
   },
 
@@ -58,9 +61,10 @@ export const accountService = {
    * Delete account (soft delete)
    */
   deleteAccount: async (id: string): Promise<void> => {
+    const messages = getServiceMessages();
     return api.delete<void>(API_ENDPOINTS.ACCOUNTS.DELETE(id), {
       showSuccessMessage: true,
-      successMessage: 'Xóa tài khoản thành công',
+      successMessage: messages.accounts.deleted,
     });
   },
 };

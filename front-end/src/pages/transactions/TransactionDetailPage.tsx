@@ -146,30 +146,38 @@ export const TransactionDetailPage: React.FC = () => {
 
         <Descriptions bordered column={1}>
           <Descriptions.Item label="Mô tả">
-            {transaction.description || transaction.notes || '-'}
+            {transaction.description || transaction.note || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="Loại giao dịch">
             <Tag color={isIncome ? 'green' : 'red'}>{isIncome ? 'Thu nhập' : 'Chi tiêu'}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Danh mục">
-            {/* Category would need to be fetched separately or included in response */}
-            Danh mục #{transaction.categoryId}
+            {/* Prefer showing category name if available (backend now returns full object) */}
+            {transaction.category?.name
+              ? transaction.category.name
+              : `Danh mục #${transaction.categoryId}`}
           </Descriptions.Item>
           <Descriptions.Item label="Tài khoản">
-            {/* Account would need to be fetched separately or included in response */}
-            Tài khoản #{transaction.accountId}
+            {/* Prefer showing account name if available (backend now returns full object) */}
+            {transaction.account?.name
+              ? transaction.account.name
+              : `Tài khoản #${transaction.accountId}`}
           </Descriptions.Item>
           <Descriptions.Item label="Ngày giao dịch">
-            {formatDate(new Date(transaction.date), 'DD/MM/YYYY HH:mm')}
+            {transaction.date ? formatDate(new Date(transaction.date), 'DD/MM/YYYY HH:mm') : '-'}
           </Descriptions.Item>
-          {transaction.notes && (
-            <Descriptions.Item label="Ghi chú">{transaction.notes}</Descriptions.Item>
+          {transaction.note && (
+            <Descriptions.Item label="Ghi chú">{transaction.note}</Descriptions.Item>
           )}
           <Descriptions.Item label="Ngày tạo">
-            {formatDate(new Date(transaction.createdAt), 'DD/MM/YYYY HH:mm')}
+            {transaction.createdAt
+              ? formatDate(new Date(transaction.createdAt), 'DD/MM/YYYY HH:mm')
+              : '-'}
           </Descriptions.Item>
           <Descriptions.Item label="Cập nhật lần cuối">
-            {formatDate(new Date(transaction.updatedAt), 'DD/MM/YYYY HH:mm')}
+            {transaction.updatedAt
+              ? formatDate(new Date(transaction.updatedAt), 'DD/MM/YYYY HH:mm')
+              : '-'}
           </Descriptions.Item>
         </Descriptions>
 

@@ -4,36 +4,22 @@
  */
 
 import { TransactionForm } from '@/components/organisms/TransactionForm';
-import { TransactionTypeLabels } from '@/constants/enum-labels';
 import { TransactionType } from '@/constants/enums';
 import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { useI18n } from '@hooks/useI18n';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import { transactionActions } from '@redux/modules/transactions';
 import type { ITransaction } from '@redux/modules/transactions/transactionTypes';
-import {
-  Button,
-  Card,
-  Col,
-  Input,
-  Modal,
-  Pagination,
-  Row,
-  Select,
-  Space,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import { Button, Card, Col, Empty, Input, Modal, Row, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
-
-const { Title } = Typography;
 
 /**
  * Transactions Page Component
  */
 export const TransactionsPage: React.FC = () => {
+  const { t, getTransactionTypeLabel } = useI18n();
   const dispatch = useAppDispatch();
 
   // Redux state
@@ -96,11 +82,11 @@ export const TransactionsPage: React.FC = () => {
   // Handle delete
   const handleDelete = (id: string) => {
     Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc muốn xóa giao dịch này?',
-      okText: 'Xóa',
+      title: t('transactions.deleteTransaction'),
+      content: t('transactions.deleteConfirmation'),
+      okText: t('common.delete'),
       okType: 'danger',
-      cancelText: 'Hủy',
+      cancelText: t('common.cancel'),
       onOk: () => {
         dispatch(transactionActions.deleteTransactionRequest({ id }));
       },
@@ -130,23 +116,24 @@ export const TransactionsPage: React.FC = () => {
   // Table columns
   const columns: ColumnsType<ITransaction> = [
     {
-      title: 'Ngày',
+      title: t('transactions.date'),
       dataIndex: 'date',
       key: 'date',
       width: 120,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
-      sorter: true,
+      render: (date: string) => dayjs(date).format('DD-MM-YYYY HH:mm'),
     },
     {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
-      ellipsis: true,
+      title: t('transactions.account'),
+      dataIndex: 'account',
+      key: 'account',
+      width: 130,
+      render: (account: any) => (account?.name ? account.name : '-'),
     },
     {
-      title: 'Danh mục',
+      title: t('transactions.category'),
       dataIndex: 'category',
       key: 'category',
+      width: 180,
       render: (category: any) =>
         category ? (
           <Space>
@@ -158,23 +145,17 @@ export const TransactionsPage: React.FC = () => {
         ),
     },
     {
-      title: 'Tài khoản',
-      dataIndex: 'account',
-      key: 'account',
-      render: (account: any) => account?.name || '-',
-    },
-    {
-      title: 'Loại',
+      title: t('transactions.type'),
       dataIndex: 'type',
       key: 'type',
       width: 120,
       render: (type: TransactionType) => {
         const color = type === TransactionType.INCOME ? 'green' : 'red';
-        return <Tag color={color}>{TransactionTypeLabels[type]}</Tag>;
+        return <Tag color={color}>{getTransactionTypeLabel(type)}</Tag>;
       },
     },
     {
-      title: 'Số tiền',
+      title: t('transactions.amount'),
       dataIndex: 'amount',
       key: 'amount',
       width: 150,
@@ -192,119 +173,113 @@ export const TransactionsPage: React.FC = () => {
           </span>
         );
       },
-      sorter: true,
     },
     {
-      title: 'Thao tác',
+      title: t('transactions.description'),
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+    },
+    {
+      title: t('common.actions'),
       key: 'actions',
-      width: 120,
+      width: 100,
       align: 'center',
-      fixed: 'right',
       render: (_: any, record: ITransaction) => (
         <Space>
           <Button
-            type="link"
+            type="text"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
-            size="small"
-          >
-            Sửa
-          </Button>
+            title={t('common.edit')}
+          />
           <Button
-            type="link"
+            type="text"
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(record.id)}
-            size="small"
-          >
-            Xóa
-          </Button>
+            title={t('common.delete')}
+          />
         </Space>
       ),
     },
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          {/* Header */}
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Title level={3} style={{ margin: 0 }}>
-                Quản lý giao dịch
-              </Title>
-            </Col>
-            <Col>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                Thêm giao dịch
-              </Button>
-            </Col>
-          </Row>
-
-          {/* Filters */}
-          <Row gutter={16}>
-            <Col xs={24} sm={12} md={10}>
-              <Input
-                placeholder="Tìm kiếm theo mô tả, ghi chú..."
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onPressEnter={handleSearch}
-                allowClear
-              />
-            </Col>
-            <Col xs={12} sm={6} md={6}>
-              <Select
-                placeholder="Loại giao dịch"
-                style={{ width: '100%' }}
-                value={filterType}
-                onChange={setFilterType}
-                allowClear
-              >
-                <Select.Option value={TransactionType.INCOME}>
-                  {TransactionTypeLabels[TransactionType.INCOME]}
-                </Select.Option>
-                <Select.Option value={TransactionType.EXPENSE}>
-                  {TransactionTypeLabels[TransactionType.EXPENSE]}
-                </Select.Option>
-              </Select>
-            </Col>
-            <Col xs={12} sm={6} md={4}>
-              <Button type="primary" onClick={handleSearch} block>
-                Tìm kiếm
-              </Button>
-            </Col>
-          </Row>
-
-          {/* Table */}
-          <Table
-            columns={columns}
-            dataSource={transactions}
-            rowKey="id"
-            loading={isLoading}
-            pagination={false}
-            scroll={{ x: 1000 }}
-          />
-
-          {/* Pagination */}
-          <Row justify="end">
-            <Pagination
-              current={pagination.page}
-              pageSize={pagination.limit}
-              total={pagination.total}
-              onChange={handlePageChange}
-              showSizeChanger
-              showTotal={(total) => `Tổng ${total} giao dịch`}
-              pageSizeOptions={['10', '20', '50', '100']}
+    <div>
+      <Card
+        title={t('transactions.manageTransactions')}
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+            {t('transactions.addTransaction')}
+          </Button>
+        }
+      >
+        {/* Filters */}
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col xs={24} sm={12} md={10}>
+            <Input
+              placeholder={t('transactions.searchPlaceholder')}
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onPressEnter={handleSearch}
+              allowClear
             />
-          </Row>
-        </Space>
+          </Col>
+          <Col xs={12} sm={6} md={6}>
+            <Select
+              placeholder={t('transactions.transactionType')}
+              style={{ width: '100%' }}
+              value={filterType}
+              onChange={setFilterType}
+              allowClear
+            >
+              <Select.Option value={TransactionType.INCOME}>
+                {getTransactionTypeLabel(TransactionType.INCOME)}
+              </Select.Option>
+              <Select.Option value={TransactionType.EXPENSE}>
+                {getTransactionTypeLabel(TransactionType.EXPENSE)}
+              </Select.Option>
+            </Select>
+          </Col>
+          <Col xs={12} sm={6} md={4}>
+            <Button type="primary" onClick={handleSearch} block>
+              {t('common.search')}
+            </Button>
+          </Col>
+        </Row>
+
+        {/* Table */}
+        <Table
+          columns={columns}
+          bordered
+          dataSource={transactions}
+          rowKey="id"
+          loading={isLoading}
+          pagination={{
+            current: pagination.page,
+            pageSize: pagination.limit,
+            total: pagination.total,
+            onChange: handlePageChange,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total) => t('transactions.totalTransactions', { total }),
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          locale={{
+            emptyText: <Empty description={t('transactions.noTransactions')} />,
+          }}
+        />
       </Card>
 
       {/* Create/Edit Modal */}
       <Modal
-        title={editingTransaction ? 'Sửa giao dịch' : 'Thêm giao dịch mới'}
+        title={
+          editingTransaction
+            ? t('transactions.editTransaction')
+            : t('transactions.addNewTransaction')
+        }
         open={isModalOpen}
         onCancel={handleModalClose}
         footer={null}

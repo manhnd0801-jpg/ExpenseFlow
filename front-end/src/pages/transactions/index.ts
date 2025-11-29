@@ -1,6 +1,6 @@
 /**
- * Transactions Pages Export
+ * Transactions module exports
  */
 
-export { default as TransactionListPage } from './TransactionListPage';
 export { default as TransactionDetailPage } from './TransactionDetailPage';
+export { TransactionsPage } from './TransactionsListPage';

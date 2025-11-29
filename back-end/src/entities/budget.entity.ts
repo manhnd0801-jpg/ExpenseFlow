@@ -1,14 +1,15 @@
 import {
-    Column,
-    CreateDateColumn,
-    DeleteDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { BudgetPeriod } from '../common/constants/enums';
+import { DecimalToNumber } from '../common/decorators';
 import { Category } from './category.entity';
 import { User } from './user.entity';
 
@@ -30,12 +31,13 @@ export class Budget {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   amount: number; // Budget limit amount
 
-  @Column({ 
+  @Column({
     type: 'smallint',
-    comment: '1=Daily, 2=Weekly, 3=Monthly, 4=Quarterly, 5=Yearly, 6=Custom'
+    comment: '1=Daily, 2=Weekly, 3=Monthly, 4=Quarterly, 5=Yearly, 6=Custom',
   })
   period: BudgetPeriod;
 
@@ -45,6 +47,7 @@ export class Budget {
   @Column({ type: 'date' })
   endDate: Date;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
   spent: number; // Current spent amount
 
@@ -54,6 +57,7 @@ export class Budget {
   @Column({ type: 'boolean', default: true })
   alertEnabled: boolean;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 80 })
   alertThreshold: number; // Alert when spent reaches this percentage
 
@@ -73,11 +77,11 @@ export class Budget {
   deletedAt?: Date;
 
   // Relationships
-  @ManyToOne(() => User, user => user.budgets)
+  @ManyToOne(() => User, (user) => user.budgets)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Category, category => category.budgets, { nullable: true })
+  @ManyToOne(() => Category, (category) => category.budgets, { nullable: true })
   @JoinColumn({ name: 'category_id' })
   category?: Category;
 

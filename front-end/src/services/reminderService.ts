@@ -3,14 +3,11 @@
  * Handles reminder and notification scheduling API calls
  */
 
-import api from './api';
-import { API_ENDPOINTS } from '@utils/constants';
-import type {
-  IReminder,
-  ICreateReminderRequest,
-  IUpdateReminderRequest,
-} from '@/types/models';
 import type { ReminderType } from '@/constants/enums';
+import type { ICreateReminderRequest, IReminder, IUpdateReminderRequest } from '@/types/models';
+import { API_ENDPOINTS } from '@utils/constants';
+import { getServiceMessages } from '@utils/i18nService';
+import api from './api';
 
 export const reminderService = {
   /**
@@ -47,9 +44,10 @@ export const reminderService = {
    * Create new reminder
    */
   createReminder: async (data: ICreateReminderRequest): Promise<IReminder> => {
+    const messages = getServiceMessages();
     return api.post<IReminder>(API_ENDPOINTS.REMINDERS.CREATE, data, {
       showSuccessMessage: true,
-      successMessage: 'Tạo nhắc nhở thành công',
+      successMessage: messages.reminders.created,
     });
   },
 
@@ -57,9 +55,10 @@ export const reminderService = {
    * Update existing reminder
    */
   updateReminder: async (id: string, data: IUpdateReminderRequest): Promise<IReminder> => {
+    const messages = getServiceMessages();
     return api.patch<IReminder>(API_ENDPOINTS.REMINDERS.UPDATE(id), data, {
       showSuccessMessage: true,
-      successMessage: 'Cập nhật nhắc nhở thành công',
+      successMessage: messages.reminders.updated,
     });
   },
 
@@ -67,19 +66,25 @@ export const reminderService = {
    * Mark reminder as completed
    */
   markReminderComplete: async (id: string): Promise<IReminder> => {
-    return api.patch<IReminder>(API_ENDPOINTS.REMINDERS.COMPLETE(id), {}, {
-      showSuccessMessage: true,
-      successMessage: 'Đánh dấu hoàn thành thành công',
-    });
+    const messages = getServiceMessages();
+    return api.patch<IReminder>(
+      API_ENDPOINTS.REMINDERS.COMPLETE(id),
+      {},
+      {
+        showSuccessMessage: true,
+        successMessage: messages.markedCompleted,
+      }
+    );
   },
 
   /**
    * Delete reminder (soft delete)
    */
   deleteReminder: async (id: string): Promise<void> => {
+    const messages = getServiceMessages();
     return api.delete<void>(API_ENDPOINTS.REMINDERS.DELETE(id), {
       showSuccessMessage: true,
-      successMessage: 'Xóa nhắc nhở thành công',
+      successMessage: messages.reminders.deleted,
     });
   },
 };

@@ -11,14 +11,15 @@ import {
 import { Button, Card, Modal, Progress, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
-import { GoalStatusLabels } from '../../constants/enum-labels';
 import { GoalStatus } from '../../constants/enums';
+import { useI18n } from '../../hooks/useI18n';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { deleteGoalStart, fetchGoalsStart } from '../../redux/modules/goals/goalSlice';
 import type { IGoal } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 const GoalsListPage: React.FC = () => {
+  const { t, getGoalStatusLabel } = useI18n();
   const dispatch = useAppDispatch();
   const { goals, loading } = useAppSelector((state) => state.goals);
 
@@ -90,24 +91,24 @@ const GoalsListPage: React.FC = () => {
       color = 'red';
     }
 
-    return <Tag color={color}>{GoalStatusLabels[status as keyof typeof GoalStatusLabels]}</Tag>;
+    return <Tag color={color}>{getGoalStatusLabel(status)}</Tag>;
   };
 
   const columns: ColumnsType<IGoal> = [
     {
-      title: 'Tên mục tiêu',
+      title: t('goals.goalName'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string) => <div style={{ fontWeight: 500 }}>{name}</div>,
     },
     {
-      title: 'Số tiền mục tiêu',
+      title: t('goals.targetAmount'),
       dataIndex: 'targetAmount',
       key: 'targetAmount',
       render: (amount: number) => formatCurrency(amount),
     },
     {
-      title: 'Hạn hoàn thành',
+      title: t('goals.deadline'),
       dataIndex: 'deadline',
       key: 'deadline',
       render: (deadline: string) => {
@@ -118,40 +119,42 @@ const GoalsListPage: React.FC = () => {
         return (
           <div style={{ color: isOverdue ? '#f5222d' : 'inherit' }}>
             {formatDate(deadline)}
-            {isOverdue && <div style={{ fontSize: '12px' }}>Quá hạn</div>}
+            {isOverdue && <div style={{ fontSize: '12px' }}>{t('goals.overdue')}</div>}
           </div>
         );
       },
     },
     {
-      title: 'Tiến độ',
+      title: t('goals.progress'),
       key: 'progress',
       width: 200,
       render: (_, goal) => renderProgress(goal),
     },
     {
-      title: 'Trạng thái',
+      title: t('common.status'),
       dataIndex: 'status',
       key: 'status',
       render: renderStatus,
     },
     {
-      title: 'Thao tác',
+      title: t('common.actions'),
       key: 'actions',
+      width: 150,
+      align: 'center',
       render: (_, goal) => (
         <Space size="small">
           <Button
             type="text"
             icon={<EyeOutlined />}
             onClick={() => handleView(goal)}
-            title="Xem chi tiết"
+            title={t('common.viewDetails')}
           />
           {goal.status === GoalStatus.ACTIVE && (
             <Button
               type="text"
               icon={<DollarOutlined />}
               onClick={() => handleContribute(goal)}
-              title="Đóng góp"
+              title={t('goals.contribute')}
               style={{ color: '#52c41a' }}
             />
           )}
@@ -159,14 +162,14 @@ const GoalsListPage: React.FC = () => {
             type="text"
             icon={<EditOutlined />}
             onClick={() => handleEdit(goal)}
-            title="Chỉnh sửa"
+            title={t('common.edit')}
           />
           <Button
             type="text"
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(goal.id)}
-            title="Xóa"
+            title={t('common.delete')}
           />
         </Space>
       ),
@@ -176,7 +179,7 @@ const GoalsListPage: React.FC = () => {
   return (
     <div>
       <Card
-        title="Quản lý Mục tiêu Tài chính"
+        title={t('goals.manageGoals')}
         extra={
           <Button
             type="primary"
@@ -186,11 +189,12 @@ const GoalsListPage: React.FC = () => {
               console.log('Create goal');
             }}
           >
-            Tạo mục tiêu
+            {t('goals.createGoal')}
           </Button>
         }
       >
         <Table
+          bordered
           columns={columns}
           dataSource={goals}
           rowKey="id"
@@ -198,22 +202,22 @@ const GoalsListPage: React.FC = () => {
           pagination={{
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total) => `Tổng ${total} mục tiêu`,
+            showTotal: (total) => t('goals.totalGoals', { total }),
           }}
         />
       </Card>
 
       <Modal
-        title="Xác nhận xóa"
+        title={t('goals.deleteGoal')}
         open={isDeleteModalVisible}
         onOk={handleConfirmDelete}
         onCancel={() => setIsDeleteModalVisible(false)}
-        okText="Xóa"
-        cancelText="Hủy"
+        okText={t('common.delete')}
+        cancelText={t('common.cancel')}
         okButtonProps={{ danger: true }}
       >
-        <p>Bạn có chắc chắn muốn xóa mục tiêu này không?</p>
-        <p>Hành động này không thể hoàn tác.</p>
+        <p>{t('goals.deleteConfirmation')}</p>
+        <p>{t('common.irreversibleAction')}</p>
       </Modal>
     </div>
   );

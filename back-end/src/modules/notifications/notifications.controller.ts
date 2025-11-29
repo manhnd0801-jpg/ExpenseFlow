@@ -1,12 +1,13 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('notifications')
+@Controller(ApiRoutes.NOTIFICATIONS.BASE)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
@@ -22,7 +23,7 @@ export class NotificationsController {
     };
   }
 
-  @Get('unread')
+  @Get(ApiRoutes.NOTIFICATIONS.UNREAD)
   @ApiOperation({ summary: 'Get unread notifications' })
   @ApiResponse({ status: 200, description: 'List of unread notifications' })
   async findUnread(@Request() req) {
@@ -34,7 +35,7 @@ export class NotificationsController {
     };
   }
 
-  @Get('unread/count')
+  @Get(ApiRoutes.NOTIFICATIONS.UNREAD_COUNT)
   @ApiOperation({ summary: 'Get unread notification count' })
   @ApiResponse({ status: 200, description: 'Unread count' })
   async getUnreadCount(@Request() req) {
@@ -46,7 +47,7 @@ export class NotificationsController {
     };
   }
 
-  @Patch(':id/read')
+  @Patch(`:id/${ApiRoutes.NOTIFICATIONS.READ}`)
   @ApiOperation({ summary: 'Mark notification as read' })
   @ApiParam({ name: 'id', description: 'Notification ID' })
   @ApiResponse({ status: 200, description: 'Notification marked as read' })
@@ -60,7 +61,7 @@ export class NotificationsController {
     };
   }
 
-  @Patch('read-all')
+  @Patch(ApiRoutes.NOTIFICATIONS.READ_ALL)
   @ApiOperation({ summary: 'Mark all notifications as read' })
   @ApiResponse({ status: 200, description: 'All notifications marked as read' })
   async markAllAsRead(@Request() req) {
@@ -81,7 +82,7 @@ export class NotificationsController {
     await this.notificationsService.remove(id, req.user.userId);
   }
 
-  @Delete('read/all')
+  @Delete(`${ApiRoutes.NOTIFICATIONS.READ}/all`)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete all read notifications' })
   @ApiResponse({

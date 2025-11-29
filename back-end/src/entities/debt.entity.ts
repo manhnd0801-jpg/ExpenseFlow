@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { DebtStatus, DebtType } from '../common/constants/enums';
+import { DateToString, DecimalToNumber } from '../common/decorators';
 import { DebtPayment } from './debt-payment.entity';
 import { User } from './user.entity';
 
@@ -25,9 +26,9 @@ export class Debt {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
-  @Column({ 
+  @Column({
     type: 'smallint',
-    comment: '1=Lending, 2=Borrowing'
+    comment: '1=Lending, 2=Borrowing',
   })
   type: DebtType;
 
@@ -37,12 +38,15 @@ export class Debt {
   @Column({ type: 'varchar', length: 255, nullable: true })
   contactInfo: string; // Phone, email, etc.
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   originalAmount: number;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   remainingAmount: number;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
   interestRate: number; // Annual interest rate percentage
 
@@ -52,10 +56,10 @@ export class Debt {
   @Column({ type: 'date', nullable: true })
   dueDate: Date;
 
-  @Column({ 
+  @Column({
     type: 'smallint',
     default: DebtStatus.ACTIVE,
-    comment: '1=Active, 2=Paid, 3=Partial, 4=Overdue'
+    comment: '1=Active, 2=Paid, 3=Partial, 4=Overdue',
   })
   status: DebtStatus;
 
@@ -87,11 +91,11 @@ export class Debt {
   deletedAt?: Date;
 
   // Relationships
-  @ManyToOne(() => User, user => user.debts)
+  @ManyToOne(() => User, (user) => user.debts)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @OneToMany(() => DebtPayment, payment => payment.debt)
+  @OneToMany(() => DebtPayment, (payment) => payment.debt)
   payments: DebtPayment[];
 
   // Virtual properties

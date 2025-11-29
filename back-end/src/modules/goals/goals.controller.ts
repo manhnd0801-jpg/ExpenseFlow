@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { GetUser } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/guards';
 import { ContributeGoalDto, CreateGoalDto, UpdateGoalDto } from './dto';
@@ -8,7 +9,7 @@ import { GoalsService } from './goals.service';
 @ApiTags('Goals')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('goals')
+@Controller(ApiRoutes.GOALS.BASE)
 export class GoalsController {
   constructor(private readonly goalsService: GoalsService) {}
 
@@ -47,7 +48,7 @@ export class GoalsController {
     return { success: true, message: 'Goal deleted successfully' };
   }
 
-  @Post(':id/contribute')
+  @Post(`:id/${ApiRoutes.GOALS.CONTRIBUTE}`)
   @ApiOperation({ summary: 'Contribute to a goal' })
   async contribute(@GetUser('id') userId: string, @Param('id') id: string, @Body() dto: ContributeGoalDto) {
     const data = await this.goalsService.contribute(userId, id, dto);

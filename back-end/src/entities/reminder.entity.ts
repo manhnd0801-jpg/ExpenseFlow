@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { FrequencyType, ReminderType } from '../common/constants/enums';
+import { DateToString, DecimalToNumber } from '../common/decorators';
 import { User } from './user.entity';
 
 /**
@@ -63,6 +64,7 @@ export class Reminder {
   @Column({ type: 'integer', default: 1 })
   daysBefore: number; // How many days before to remind
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
   amount: number; // For payment reminders
 

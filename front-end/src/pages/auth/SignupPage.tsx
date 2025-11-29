@@ -3,9 +3,21 @@
  * Handle user registration with email, password, and fullName
  */
 
-import { GithubOutlined, GoogleOutlined, LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  GithubOutlined,
+  GoogleOutlined,
+  LockOutlined,
+  MailOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
-import { authActions, selectError, selectIsAuthenticated, selectIsLoading } from '@redux/modules/auth';
+import {
+  authActions,
+  selectError,
+  selectIsAuthenticated,
+  selectIsLoading,
+  selectIsLoginSuccess,
+} from '@redux/modules/auth';
 import { ROUTES } from '@utils/constants';
 import { Button, Divider, Form, Input, message, Space } from 'antd';
 import React from 'react';
@@ -72,6 +84,7 @@ export const SignupPage: React.FC = () => {
   const isLoading = useAppSelector(selectIsLoading);
   const error = useAppSelector(selectError);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const isLoginSuccess = useAppSelector(selectIsLoginSuccess);
 
   /**
    * Handle form submission
@@ -107,9 +120,14 @@ export const SignupPage: React.FC = () => {
   React.useEffect(() => {
     if (isAuthenticated && !isLoading) {
       navigate(ROUTES.DASHBOARD);
-      message.success('Đăng ký thành công!');
+      // Only show success message on actual signup, not on hydration
+      if (isLoginSuccess) {
+        message.success('Đăng ký thành công!');
+        // Clear the login success flag after showing message
+        dispatch(authActions.clearLoginSuccess());
+      }
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, isLoginSuccess, navigate, dispatch]);
 
   return (
     <FormWrapper>
@@ -229,4 +247,3 @@ export const SignupPage: React.FC = () => {
 };
 
 export default SignupPage;
-

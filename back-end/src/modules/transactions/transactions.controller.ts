@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
+import { ApiRoutes } from '../../common/constants';
 import { GetUser } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/guards';
 import {
@@ -27,7 +28,7 @@ import { TransactionsService } from './transactions.service';
 @ApiTags('Transactions')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('transactions')
+@Controller(ApiRoutes.TRANSACTIONS.BASE)
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
@@ -49,7 +50,7 @@ export class TransactionsController {
     return {
       success: true,
       data: plainToInstance(TransactionResponseDto, transaction, {
-        excludeExtraneousValues: true,
+        excludeExtraneousValues: false, // Allow nested objects to pass through
       }),
       message: 'Transaction created successfully',
     };
@@ -73,7 +74,7 @@ export class TransactionsController {
     return {
       success: true,
       data: plainToInstance(TransactionResponseDto, data, {
-        excludeExtraneousValues: true,
+        excludeExtraneousValues: false, // Allow nested objects to pass through
       }),
       pagination: {
         page: Number(page),
@@ -84,7 +85,7 @@ export class TransactionsController {
     };
   }
 
-  @Get('summary')
+  @Get(ApiRoutes.TRANSACTIONS.SUMMARY)
   @ApiOperation({ summary: 'Get transaction summary for a period' })
   @ApiResponse({
     status: 200,
@@ -121,7 +122,7 @@ export class TransactionsController {
     return {
       success: true,
       data: plainToInstance(TransactionResponseDto, transaction, {
-        excludeExtraneousValues: true,
+        excludeExtraneousValues: false, // Allow nested objects to pass through
       }),
     };
   }
@@ -144,7 +145,7 @@ export class TransactionsController {
     return {
       success: true,
       data: plainToInstance(TransactionResponseDto, transaction, {
-        excludeExtraneousValues: true,
+        excludeExtraneousValues: false, // Allow nested objects to pass through
       }),
       message: 'Transaction updated successfully',
     };

@@ -5,10 +5,11 @@
 import { TransactionType } from '@/constants/enums';
 import { ROUTES } from '@/utils/constants';
 import { ArrowDownOutlined, ArrowUpOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import { useI18n } from '@hooks';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import { transactionActions } from '@redux/modules/transactions';
 import type { ITransaction } from '@redux/modules/transactions/transactionTypes';
-import { Button, Card, Col, Empty, Progress, Row, Statistic, Table } from 'antd';
+import { Button, Card, Col, Empty, Progress, Row, Space, Statistic, Table, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -104,6 +105,7 @@ const DashboardWrapper = styled.div`
 export const DashboardPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   // Get state from Redux
   const transactions = useAppSelector((state) => state.transactions.transactions) || [];
@@ -122,14 +124,13 @@ export const DashboardPage: React.FC = () => {
 
     const totalIncome = transactions
       .filter((t: ITransaction) => t.type === TransactionType.INCOME)
-      .reduce((sum: number, t: ITransaction) => sum + t.amount, 0);
+      .reduce((sum: number, t: ITransaction) => Number(sum) + Number(t.amount), 0);
 
     const totalExpense = transactions
       .filter((t: ITransaction) => t.type === TransactionType.EXPENSE)
-      .reduce((sum: number, t: ITransaction) => sum + t.amount, 0);
-
-    const balance = totalIncome - totalExpense;
-    const expenseRatio = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
+      .reduce((sum: number, t: ITransaction) => Number(sum) + Number(t.amount), 0);
+    const balance = Number(totalIncome) - Number(totalExpense);
+    const expenseRatio = totalIncome > 0 ? (Number(totalExpense) / Number(totalIncome)) * 100 : 0;
 
     return { totalIncome, totalExpense, balance, expenseRatio };
   }, [transactions]);
@@ -145,31 +146,44 @@ export const DashboardPage: React.FC = () => {
   // Table columns
   const columns = [
     {
-      title: 'Ngày',
+      title: t('transactions.date'),
       dataIndex: 'date',
       key: 'date',
-      width: 120,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      width: 150,
+      render: (date: string) => dayjs(date).format('HH:mm DD/MM/YYYY'),
     },
     {
-      title: 'Danh mục',
-      dataIndex: 'category',
-      key: 'category',
-      width: 120,
-      render: (_: any, record: ITransaction) => record.category?.name || 'N/A',
-    },
-    {
-      title: 'Mô tả',
-      dataIndex: 'note',
-      key: 'note',
-      render: (note: string) => note || '-',
-    },
-    {
-      title: 'Tài khoản',
+      title: t('transactions.account'),
       dataIndex: 'account',
       key: 'account',
       width: 150,
       render: (_: any, record: ITransaction) => record.account?.name || 'N/A',
+    },
+    {
+      title: t('transactions.category'),
+      dataIndex: 'category',
+      key: 'category',
+      width: 120,
+      render: (category: any) =>
+        category ? (
+          <Space>
+            {category.icon && <span style={{ color: category.color }}>{category.icon}</span>}
+            <span>{category.name}</span>
+          </Space>
+        ) : (
+          '-'
+        ),
+    },
+    {
+      title: t('transactions.type'),
+      dataIndex: 'type',
+      key: 'type',
+      width: 120,
+      render: (_: any, record: ITransaction) => (
+        <Tag color={record.type === TransactionType.INCOME ? 'green' : 'red'}>
+          {record.type === TransactionType.INCOME ? 'Thu nhập' : 'Chi tiêu'}
+        </Tag>
+      ),
     },
     {
       title: 'Số tiền',
@@ -181,14 +195,19 @@ export const DashboardPage: React.FC = () => {
         const isIncome = record.type === TransactionType.INCOME;
         return (
           <span className={`amount ${isIncome ? 'income' : 'expense'}`}>
-            {isIncome ? '+' : '-'}
             {formatCurrency(amount)}
           </span>
         );
       },
     },
     {
-      title: 'Thao tác',
+      title: t('transactions.note'),
+      dataIndex: 'note',
+      key: 'note',
+      render: (note: string) => note || '-',
+    },
+    {
+      title: t('common.action'),
       key: 'action',
       width: 100,
       render: (_: any, record: ITransaction) => (
@@ -198,7 +217,7 @@ export const DashboardPage: React.FC = () => {
           icon={<EyeOutlined />}
           onClick={() => navigate(`${ROUTES.TRANSACTIONS}/${record.id}`)}
         >
-          Xem
+          {t('common.view')}
         </Button>
       ),
     },
@@ -211,7 +230,7 @@ export const DashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card className="stat-card balance" size="small">
             <Statistic
-              title="Số dư"
+              title={t('dashboard.balance')}
               value={stats.balance}
               prefix="₫"
               valueStyle={{ color: 'var(--primary-color)' }}
@@ -276,6 +295,7 @@ export const DashboardPage: React.FC = () => {
           <div style={{ textAlign: 'center', padding: '40px' }}>Đang tải...</div>
         ) : recentTransactions.length > 0 ? (
           <Table
+            bordered
             className="transactions-table"
             columns={columns}
             dataSource={recentTransactions}

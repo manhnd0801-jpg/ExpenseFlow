@@ -3,8 +3,8 @@
  * Reusable form for creating and editing transactions
  */
 
-import { TransactionTypeLabels } from '@/constants/enum-labels';
 import { CategoryType, TransactionType } from '@/constants/enums';
+import { useI18n } from '@/hooks/useI18n';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import { accountActions } from '@redux/modules/accounts';
 import { categoryActions } from '@redux/modules/categories';
@@ -31,6 +31,7 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
+  const { t, getTransactionTypeLabel } = useI18n();
   const [form] = Form.useForm();
   const dispatch = useAppDispatch();
 
@@ -52,7 +53,6 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
   // Check if user has accounts and categories
   const hasAccounts = accounts && accounts.length > 0;
   const hasCategories = categories && categories.length > 0;
-  const canCreateTransaction = hasAccounts && hasCategories;
 
   // Set initial values if editing
   useEffect(() => {
@@ -90,10 +90,13 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
 
   // Handle form submit
   const handleSubmit = (values: any) => {
+    console.log('values', values);
+
     const payload: ICreateTransactionPayload = {
       ...values,
       date: values.date.format('YYYY-MM-DD'),
     };
+    console.log(initialValues, 'initialValues');
 
     if (initialValues) {
       // Update existing transaction
@@ -121,23 +124,23 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
       <div style={{ textAlign: 'center', padding: '40px 20px' }}>
         <p style={{ marginBottom: '16px', fontSize: '16px', color: 'rgba(0,0,0,0.65)' }}>
           {!hasAccounts && !hasCategories
-            ? 'Bạn cần tạo tài khoản và danh mục trước khi tạo giao dịch'
+            ? t('transactions.needAccountAndCategory')
             : !hasAccounts
-            ? 'Bạn cần tạo tài khoản trước khi tạo giao dịch'
-            : 'Bạn cần tạo danh mục trước khi tạo giao dịch'}
+            ? t('transactions.needAccount')
+            : t('transactions.needCategory')}
         </p>
         <Space>
           {!hasAccounts && (
             <Button type="primary" onClick={() => (window.location.href = '/accounts')}>
-              Tạo tài khoản
+              {t('accounts.createAccount')}
             </Button>
           )}
           {!hasCategories && (
             <Button type="primary" onClick={() => (window.location.href = '/categories')}>
-              Tạo danh mục
+              {t('categories.createCategory')}
             </Button>
           )}
-          {onCancel && <Button onClick={onCancel}>Đóng</Button>}
+          {onCancel && <Button onClick={onCancel}>{t('common.close')}</Button>}
         </Space>
       </div>
     );
@@ -154,26 +157,26 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
       }}
     >
       <Form.Item
-        label="Loại giao dịch"
+        label={t('transactions.transactionType')}
         name="type"
-        rules={[{ required: true, message: 'Vui lòng chọn loại giao dịch' }]}
+        rules={[{ required: true, message: t('transactions.typeRequired') }]}
       >
-        <Select placeholder="Chọn loại">
+        <Select placeholder={t('transactions.selectType')}>
           <Select.Option value={TransactionType.INCOME}>
-            {TransactionTypeLabels[TransactionType.INCOME]}
+            {getTransactionTypeLabel(TransactionType.INCOME)}
           </Select.Option>
           <Select.Option value={TransactionType.EXPENSE}>
-            {TransactionTypeLabels[TransactionType.EXPENSE]}
+            {getTransactionTypeLabel(TransactionType.EXPENSE)}
           </Select.Option>
         </Select>
       </Form.Item>
 
       <Form.Item
-        label="Số tiền"
+        label={t('transactions.amount')}
         name="amount"
         rules={[
-          { required: true, message: 'Vui lòng nhập số tiền' },
-          { type: 'number', min: 0, message: 'Số tiền phải lớn hơn 0' },
+          { required: true, message: t('transactions.amountRequired') },
+          { type: 'number', min: 0, message: t('transactions.amountMinimum') },
         ]}
       >
         <InputNumber
@@ -187,12 +190,12 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
       </Form.Item>
 
       <Form.Item
-        label="Tài khoản"
+        label={t('transactions.account')}
         name="accountId"
-        rules={[{ required: true, message: 'Vui lòng chọn tài khoản' }]}
+        rules={[{ required: true, message: t('transactions.accountRequired') }]}
       >
         <Select
-          placeholder="Chọn tài khoản"
+          placeholder={t('transactions.selectAccount')}
           loading={!accounts.length}
           showSearch
           optionFilterProp="children"
@@ -210,12 +213,12 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
       </Form.Item>
 
       <Form.Item
-        label="Danh mục"
+        label={t('transactions.category')}
         name="categoryId"
-        rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
+        rules={[{ required: true, message: t('transactions.categoryRequired') }]}
       >
         <Select
-          placeholder="Chọn danh mục"
+          placeholder={t('transactions.selectCategory')}
           loading={!categories.length}
           showSearch
           optionFilterProp="children"
@@ -232,31 +235,40 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
       </Form.Item>
 
       <Form.Item
-        label="Ngày giao dịch"
+        label={t('transactions.date')}
         name="date"
-        rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+        rules={[{ required: true, message: t('transactions.dateRequired') }]}
       >
-        <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn ngày" />
+        <DatePicker
+          style={{ width: '100%' }}
+          format="DD/MM/YYYY"
+          placeholder={t('transactions.selectDate')}
+        />
       </Form.Item>
 
       <Form.Item
-        label="Mô tả"
+        label={t('transactions.description')}
         name="description"
-        rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+        rules={[{ required: true, message: t('transactions.descriptionRequired') }]}
       >
-        <Input placeholder="Ví dụ: Mua sắm, Ăn trưa, Lương tháng..." />
+        <Input placeholder={t('transactions.descriptionPlaceholder')} />
       </Form.Item>
 
-      <Form.Item label="Ghi chú" name="note">
-        <Input.TextArea rows={3} placeholder="Ghi chú thêm (tùy chọn)" maxLength={500} showCount />
+      <Form.Item label={t('transactions.note')} name="note">
+        <Input.TextArea
+          rows={3}
+          placeholder={t('transactions.notePlaceholder')}
+          maxLength={500}
+          showCount
+        />
       </Form.Item>
 
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit" loading={isCreating || isUpdating}>
-            {initialValues ? 'Cập nhật' : 'Tạo mới'}
+            {initialValues ? t('common.update') : t('common.create')}
           </Button>
-          {onCancel && <Button onClick={onCancel}>Hủy</Button>}
+          {onCancel && <Button onClick={onCancel}>{t('common.cancel')}</Button>}
         </Space>
       </Form.Item>
     </Form>

@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { LoanStatus, LoanType } from '../common/constants/enums';
+import { DateToString, DecimalToNumber } from '../common/decorators';
 import { LoanPayment } from './loan-payment.entity';
 import { User } from './user.entity';
 
@@ -37,12 +38,15 @@ export class Loan {
   @Column({ type: 'varchar', length: 255, nullable: true })
   lender: string; // Bank/Organization name
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   originalAmount: number; // Total loan amount
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   remainingPrincipal: number; // Remaining principal to pay
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 5, scale: 2 })
   interestRate: number; // Annual interest rate percentage (e.g., 12.5)
 
@@ -52,6 +56,7 @@ export class Loan {
   @Column({ type: 'integer' })
   remainingMonths: number; // Remaining months to pay
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   monthlyPayment: number; // Calculated monthly payment (principal + interest)
 

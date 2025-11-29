@@ -1,15 +1,16 @@
 import {
-    Column,
-    CreateDateColumn,
-    DeleteDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToMany,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { EventStatus } from '../common/constants/enums';
+import { DateToString, DecimalToNumber } from '../common/decorators';
 import { Transaction } from './transaction.entity';
 import { User } from './user.entity';
 
@@ -31,6 +32,7 @@ export class Event {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
   budget: number; // Total budget for the event
 
@@ -40,10 +42,10 @@ export class Event {
   @Column({ type: 'date', nullable: true })
   endDate: Date;
 
-  @Column({ 
+  @Column({
     type: 'smallint',
     default: EventStatus.PLANNED,
-    comment: '1=Planned, 2=Active, 3=Completed, 4=Cancelled'
+    comment: '1=Planned, 2=Active, 3=Completed, 4=Cancelled',
   })
   status: EventStatus;
 
@@ -69,18 +71,18 @@ export class Event {
   deletedAt?: Date;
 
   // Relationships
-  @ManyToOne(() => User, user => user.events)
+  @ManyToOne(() => User, (user) => user.events)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @OneToMany(() => Transaction, transaction => transaction.event)
+  @OneToMany(() => Transaction, (transaction) => transaction.event)
   transactions: Transaction[];
 
   // Virtual properties
   get totalSpent(): number {
     if (!this.transactions) return 0;
     return this.transactions
-      .filter(t => t.type === 2) // Expenses only
+      .filter((t) => t.type === 2) // Expenses only
       .reduce((sum, t) => sum + Number(t.amount), 0);
   }
 

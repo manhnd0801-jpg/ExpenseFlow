@@ -167,7 +167,8 @@ export interface ITransactionSummary {
 export interface IBudget {
   id: TId;
   userId: TId;
-  categoryId: TId;
+  categoryId?: TId; // Optional because can be null for overall budget
+  name: string;
   amount: number;
   period: BudgetPeriod;
   startDate: TTimestamp;
@@ -175,6 +176,11 @@ export interface IBudget {
   spent?: number;
   remaining?: number;
   percentage?: number;
+  isActive: boolean;
+  alertEnabled: boolean;
+  alertThreshold: number;
+  rolloverUnused: boolean;
+  note?: string;
   createdAt: TTimestamp;
   updatedAt: TTimestamp;
   deletedAt?: TTimestamp;

@@ -3,8 +3,8 @@
  * Reusable form for creating and editing accounts
  */
 
-import { AccountTypeLabels, CurrencyLabels } from '@/constants/enum-labels';
 import { AccountType, Currency } from '@/constants/enums';
+import { useI18n } from '@/hooks/useI18n';
 import type { IAccount, ICreateAccountPayload } from '@redux/modules/accounts/accountTypes';
 import { Button, Form, Input, InputNumber, Select, Space } from 'antd';
 import React, { useEffect } from 'react';
@@ -25,6 +25,7 @@ export const AccountForm: React.FC<IAccountFormProps> = ({
   onCancel,
   loading = false,
 }) => {
+  const { t, getAccountTypeLabel, getCurrencyLabel } = useI18n();
   const [form] = Form.useForm();
 
   // Set initial values if editing
@@ -86,36 +87,41 @@ export const AccountForm: React.FC<IAccountFormProps> = ({
       }}
     >
       <Form.Item
-        label="Tên tài khoản"
+        label={t('accounts.accountName')}
         name="name"
         rules={[
-          { required: true, message: 'Vui lòng nhập tên tài khoản' },
-          { min: 3, message: 'Tên phải có ít nhất 3 ký tự' },
+          { required: true, message: t('accounts.nameRequired') },
+          { min: 3, message: t('accounts.nameMinLength') },
         ]}
       >
-        <Input placeholder="Ví dụ: Tài khoản Vietcombank, Ví Momo..." />
+        <Input placeholder={t('accounts.namePlaceholder')} />
       </Form.Item>
 
       <Form.Item
-        label="Loại tài khoản"
+        label={t('accounts.accountType')}
         name="type"
-        rules={[{ required: true, message: 'Vui lòng chọn loại tài khoản' }]}
+        rules={[{ required: true, message: t('accounts.typeRequired') }]}
       >
-        <Select placeholder="Chọn loại" disabled={!!initialValues}>
-          {Object.entries(AccountTypeLabels).map(([value, label]) => (
-            <Select.Option key={value} value={Number(value)}>
-              {label}
+        <Select placeholder={t('accounts.selectType')} disabled={!!initialValues}>
+          {[
+            AccountType.CASH,
+            AccountType.BANK,
+            AccountType.CREDIT_CARD,
+            AccountType.DIGITAL_WALLET,
+          ].map((value) => (
+            <Select.Option key={value} value={value}>
+              {getAccountTypeLabel(value)}
             </Select.Option>
           ))}
         </Select>
       </Form.Item>
 
       <Form.Item
-        label="Số dư ban đầu"
+        label={t('accounts.initialBalance')}
         name="initialBalance"
         rules={[
-          { required: true, message: 'Vui lòng nhập số dư ban đầu' },
-          { type: 'number', min: 0, message: 'Số dư phải >= 0' },
+          { required: true, message: t('accounts.balanceRequired') },
+          { type: 'number', min: 0, message: t('accounts.balanceMinimum') },
         ]}
       >
         <InputNumber
@@ -130,31 +136,31 @@ export const AccountForm: React.FC<IAccountFormProps> = ({
       </Form.Item>
 
       <Form.Item
-        label="Đơn vị tiền tệ"
+        label={t('accounts.currency')}
         name="currency"
-        rules={[{ required: true, message: 'Vui lòng chọn đơn vị tiền tệ' }]}
+        rules={[{ required: true, message: t('accounts.currencyRequired') }]}
       >
-        <Select placeholder="Chọn đơn vị" disabled={!!initialValues}>
-          <Select.Option value={Currency.VND}>{CurrencyLabels[Currency.VND]}</Select.Option>
-          <Select.Option value={Currency.USD}>{CurrencyLabels[Currency.USD]}</Select.Option>
-          <Select.Option value={Currency.EUR}>{CurrencyLabels[Currency.EUR]}</Select.Option>
-          <Select.Option value={Currency.JPY}>{CurrencyLabels[Currency.JPY]}</Select.Option>
-          <Select.Option value={Currency.CNY}>{CurrencyLabels[Currency.CNY]}</Select.Option>
+        <Select placeholder={t('accounts.selectCurrency')} disabled={!!initialValues}>
+          {[Currency.VND, Currency.USD, Currency.EUR, Currency.JPY, Currency.CNY].map((value) => (
+            <Select.Option key={value} value={value}>
+              {getCurrencyLabel(value)}
+            </Select.Option>
+          ))}
         </Select>
       </Form.Item>
 
-      <Form.Item label="Màu sắc" name="color">
+      <Form.Item label={t('accounts.color')} name="color">
         <Input type="color" style={{ width: '100px' }} />
       </Form.Item>
 
-      <Form.Item label="Icon" name="icon">
-        <Input placeholder="Ví dụ: 💰, 🏦, 💳..." maxLength={2} />
+      <Form.Item label={t('accounts.icon')} name="icon">
+        <Input placeholder={t('accounts.iconPlaceholder')} maxLength={2} />
       </Form.Item>
 
-      <Form.Item label="Mô tả" name="description">
+      <Form.Item label={t('accounts.description')} name="description">
         <Input.TextArea
           rows={3}
-          placeholder="Ghi chú về tài khoản (tùy chọn)"
+          placeholder={t('accounts.descriptionPlaceholder')}
           maxLength={500}
           showCount
         />
@@ -163,9 +169,9 @@ export const AccountForm: React.FC<IAccountFormProps> = ({
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit" loading={loading}>
-            {initialValues ? 'Cập nhật' : 'Tạo mới'}
+            {initialValues ? t('common.update') : t('common.create')}
           </Button>
-          {onCancel && <Button onClick={onCancel}>Hủy</Button>}
+          {onCancel && <Button onClick={onCancel}>{t('common.cancel')}</Button>}
         </Space>
       </Form.Item>
     </Form>

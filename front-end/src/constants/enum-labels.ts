@@ -1,6 +1,18 @@
 /**
  * Enum Label Mappings for Display
- * Maps numeric enum values to user-friendly Vietnamese labels
+ * ⚠️ DEPRECATED: This file is deprecated. Use useI18n hook instead.
+ *
+ * @deprecated Use `useI18n().getAccountTypeLabel()` and similar methods instead.
+ *
+ * New Usage:
+ * ```tsx
+ * import { useI18n } from '@hooks';
+ *
+ * function MyComponent() {
+ *   const { getAccountTypeLabel } = useI18n();
+ *   return <div>{getAccountTypeLabel(AccountType.CASH)}</div>;
+ * }
+ * ```
  */
 
 import {
@@ -21,6 +33,17 @@ import {
   TransactionType,
 } from './enums';
 
+// Currency Code Mapping - Convert integer enum to ISO currency code
+export const CurrencyCodeMap: Record<Currency, string> = {
+  [Currency.VND]: 'VND',
+  [Currency.USD]: 'USD',
+  [Currency.EUR]: 'EUR',
+  [Currency.JPY]: 'JPY',
+  [Currency.CNY]: 'CNY',
+};
+
+// Legacy Vietnamese-only labels - DEPRECATED
+// Use useI18n() hook for multilingual support
 export const AccountTypeLabels: Record<AccountType, string> = {
   [AccountType.CASH]: 'Tiền mặt',
   [AccountType.BANK]: 'Ngân hàng',
@@ -47,15 +70,6 @@ export const BudgetPeriodLabels: Record<BudgetPeriod, string> = {
   [BudgetPeriod.QUARTERLY]: 'Hàng quý',
   [BudgetPeriod.YEARLY]: 'Hàng năm',
   [BudgetPeriod.CUSTOM]: 'Tùy chỉnh',
-};
-
-// Currency Code Mapping - Convert integer enum to ISO currency code
-export const CurrencyCodeMap: Record<Currency, string> = {
-  [Currency.VND]: 'VND',
-  [Currency.USD]: 'USD',
-  [Currency.EUR]: 'EUR',
-  [Currency.JPY]: 'JPY',
-  [Currency.CNY]: 'CNY',
 };
 
 export const CurrencyLabels: Record<Currency, string> = {

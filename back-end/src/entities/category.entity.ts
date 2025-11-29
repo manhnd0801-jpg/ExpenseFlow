@@ -1,13 +1,13 @@
 import {
-    Column,
-    CreateDateColumn,
-    DeleteDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToMany,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { CategoryType } from '../common/constants/enums';
 import { Budget } from './budget.entity';
@@ -32,9 +32,9 @@ export class Category {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @Column({ 
+  @Column({
     type: 'smallint',
-    comment: '1=Income, 2=Expense'
+    comment: '1=Income, 2=Expense',
   })
   type: CategoryType;
 
@@ -69,21 +69,21 @@ export class Category {
   deletedAt?: Date;
 
   // Relationships
-  @ManyToOne(() => User, user => user.categories, { nullable: true })
+  @ManyToOne(() => User, (user) => user.categories, { nullable: true })
   @JoinColumn({ name: 'user_id' })
   user?: User;
 
-  @ManyToOne(() => Category, category => category.subcategories, { nullable: true })
+  @ManyToOne(() => Category, (category) => category.subcategories, { nullable: true })
   @JoinColumn({ name: 'parent_id' })
   parent?: Category;
 
-  @OneToMany(() => Category, category => category.parent)
+  @OneToMany(() => Category, (category) => category.parent)
   subcategories: Category[];
 
-  @OneToMany(() => Transaction, transaction => transaction.category)
+  @OneToMany(() => Transaction, (transaction) => transaction.category)
   transactions: Transaction[];
 
-  @OneToMany(() => Budget, budget => budget.category)
+  @OneToMany(() => Budget, (budget) => budget.category)
   budgets: Budget[];
 
   // Virtual properties

@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { FrequencyType } from '../common/constants/enums';
+import { DateToString, DecimalToNumber } from '../common/decorators';
 import { Category } from './category.entity';
 import { User } from './user.entity';
 
@@ -32,6 +33,7 @@ export class RecurringTransaction {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   amount: number;
 

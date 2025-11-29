@@ -45,6 +45,19 @@ export const selectIsLoading = createSelector([selectAuthState], (auth) => auth.
 export const selectError = createSelector([selectAuthState], (auth) => auth.error);
 
 /**
+ * Select login success flag
+ */
+export const selectIsLoginSuccess = createSelector(
+  [selectAuthState],
+  (auth) => auth.isLoginSuccess
+);
+
+/**
+ * Select hydrated flag
+ */
+export const selectIsHydrated = createSelector([selectAuthState], (auth) => auth.isHydrated);
+
+/**
  * Select auth state for debugging (dev only)
  */
 export const selectAuthDebug = createSelector([selectAuthState], (auth) => ({
@@ -52,4 +65,5 @@ export const selectAuthDebug = createSelector([selectAuthState], (auth) => ({
   isAuthenticated: auth.isAuthenticated,
   isLoading: auth.isLoading,
   error: auth.error,
+  isLoginSuccess: auth.isLoginSuccess,
 }));

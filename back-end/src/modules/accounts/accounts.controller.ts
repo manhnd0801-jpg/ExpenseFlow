@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { GetUser } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/guards';
 import { AccountsService } from './accounts.service';
@@ -8,7 +9,7 @@ import { CreateAccountDto, UpdateAccountDto } from './dto';
 @ApiTags('Accounts')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('accounts')
+@Controller(ApiRoutes.ACCOUNTS.BASE)
 export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}
 
@@ -26,7 +27,7 @@ export class AccountsController {
     return { success: true, data };
   }
 
-  @Get('total-balance')
+  @Get(ApiRoutes.ACCOUNTS.TOTAL_BALANCE)
   @ApiOperation({ summary: 'Get total balance across all accounts' })
   async getTotalBalance(@GetUser('id') userId: string) {
     const totalBalance = await this.accountsService.getTotalBalance(userId);

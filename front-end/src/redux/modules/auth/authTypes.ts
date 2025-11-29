@@ -24,6 +24,8 @@ export interface IAuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
+  isLoginSuccess?: boolean; // Flag to distinguish actual login vs hydration
+  isHydrated?: boolean; // Flag to track if auth state has been hydrated from localStorage
 }
 
 /**

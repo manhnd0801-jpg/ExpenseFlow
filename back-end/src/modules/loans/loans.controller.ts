@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CreateLoanDto, CreateLoanPaymentDto, QueryLoanDto, SimulatePrepaymentDto, UpdateLoanDto } from './dto';
 import { LoansService } from './loans.service';
@@ -19,7 +20,7 @@ import { LoansService } from './loans.service';
 @ApiTags('Loans')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('loans')
+@Controller(ApiRoutes.LOANS.BASE)
 export class LoansController {
   constructor(private readonly loansService: LoansService) {}
 
@@ -89,7 +90,7 @@ export class LoansController {
     };
   }
 
-  @Get(':id/amortization-schedule')
+  @Get(`:id/${ApiRoutes.LOANS.AMORTIZATION_SCHEDULE}`)
   @ApiOperation({ summary: 'Get loan amortization schedule' })
   @ApiResponse({ status: 200, description: 'Returns amortization schedule' })
   async getAmortizationSchedule(@Request() req, @Param('id', ParseUUIDPipe) id: string) {
@@ -102,7 +103,7 @@ export class LoansController {
     };
   }
 
-  @Post(':id/simulate-prepayment')
+  @Post(`:id/${ApiRoutes.LOANS.SIMULATE_PREPAYMENT}`)
   @ApiOperation({ summary: 'Simulate prepayment impact' })
   @ApiResponse({ status: 200, description: 'Returns prepayment simulation' })
   async simulatePrepayment(@Request() req, @Param('id', ParseUUIDPipe) id: string, @Body() dto: SimulatePrepaymentDto) {
@@ -115,7 +116,7 @@ export class LoansController {
     };
   }
 
-  @Post(':id/payments')
+  @Post(`:id/${ApiRoutes.LOANS.PAYMENTS}`)
   @ApiOperation({ summary: 'Record loan payment' })
   @ApiResponse({ status: 201, description: 'Payment recorded successfully' })
   async recordPayment(@Request() req, @Param('id', ParseUUIDPipe) id: string, @Body() dto: CreateLoanPaymentDto) {
@@ -127,7 +128,7 @@ export class LoansController {
     };
   }
 
-  @Get(':id/payments')
+  @Get(`:id/${ApiRoutes.LOANS.PAYMENTS}`)
   @ApiOperation({ summary: 'Get loan payments history' })
   @ApiResponse({ status: 200, description: 'Returns payment history' })
   async getPayments(@Request() req, @Param('id', ParseUUIDPipe) id: string) {

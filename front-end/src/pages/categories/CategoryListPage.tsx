@@ -4,60 +4,21 @@
  */
 
 import { CategoryForm } from '@/components/organisms/CategoryForm';
-import { CategoryTypeLabels } from '@/constants/enum-labels';
 import { CategoryType } from '@/constants/enums';
+import { useI18n } from '@/hooks/useI18n';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import { categoryActions } from '@redux/modules/categories';
 import type { ICategory } from '@redux/modules/categories/categoryTypes';
-import { Button, Card, Empty, Modal, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Modal, Space, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
-
-/**
- * Styled Components
- */
-const PageWrapper = styled.div`
-  padding: 24px;
-
-  .page-header {
-    margin-bottom: 24px;
-
-    h1 {
-      margin: 0 0 8px 0;
-      font-size: 24px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    p {
-      margin: 0;
-      font-size: 14px;
-      color: #6b7280;
-    }
-  }
-
-  .actions-row {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    margin-bottom: 24px;
-  }
-
-  .category-color {
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-right: 8px;
-    border: 1px solid #e5e7eb;
-  }
-`;
 
 /**
  * Category List Page Component
  */
 export const CategoryListPage: React.FC = () => {
+  const { t, getCategoryTypeLabel } = useI18n();
   const dispatch = useAppDispatch();
 
   // Redux state
@@ -67,6 +28,8 @@ export const CategoryListPage: React.FC = () => {
   // Local state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(null);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   // Load categories on mount
   useEffect(() => {
@@ -95,7 +58,16 @@ export const CategoryListPage: React.FC = () => {
 
   // Handle delete category
   const handleDelete = (categoryId: string) => {
-    dispatch(categoryActions.deleteCategoryRequest({ id: categoryId }));
+    setSelectedCategoryId(categoryId);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedCategoryId) {
+      dispatch(categoryActions.deleteCategoryRequest({ id: selectedCategoryId }));
+      setIsDeleteModalVisible(false);
+      setSelectedCategoryId(null);
+    }
   };
 
   // Handle open modal
@@ -115,9 +87,9 @@ export const CategoryListPage: React.FC = () => {
   };
 
   // Table columns
-  const columns = [
+  const columns: ColumnsType<ICategory> = [
     {
-      title: 'Tên danh mục',
+      title: t('categories.categoryName'),
       dataIndex: 'name',
       key: 'name',
       render: (text: string, record: ICategory) => (
@@ -125,8 +97,15 @@ export const CategoryListPage: React.FC = () => {
           {record.icon && <span style={{ fontSize: '20px', marginRight: 8 }}>{record.icon}</span>}
           {record.color && (
             <span
-              className="category-color"
-              style={{ backgroundColor: record.color, marginRight: 8 }}
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 4,
+                backgroundColor: record.color,
+                display: 'inline-block',
+                marginRight: 8,
+                border: '1px solid #e5e7eb',
+              }}
             />
           )}
           <div>
@@ -139,103 +118,92 @@ export const CategoryListPage: React.FC = () => {
       ),
     },
     {
-      title: 'Loại',
+      title: t('categories.categoryType'),
       dataIndex: 'type',
       key: 'type',
       render: (type: CategoryType) => (
         <Tag color={type === CategoryType.INCOME ? 'green' : 'blue'}>
-          {CategoryTypeLabels[type]}
+          {getCategoryTypeLabel(type)}
         </Tag>
       ),
     },
     {
-      title: 'Mặc định',
+      title: t('common.default'),
       dataIndex: 'isDefault',
       key: 'isDefault',
       render: (isDefault: boolean) => (
-        <Tag color={isDefault ? 'orange' : 'default'}>{isDefault ? 'Có' : 'Không'}</Tag>
+        <Tag color={isDefault ? 'orange' : 'default'}>
+          {isDefault ? t('common.yes') : t('common.no')}
+        </Tag>
       ),
     },
     {
-      title: 'Trạng thái',
+      title: t('common.status'),
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'red'}>{isActive ? 'Hoạt động' : 'Không hoạt động'}</Tag>
+        <Tag color={isActive ? 'green' : 'red'}>
+          {isActive ? t('common.active') : t('common.inactive')}
+        </Tag>
       ),
     },
     {
-      title: 'Thao tác',
+      title: t('common.actions'),
       key: 'actions',
-      width: 150,
+      width: 120,
+      align: 'center',
       render: (_: any, record: ICategory) => (
         <Space size="small">
           <Button
             type="text"
-            size="small"
             icon={<EditOutlined />}
             onClick={() => handleOpenModal(record)}
-            title="Chỉnh sửa"
+            title={t('common.edit')}
           />
-          <Popconfirm
-            title="Xóa danh mục?"
-            description="Bạn có chắc muốn xóa danh mục này không?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button type="text" size="small" danger icon={<DeleteOutlined />} title="Xóa" />
-          </Popconfirm>
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record.id)}
+            title={t('common.delete')}
+          />
         </Space>
       ),
     },
   ];
 
   return (
-    <PageWrapper>
-      {/* Page Header */}
-      <div className="page-header">
-        <h1>Quản lý danh mục</h1>
-        <p>Quản lý các danh mục thu nhập và chi tiêu của bạn</p>
-      </div>
-
-      {/* Actions */}
-      <div className="actions-row">
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
-          Thêm danh mục
-        </Button>
-      </div>
-
-      {/* Categories Table */}
-      <Card>
+    <div>
+      <Card
+        title={t('categories.title')}
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
+            {t('categories.addCategory')}
+          </Button>
+        }
+      >
         <Table
           columns={columns}
-          dataSource={categories.map((cat: ICategory) => ({ ...cat, key: cat.id }))}
+          dataSource={categories}
+          rowKey="id"
+          bordered
           loading={isLoading}
           pagination={{
-            pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Tổng ${total} danh mục`,
-          }}
-          locale={{
-            emptyText: (
-              <Empty
-                description="Chưa có danh mục nào"
-                style={{ marginTop: '48px', marginBottom: '48px' }}
-              />
-            ),
+            showQuickJumper: true,
+            showTotal: (total) => t('categories.totalCategories', { total }),
           }}
         />
       </Card>
 
       {/* Create/Edit Modal */}
       <Modal
-        title={editingCategory ? 'Chỉnh sửa danh mục' : 'Tạo danh mục mới'}
+        title={editingCategory ? t('categories.editCategory') : t('categories.addCategory')}
         open={isModalOpen}
         onCancel={handleCloseModal}
         footer={null}
         width={600}
+        destroyOnClose
       >
         <CategoryForm
           initialValues={editingCategory || undefined}
@@ -244,7 +212,21 @@ export const CategoryListPage: React.FC = () => {
           loading={isLoading}
         />
       </Modal>
-    </PageWrapper>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title={t('categories.deleteCategory')}
+        open={isDeleteModalVisible}
+        onOk={handleConfirmDelete}
+        onCancel={() => setIsDeleteModalVisible(false)}
+        okText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        okButtonProps={{ danger: true }}
+      >
+        <p>{t('categories.deleteConfirmMessage')}</p>
+        <p>{t('common.irreversibleAction')}</p>
+      </Modal>
+    </div>
   );
 };
 

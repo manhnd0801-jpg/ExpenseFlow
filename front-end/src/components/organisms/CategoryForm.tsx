@@ -3,8 +3,8 @@
  * Reusable form for creating and editing categories
  */
 
-import { CategoryTypeLabels } from '@/constants/enum-labels';
 import { CategoryType } from '@/constants/enums';
+import { useI18n } from '@/hooks/useI18n';
 import type { ICategory, ICreateCategoryPayload } from '@redux/modules/categories/categoryTypes';
 import { Button, Form, Input, Select, Space } from 'antd';
 import React, { useEffect } from 'react';
@@ -25,6 +25,7 @@ export const CategoryForm: React.FC<ICategoryFormProps> = ({
   onCancel,
   loading = false,
 }) => {
+  const { t, getCategoryTypeLabel } = useI18n();
   const [form] = Form.useForm();
 
   // Set initial values if editing
@@ -59,42 +60,42 @@ export const CategoryForm: React.FC<ICategoryFormProps> = ({
       }}
     >
       <Form.Item
-        label="Tên danh mục"
+        label={t('categories.categoryName')}
         name="name"
         rules={[
-          { required: true, message: 'Vui lòng nhập tên danh mục' },
-          { min: 2, message: 'Tên phải có ít nhất 2 ký tự' },
+          { required: true, message: t('categories.nameRequired') },
+          { min: 2, message: t('categories.nameMinLength') },
         ]}
       >
-        <Input placeholder="Ví dụ: Ăn uống, Xăng xe, Lương..." />
+        <Input placeholder={t('categories.namePlaceholder')} />
       </Form.Item>
 
       <Form.Item
-        label="Loại danh mục"
+        label={t('categories.categoryType')}
         name="type"
-        rules={[{ required: true, message: 'Vui lòng chọn loại danh mục' }]}
+        rules={[{ required: true, message: t('categories.typeRequired') }]}
       >
-        <Select placeholder="Chọn loại">
-          {Object.entries(CategoryTypeLabels).map(([value, label]) => (
-            <Select.Option key={value} value={Number(value)}>
-              {label}
+        <Select placeholder={t('categories.selectType')}>
+          {[CategoryType.EXPENSE, CategoryType.INCOME].map((value) => (
+            <Select.Option key={value} value={value}>
+              {getCategoryTypeLabel(value)}
             </Select.Option>
           ))}
         </Select>
       </Form.Item>
 
-      <Form.Item label="Màu sắc" name="color">
+      <Form.Item label={t('categories.color')} name="color">
         <Input type="color" style={{ width: '100px' }} />
       </Form.Item>
 
-      <Form.Item label="Icon" name="icon">
-        <Input placeholder="Ví dụ: 🍔, ⛽, 💰..." maxLength={2} />
+      <Form.Item label={t('categories.icon')} name="icon">
+        <Input placeholder={t('categories.iconPlaceholder')} maxLength={2} />
       </Form.Item>
 
-      <Form.Item label="Mô tả" name="description">
+      <Form.Item label={t('categories.description')} name="description">
         <Input.TextArea
           rows={3}
-          placeholder="Ghi chú về danh mục (tùy chọn)"
+          placeholder={t('categories.descriptionPlaceholder')}
           maxLength={500}
           showCount
         />
@@ -103,9 +104,9 @@ export const CategoryForm: React.FC<ICategoryFormProps> = ({
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit" loading={loading}>
-            {initialValues ? 'Cập nhật' : 'Tạo mới'}
+            {initialValues ? t('common.update') : t('common.create')}
           </Button>
-          {onCancel && <Button onClick={onCancel}>Hủy</Button>}
+          {onCancel && <Button onClick={onCancel}>{t('common.cancel')}</Button>}
         </Space>
       </Form.Item>
     </Form>

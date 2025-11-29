@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { plainToClass } from 'class-transformer';
+import { ApiRoutes } from '../../common/constants';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CreateReminderDto, ReminderResponseDto, UpdateReminderDto } from './dto';
 import { RemindersService } from './reminders.service';
@@ -21,7 +22,7 @@ import { RemindersService } from './reminders.service';
 @ApiTags('Reminders')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('reminders')
+@Controller(ApiRoutes.REMINDERS.BASE)
 export class RemindersController {
   constructor(private readonly remindersService: RemindersService) {}
 
@@ -63,7 +64,7 @@ export class RemindersController {
     };
   }
 
-  @Get('upcoming')
+  @Get(ApiRoutes.REMINDERS.UPCOMING)
   @ApiOperation({ summary: 'Get upcoming reminders (next 7 days)' })
   @ApiResponse({
     status: 200,
@@ -81,7 +82,7 @@ export class RemindersController {
     };
   }
 
-  @Get('by-type')
+  @Get(ApiRoutes.REMINDERS.BY_TYPE)
   @ApiOperation({ summary: 'Get reminders by type' })
   @ApiQuery({
     name: 'type',
@@ -147,7 +148,7 @@ export class RemindersController {
     };
   }
 
-  @Patch(':id/complete')
+  @Patch(`:id/${ApiRoutes.REMINDERS.COMPLETE}`)
   @ApiOperation({ summary: 'Mark reminder as completed' })
   @ApiParam({ name: 'id', description: 'Reminder ID' })
   @ApiResponse({

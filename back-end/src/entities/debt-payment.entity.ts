@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { PaymentStatus } from '../common/constants/enums';
+import { DateToString, DecimalToNumber } from '../common/decorators';
 import { Debt } from './debt.entity';
 
 /**
@@ -22,16 +23,17 @@ export class DebtPayment {
   @Column({ name: 'debt_id', type: 'uuid' })
   debtId: string;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   amount: number;
 
   @Column({ type: 'date' })
   paymentDate: Date;
 
-  @Column({ 
+  @Column({
     type: 'smallint',
     default: PaymentStatus.PAID,
-    comment: '1=Pending, 2=Paid, 3=Failed, 4=Skipped'
+    comment: '1=Pending, 2=Paid, 3=Failed, 4=Skipped',
   })
   status: PaymentStatus;
 
@@ -51,7 +53,7 @@ export class DebtPayment {
   updatedAt: Date;
 
   // Relationships
-  @ManyToOne(() => Debt, debt => debt.payments)
+  @ManyToOne(() => Debt, (debt) => debt.payments)
   @JoinColumn({ name: 'debt_id' })
   debt: Debt;
 

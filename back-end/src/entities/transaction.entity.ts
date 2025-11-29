@@ -1,14 +1,15 @@
 import {
-    Column,
-    CreateDateColumn,
-    DeleteDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { TransactionType } from '../common/constants/enums';
+import { DecimalToNumber } from '../common/decorators';
 import { Account } from './account.entity';
 import { Category } from './category.entity';
 import { Event } from './event.entity';
@@ -38,12 +39,13 @@ export class Transaction {
   @Column({ name: 'event_id', type: 'uuid', nullable: true })
   eventId?: string;
 
-  @Column({ 
+  @Column({
     type: 'smallint',
-    comment: '1=Income, 2=Expense, 3=Transfer'
+    comment: '1=Income, 2=Expense, 3=Transfer',
   })
   type: TransactionType;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   amount: number;
 
@@ -74,12 +76,14 @@ export class Transaction {
   @Column({ name: 'recurring_id', type: 'uuid', nullable: true })
   recurringId?: string; // Link to recurring transaction template
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
   exchangeRate: number; // For multi-currency transactions
 
   @Column({ type: 'varchar', length: 3, nullable: true })
   originalCurrency: string; // Original currency code
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
   originalAmount: number; // Original amount before conversion
 
@@ -93,23 +97,23 @@ export class Transaction {
   deletedAt?: Date;
 
   // Relationships
-  @ManyToOne(() => User, user => user.transactions)
+  @ManyToOne(() => User, (user) => user.transactions)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Account, account => account.transactions)
+  @ManyToOne(() => Account, (account) => account.transactions)
   @JoinColumn({ name: 'account_id' })
   account: Account;
 
-  @ManyToOne(() => Account, account => account.transfersTo, { nullable: true })
+  @ManyToOne(() => Account, (account) => account.transfersTo, { nullable: true })
   @JoinColumn({ name: 'to_account_id' })
   toAccount?: Account;
 
-  @ManyToOne(() => Category, category => category.transactions, { nullable: true })
+  @ManyToOne(() => Category, (category) => category.transactions, { nullable: true })
   @JoinColumn({ name: 'category_id' })
   category?: Category;
 
-  @ManyToOne(() => Event, event => event.transactions, { nullable: true })
+  @ManyToOne(() => Event, (event) => event.transactions, { nullable: true })
   @JoinColumn({ name: 'event_id' })
   event?: Event;
 

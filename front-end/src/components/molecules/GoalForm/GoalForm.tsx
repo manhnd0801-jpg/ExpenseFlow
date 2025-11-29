@@ -2,6 +2,7 @@
  * Goal Form Component
  * For creating and editing financial goals
  */
+import { useI18n } from '@/hooks/useI18n';
 import {
   CalendarOutlined,
   CheckCircleOutlined,
@@ -258,6 +259,7 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
   initialValues,
   loading = false,
 }) => {
+  const { t, getGoalTypeLabel: getLabelForGoalType } = useI18n();
   const [form] = Form.useForm();
   const [targetAmount, setTargetAmount] = useState<number>(0);
   const [goalType, setGoalType] = useState<number>(GoalType.SAVING);
@@ -312,19 +314,20 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
   };
 
   const getGoalTypeInfo = (type: number) => {
+    const label = getLabelForGoalType(type);
     switch (type) {
       case GoalType.SAVING:
-        return { icon: '💰', name: 'Tiết kiệm', description: 'Tích lũy tiền cho tương lai' };
+        return { icon: '💰', name: label, description: t('goals.savingDescription') };
       case GoalType.PURCHASE:
-        return { icon: '🛍️', name: 'Mua sắm', description: 'Tiết kiệm để mua một món đồ' };
+        return { icon: '🛍️', name: label, description: t('goals.purchaseDescription') };
       case GoalType.INVESTMENT:
-        return { icon: '📈', name: 'Đầu tư', description: 'Mục tiêu đầu tư tài chính' };
+        return { icon: '📈', name: label, description: t('goals.investmentDescription') };
       case GoalType.DEBT_PAYOFF:
-        return { icon: '💳', name: 'Trả nợ', description: 'Thanh toán khoản nợ' };
+        return { icon: '💳', name: label, description: t('goals.debtPayoffDescription') };
       case GoalType.EMERGENCY:
-        return { icon: '🚨', name: 'Khẩn cấp', description: 'Quỹ dự phòng khẩn cấp' };
+        return { icon: '🚨', name: label, description: t('goals.emergencyDescription') };
       default:
-        return { icon: '🎯', name: 'Khác', description: 'Mục tiêu tài chính khác' };
+        return { icon: '🎯', name: label, description: t('goals.otherDescription') };
     }
   };
 
@@ -358,7 +361,7 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
 
   return (
     <Modal
-      title={initialValues?.id ? 'Chỉnh sửa mục tiêu' : 'Tạo mục tiêu mới'}
+      title={initialValues?.id ? t('goals.editGoal') : t('goals.createNewGoal')}
       open={visible}
       onCancel={onCancel}
       width={700}
@@ -373,27 +376,30 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
               <div className="goal-stats">
                 <div className="stat-item">
                   <div className="stat-value">{formatCurrency(currentAmount)}</div>
-                  <div className="stat-label">Hiện tại</div>
+                  <div className="stat-label">{t('goals.current')}</div>
                 </div>
                 <div className="stat-item">
                   <div className="stat-value">{Math.round(progressPercent)}%</div>
-                  <div className="stat-label">Tiến độ</div>
+                  <div className="stat-label">{t('goals.progress')}</div>
                 </div>
                 <div className="stat-item">
                   <div className="stat-value">
-                    {monthsRemaining > 0 ? `${monthsRemaining} tháng` : 'Quá hạn'}
+                    {monthsRemaining > 0
+                      ? t('goals.monthsRemaining', { months: monthsRemaining })
+                      : t('goals.overdue')}
                   </div>
-                  <div className="stat-label">Thời gian còn lại</div>
+                  <div className="stat-label">{t('goals.timeRemaining')}</div>
                 </div>
               </div>
               <div className="goal-progress">
                 <div className="progress-info">
                   <span>
-                    Hiện tại:{' '}
+                    {t('goals.current')}:{' '}
                     <span className="current-amount">{formatCurrency(currentAmount)}</span>
                   </span>
                   <span>
-                    Mục tiêu: <span className="target-amount">{formatCurrency(targetAmount)}</span>
+                    {t('goals.target')}:{' '}
+                    <span className="target-amount">{formatCurrency(targetAmount)}</span>
                   </span>
                 </div>
                 <Progress
@@ -412,29 +418,29 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
           <div className="form-section">
             <div className="section-title">
               <TrophyOutlined />
-              Thông tin cơ bản
+              {t('goals.basicInfo')}
             </div>
 
             <Row gutter={16}>
               <Col span={24}>
                 <Form.Item
-                  label="Tên mục tiêu"
+                  label={t('goals.goalName')}
                   name="name"
-                  rules={[{ required: true, message: 'Vui lòng nhập tên mục tiêu' }]}
+                  rules={[{ required: true, message: t('goals.nameRequired') }]}
                 >
-                  <Input placeholder="VD: Tiết kiệm mua nhà" size="large" />
+                  <Input placeholder={t('goals.namePlaceholder')} size="large" />
                 </Form.Item>
               </Col>
             </Row>
 
-            <Form.Item label="Mô tả (tùy chọn)" name="description">
-              <TextArea placeholder="Mô tả chi tiết về mục tiêu này..." rows={3} maxLength={300} />
+            <Form.Item label={t('goals.descriptionOptional')} name="description">
+              <TextArea placeholder={t('goals.descriptionPlaceholder')} rows={3} maxLength={300} />
             </Form.Item>
           </div>
 
           {/* Goal Type Selection */}
           <div className="form-section">
-            <div className="section-title">Loại mục tiêu</div>
+            <div className="section-title">{t('goals.goalType')}</div>
             <Form.Item name="type">
               <div className="goal-type-selector">
                 {goalTypes.map((type) => {
@@ -459,10 +465,12 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
           <div className="form-section">
             <div className="section-title">
               <DollarOutlined />
-              Số tiền mục tiêu
+              {t('goals.targetAmount')}
             </div>
             <Form.Item
-              label={`Số tiền bạn muốn ${goalType === GoalType.DEBT_PAYOFF ? 'trả' : 'tiết kiệm'}`}
+              label={
+                goalType === GoalType.DEBT_PAYOFF ? t('goals.amountToPay') : t('goals.amountToSave')
+              }
               required
             >
               <InputNumber
@@ -474,7 +482,7 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
                   const parsed = value?.replace(/\$\s?|(,*)/g, '');
                   return parsed ? Number(parsed) : 0;
                 }}
-                placeholder="Nhập số tiền"
+                placeholder={t('goals.enterAmount')}
                 size="large"
                 min={1000}
               />
@@ -486,12 +494,12 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
             <Col span={12}>
               <div className="section-title">
                 <CalendarOutlined />
-                Thời hạn
+                {t('goals.deadline')}
               </div>
               <Form.Item
-                label="Ngày hoàn thành mục tiêu"
+                label={t('goals.completionDate')}
                 name="targetDate"
-                rules={[{ required: true, message: 'Vui lòng chọn thời hạn' }]}
+                rules={[{ required: true, message: t('goals.deadlineRequired') }]}
               >
                 <DatePicker
                   style={{ width: '100%' }}
@@ -504,22 +512,22 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
             <Col span={12}>
               <div className="section-title">
                 <RocketOutlined />
-                Độ ưu tiên
+                {t('goals.priority')}
               </div>
-              <Form.Item label="Mức độ quan trọng" name="priority">
+              <Form.Item label={t('goals.importance')} name="priority">
                 <Radio.Group
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
                   className="priority-selector"
                 >
                   <Radio.Button value={1} className="priority-low">
-                    Thấp
+                    {t('goals.lowPriority')}
                   </Radio.Button>
                   <Radio.Button value={2} className="priority-medium">
-                    Trung bình
+                    {t('goals.mediumPriority')}
                   </Radio.Button>
                   <Radio.Button value={3} className="priority-high">
-                    Cao
+                    {t('goals.highPriority')}
                   </Radio.Button>
                 </Radio.Group>
               </Form.Item>
@@ -529,7 +537,7 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
           {/* Milestones (for existing goals) */}
           {initialValues?.id && initialValues.milestones && initialValues.milestones.length > 0 && (
             <div className="form-section">
-              <Card title="Các cột mốc" size="small">
+              <Card title={t('goals.milestones')} size="small">
                 <div className="milestones-section">
                   {initialValues.milestones.map((milestone, index) => (
                     <div key={index} className="milestone-item">
@@ -543,10 +551,10 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
                       <div className="milestone-status">
                         {milestone.isCompleted ? (
                           <Tag color="success" icon={<CheckCircleOutlined />}>
-                            Hoàn thành
+                            {t('goals.completed')}
                           </Tag>
                         ) : (
-                          <Tag color="processing">Đang thực hiện</Tag>
+                          <Tag color="processing">{t('goals.inProgress')}</Tag>
                         )}
                       </div>
                     </div>
@@ -562,12 +570,12 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
           <Row gutter={12}>
             <Col span={12}>
               <Button block size="large" onClick={onCancel}>
-                Hủy
+                {t('common.cancel')}
               </Button>
             </Col>
             <Col span={12}>
               <Button type="primary" block size="large" loading={loading} onClick={handleSubmit}>
-                {initialValues?.id ? 'Cập nhật mục tiêu' : 'Tạo mục tiêu'}
+                {initialValues?.id ? t('goals.updateGoal') : t('goals.createGoal')}
               </Button>
             </Col>
           </Row>

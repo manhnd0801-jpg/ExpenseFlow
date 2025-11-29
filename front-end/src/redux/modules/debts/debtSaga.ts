@@ -28,9 +28,11 @@ import {
 } from './debtSlice';
 
 // Fetch debts
-function* fetchDebtsSaga() {
+function* fetchDebtsSaga(): Generator<any, void, any> {
   try {
-    const debts: IDebt[] = yield call(debtService.getDebts);
+    const response = yield call(debtService.getDebts);
+    const debts = Array.isArray(response) ? response : (response as any)?.data || [];
+
     yield put(fetchDebtsSuccess(debts));
   } catch (error: any) {
     yield put(fetchDebtsFailure(error.message || 'Lỗi khi tải danh sách nợ'));

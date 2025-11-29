@@ -3,9 +3,9 @@
  * Handles async side effects for transaction operations (API calls)
  */
 
-import { transactionService } from '@/services/api/transactionService';
+import { transactionService } from '@/services/transactionService';
 import { PayloadAction } from '@reduxjs/toolkit';
-import { put, select, takeEvery } from 'redux-saga/effects';
+import { call, put, select, takeEvery } from 'redux-saga/effects';
 import { selectTransactionFilters, selectTransactionPagination } from './transactionSelectors';
 import { transactionActions } from './transactionSlice';
 import {
@@ -26,7 +26,7 @@ function* listTransactionsSaga(
     const filters = action.payload;
     const pagination = yield select(selectTransactionPagination);
 
-    const response: any = yield transactionService.listTransactions({
+    const response: any = yield call(transactionService.getTransactions, {
       ...filters,
       page: pagination.page,
       limit: pagination.limit,
@@ -59,7 +59,8 @@ function* listTransactionsSaga(
       })
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch transactions';
+    const errorMessage =
+      error instanceof Error && error.message ? error.message : 'Failed to fetch transactions';
     yield put(transactionActions.listTransactionsFailure(errorMessage));
   }
 }
@@ -73,7 +74,7 @@ function* createTransactionSaga(
   try {
     const payload = action.payload;
 
-    const newTransaction: ITransaction = yield transactionService.createTransaction(payload);
+    const newTransaction: ITransaction = yield call(transactionService.createTransaction, payload);
 
     yield put(transactionActions.createTransactionSuccess(newTransaction));
 
@@ -81,7 +82,8 @@ function* createTransactionSaga(
     const filters = yield select(selectTransactionFilters);
     yield put(transactionActions.listTransactionsRequest(filters));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create transaction';
+    const errorMessage =
+      error instanceof Error && error.message ? error.message : 'Failed to create transaction';
     yield put(transactionActions.createTransactionFailure(errorMessage));
   }
 }
@@ -93,9 +95,13 @@ function* updateTransactionSaga(
   action: PayloadAction<IUpdateTransactionPayload>
 ): Generator<any, void, any> {
   try {
-    const payload = action.payload;
+    const { id, ...data } = action.payload;
 
-    const updatedTransaction: ITransaction = yield transactionService.updateTransaction(payload);
+    const updatedTransaction: ITransaction = yield call(
+      transactionService.updateTransaction,
+      id,
+      data
+    );
 
     yield put(transactionActions.updateTransactionSuccess(updatedTransaction));
 
@@ -103,7 +109,8 @@ function* updateTransactionSaga(
     const filters = yield select(selectTransactionFilters);
     yield put(transactionActions.listTransactionsRequest(filters));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update transaction';
+    const errorMessage =
+      error instanceof Error && error.message ? error.message : 'Failed to update transaction';
     yield put(transactionActions.updateTransactionFailure(errorMessage));
   }
 }
@@ -117,7 +124,7 @@ function* deleteTransactionSaga(
   try {
     const { id } = action.payload;
 
-    yield transactionService.deleteTransaction(id);
+    yield call(transactionService.deleteTransaction, id);
 
     yield put(transactionActions.deleteTransactionSuccess(id));
 
@@ -125,7 +132,8 @@ function* deleteTransactionSaga(
     const filters = yield select(selectTransactionFilters);
     yield put(transactionActions.listTransactionsRequest(filters));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete transaction';
+    const errorMessage =
+      error instanceof Error && error.message ? error.message : 'Failed to delete transaction';
     yield put(transactionActions.deleteTransactionFailure(errorMessage));
   }
 }
@@ -137,11 +145,12 @@ function* getTransactionSaga(action: PayloadAction<string>): Generator<any, void
   try {
     const id = action.payload;
 
-    const transaction: ITransaction = yield transactionService.getTransaction(id);
+    const transaction: ITransaction = yield call(transactionService.getTransactionById, id);
 
     yield put(transactionActions.getTransactionSuccess(transaction));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch transaction';
+    const errorMessage =
+      error instanceof Error && error.message ? error.message : 'Failed to fetch transaction';
     yield put(transactionActions.getTransactionFailure(errorMessage));
   }
 }

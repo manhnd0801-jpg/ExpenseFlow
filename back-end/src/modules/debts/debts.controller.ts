@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { GetUser } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/guards';
 import { DebtsService } from './debts.service';
@@ -8,7 +9,7 @@ import { CreateDebtDto, RecordDebtPaymentDto, UpdateDebtDto } from './dto';
 @ApiTags('Debts')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('debts')
+@Controller(ApiRoutes.DEBTS.BASE)
 export class DebtsController {
   constructor(private readonly debtsService: DebtsService) {}
 
@@ -47,14 +48,14 @@ export class DebtsController {
     return { success: true, message: 'Debt deleted successfully' };
   }
 
-  @Post(':id/payments')
+  @Post(`:id/${ApiRoutes.DEBTS.PAYMENTS}`)
   @ApiOperation({ summary: 'Record a debt payment' })
   async recordPayment(@GetUser('id') userId: string, @Param('id') id: string, @Body() dto: RecordDebtPaymentDto) {
     const data = await this.debtsService.recordPayment(userId, id, dto);
     return { success: true, data, message: 'Payment recorded successfully' };
   }
 
-  @Get(':id/payments')
+  @Get(`:id/${ApiRoutes.DEBTS.PAYMENTS}`)
   @ApiOperation({ summary: 'Get debt payment history' })
   async getPayments(@GetUser('id') userId: string, @Param('id') id: string) {
     const data = await this.debtsService.getPayments(userId, id);

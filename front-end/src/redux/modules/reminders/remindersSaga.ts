@@ -6,6 +6,7 @@ import type { ReminderType } from '@/constants/enums';
 import type { IReminder } from '@/types/models';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { reminderService } from '@services/index';
+import { translate } from '@utils/i18nService';
 import { call, put, takeLatest } from 'redux-saga/effects';
 import {
   createReminderFailure,
@@ -37,7 +38,9 @@ function* fetchRemindersSaga() {
     const reminders: IReminder[] = yield call(reminderService.getReminders);
     yield put(fetchRemindersSuccess(reminders));
   } catch (error: any) {
-    yield put(fetchRemindersFailure(error.message || 'Lỗi khi tải danh sách nhắc nhở'));
+    yield put(
+      fetchRemindersFailure(error.message || translate('notifications.error.fetchReminders'))
+    );
   }
 }
 
@@ -47,7 +50,11 @@ function* fetchUpcomingRemindersSaga() {
     const reminders: IReminder[] = yield call(reminderService.getUpcomingReminders);
     yield put(fetchUpcomingRemindersSuccess(reminders));
   } catch (error: any) {
-    yield put(fetchUpcomingRemindersFailure(error.message || 'Lỗi khi tải nhắc nhở sắp tới'));
+    yield put(
+      fetchUpcomingRemindersFailure(
+        error.message || translate('notifications.error.fetchUpcomingReminders')
+      )
+    );
   }
 }
 
@@ -57,7 +64,11 @@ function* fetchRemindersByTypeSaga(action: PayloadAction<ReminderType>) {
     const reminders: IReminder[] = yield call(reminderService.getRemindersByType, action.payload);
     yield put(fetchRemindersByTypeSuccess(reminders));
   } catch (error: any) {
-    yield put(fetchRemindersByTypeFailure(error.message || 'Lỗi khi tải nhắc nhở theo loại'));
+    yield put(
+      fetchRemindersByTypeFailure(
+        error.message || translate('notifications.error.fetchRemindersByType')
+      )
+    );
   }
 }
 
@@ -67,7 +78,9 @@ function* createReminderSaga(action: PayloadAction<any>) {
     const reminder: IReminder = yield call(reminderService.createReminder, action.payload);
     yield put(createReminderSuccess(reminder));
   } catch (error: any) {
-    yield put(createReminderFailure(error.message || 'Lỗi khi tạo nhắc nhở'));
+    yield put(
+      createReminderFailure(error.message || translate('notifications.error.createReminder'))
+    );
   }
 }
 
@@ -81,7 +94,9 @@ function* updateReminderSaga(action: PayloadAction<{ id: string; data: any }>) {
     );
     yield put(updateReminderSuccess(reminder));
   } catch (error: any) {
-    yield put(updateReminderFailure(error.message || 'Lỗi khi cập nhật nhắc nhở'));
+    yield put(
+      updateReminderFailure(error.message || translate('notifications.error.updateReminder'))
+    );
   }
 }
 
@@ -91,7 +106,11 @@ function* markReminderCompleteSaga(action: PayloadAction<string>) {
     const reminder: IReminder = yield call(reminderService.markReminderComplete, action.payload);
     yield put(markReminderCompleteSuccess(reminder));
   } catch (error: any) {
-    yield put(markReminderCompleteFailure(error.message || 'Lỗi khi đánh dấu hoàn thành'));
+    yield put(
+      markReminderCompleteFailure(
+        error.message || translate('notifications.error.markReminderComplete')
+      )
+    );
   }
 }
 
@@ -101,7 +120,9 @@ function* deleteReminderSaga(action: PayloadAction<string>) {
     yield call(reminderService.deleteReminder, action.payload);
     yield put(deleteReminderSuccess(action.payload));
   } catch (error: any) {
-    yield put(deleteReminderFailure(error.message || 'Lỗi khi xóa nhắc nhở'));
+    yield put(
+      deleteReminderFailure(error.message || translate('notifications.error.deleteReminder'))
+    );
   }
 }
 

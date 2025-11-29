@@ -1,9 +1,9 @@
 /**
  * Debts List Page
  */
-import { DebtStatusLabels } from '@/constants/enum-labels';
 import { DebtStatus, DebtType } from '@/constants/enums';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useI18n } from '@/hooks/useI18n';
 import { deleteDebtRequest, fetchDebtsRequest } from '@/redux/modules/debts';
 import { IDebt } from '@/types/models';
 import { formatCurrency, formatDate } from '@/utils/formatters';
@@ -21,9 +21,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 const { TabPane } = Tabs;
 
 const DebtsListPage: React.FC = () => {
+  const { t, getDebtStatusLabel } = useI18n();
   const dispatch = useAppDispatch();
   const debts = useAppSelector((state) => state.debts.debts);
   const isLoading = useAppSelector((state) => state.debts.loading);
+  console.log(debts, 'debts');
 
   const [activeTab, setActiveTab] = useState('1');
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -35,9 +37,9 @@ const DebtsListPage: React.FC = () => {
   }, [dispatch]);
 
   // Filter debts by type
-  const lending = useMemo(() => debts.filter((debt) => debt.type === DebtType.LENDING), [debts]);
+  const lending = useMemo(() => debts?.filter((debt) => debt.type === DebtType.LENDING), [debts]);
   const borrowing = useMemo(
-    () => debts.filter((debt) => debt.type === DebtType.BORROWING),
+    () => debts?.filter((debt) => debt.type === DebtType.BORROWING),
     [debts]
   );
 
@@ -76,18 +78,18 @@ const DebtsListPage: React.FC = () => {
       color = 'orange';
     }
 
-    return <Tag color={color}>{DebtStatusLabels[status as keyof typeof DebtStatusLabels]}</Tag>;
+    return <Tag color={color}>{getDebtStatusLabel(status)}</Tag>;
   };
 
   const columns: ColumnsType<IDebt> = [
     {
-      title: 'Người liên quan',
+      title: t('debts.personName'),
       dataIndex: 'personName',
       key: 'personName',
       render: (name: string) => <div style={{ fontWeight: 500 }}>{name}</div>,
     },
     {
-      title: 'Số tiền',
+      title: t('debts.amount'),
       dataIndex: 'amount',
       key: 'amount',
       render: (amount: number) => (
@@ -95,23 +97,23 @@ const DebtsListPage: React.FC = () => {
       ),
     },
     {
-      title: 'Lãi suất (%/năm)',
+      title: t('debts.interestRate'),
       dataIndex: 'interestRate',
       key: 'interestRate',
-      render: (rate?: number) => (rate ? `${rate}%` : 'Không lãi'),
+      render: (rate?: number) => (rate ? `${rate}%` : t('debts.interestRateNoInterest')),
     },
     {
-      title: 'Ngày vay',
+      title: t('debts.borrowedDate'),
       dataIndex: 'borrowedDate',
       key: 'borrowedDate',
       render: (date: string) => formatDate(date),
     },
     {
-      title: 'Hạn trả',
+      title: t('debts.dueDate'),
       dataIndex: 'dueDate',
       key: 'dueDate',
       render: (date?: string) => {
-        if (!date) return 'Không xác định';
+        if (!date) return t('debts.dueDateUndetermined');
 
         const dueDate = new Date(date);
         const now = new Date();
@@ -120,19 +122,19 @@ const DebtsListPage: React.FC = () => {
         return (
           <div style={{ color: isOverdue ? '#f5222d' : 'inherit' }}>
             {formatDate(date)}
-            {isOverdue && <div style={{ fontSize: '12px' }}>Quá hạn</div>}
+            {isOverdue && <div style={{ fontSize: '12px' }}>{t('debts.overdue')}</div>}
           </div>
         );
       },
     },
     {
-      title: 'Trạng thái',
+      title: t('debts.status'),
       dataIndex: 'status',
       key: 'status',
       render: renderStatus,
     },
     {
-      title: 'Thao tác',
+      title: t('debts.actions'),
       key: 'actions',
       render: (_, debt) => (
         <Space size="small">
@@ -140,14 +142,14 @@ const DebtsListPage: React.FC = () => {
             type="text"
             icon={<EyeOutlined />}
             onClick={() => handleView(debt)}
-            title="Xem chi tiết"
+            title={t('debts.viewDetail')}
           />
           {debt.status === DebtStatus.ACTIVE && (
             <Button
               type="text"
               icon={<DollarOutlined />}
               onClick={() => handlePayment(debt)}
-              title="Ghi nhận thanh toán"
+              title={t('debts.recordPayment')}
               style={{ color: '#52c41a' }}
             />
           )}
@@ -155,14 +157,14 @@ const DebtsListPage: React.FC = () => {
             type="text"
             icon={<EditOutlined />}
             onClick={() => handleEdit(debt)}
-            title="Chỉnh sửa"
+            title={t('debts.editDebtAction')}
           />
           <Button
             type="text"
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(debt.id)}
-            title="Xóa"
+            title={t('debts.deleteDebtAction')}
           />
         </Space>
       ),
@@ -171,9 +173,9 @@ const DebtsListPage: React.FC = () => {
 
   return (
     <div>
-      <Card title="Quản lý Công nợ">
+      <Card title={t('debts.title')}>
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
-          <TabPane tab="Cho vay" key="1">
+          <TabPane tab={t('debts.lending')} key="1">
             <div style={{ marginBottom: 16 }}>
               <Button
                 type="primary"
@@ -182,26 +184,27 @@ const DebtsListPage: React.FC = () => {
                   console.log('Create lending');
                 }}
               >
-                Tạo khoản cho vay
+                {t('debts.createLending')}
               </Button>
             </div>
             <Table
+              bordered
               columns={columns}
               dataSource={lending}
               rowKey="id"
               loading={isLoading}
               locale={{
-                emptyText: isLoading ? 'Đang tải...' : 'Chưa có khoản cho vay nào',
+                emptyText: isLoading ? t('common.loading') : t('debts.noLendingDebts'),
               }}
               pagination={{
                 showSizeChanger: true,
                 showQuickJumper: true,
-                showTotal: (total) => `Tổng ${total} khoản cho vay`,
+                showTotal: (total) => t('debts.totalLending', { total }),
               }}
             />
           </TabPane>
 
-          <TabPane tab="Đi vay" key="2">
+          <TabPane tab={t('debts.borrowing')} key="2">
             <div style={{ marginBottom: 16 }}>
               <Button
                 type="primary"
@@ -210,21 +213,22 @@ const DebtsListPage: React.FC = () => {
                   console.log('Create borrowing');
                 }}
               >
-                Tạo khoản đi vay
+                {t('debts.createBorrowing')}
               </Button>
             </div>
             <Table
+              bordered
               columns={columns}
               dataSource={borrowing}
               rowKey="id"
               loading={isLoading}
               locale={{
-                emptyText: isLoading ? 'Đang tải...' : 'Chưa có khoản đi vay nào',
+                emptyText: isLoading ? t('common.loading') : t('debts.noBorrowingDebts'),
               }}
               pagination={{
                 showSizeChanger: true,
                 showQuickJumper: true,
-                showTotal: (total) => `Tổng ${total} khoản đi vay`,
+                showTotal: (total) => t('debts.totalBorrowing', { total }),
               }}
             />
           </TabPane>
@@ -232,16 +236,16 @@ const DebtsListPage: React.FC = () => {
       </Card>
 
       <Modal
-        title="Xác nhận xóa"
+        title={t('debts.confirmDelete')}
         open={isDeleteModalVisible}
         onOk={handleConfirmDelete}
         onCancel={() => setIsDeleteModalVisible(false)}
-        okText="Xóa"
-        cancelText="Hủy"
+        okText={t('common.delete')}
+        cancelText={t('common.cancel')}
         okButtonProps={{ danger: true }}
       >
-        <p>Bạn có chắc chắn muốn xóa công nợ này không?</p>
-        <p>Hành động này không thể hoàn tác.</p>
+        <p>{t('debts.confirmDeleteMessage')}</p>
+        <p>{t('debts.deleteWarning')}</p>
       </Modal>
     </div>
   );

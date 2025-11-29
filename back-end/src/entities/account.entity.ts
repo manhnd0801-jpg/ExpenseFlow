@@ -1,15 +1,16 @@
 import {
-    Column,
-    CreateDateColumn,
-    DeleteDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToMany,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { AccountType, Currency } from '../common/constants/enums';
+import { DecimalToNumber } from '../common/decorators';
 import { Transaction } from './transaction.entity';
 import { User } from './user.entity';
 
@@ -28,19 +29,20 @@ export class Account {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @Column({ 
+  @Column({
     type: 'smallint',
-    comment: '1=Cash, 2=Bank, 3=Credit Card, 4=E-Wallet, 5=Investment'
+    comment: '1=Cash, 2=Bank, 3=Credit Card, 4=E-Wallet, 5=Investment',
   })
   type: AccountType;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
   balance: number;
 
-  @Column({ 
-    type: 'smallint', 
+  @Column({
+    type: 'smallint',
     default: Currency.VND,
-    comment: '1=VND, 2=USD, 3=EUR, 4=JPY, 5=CNY'
+    comment: '1=VND, 2=USD, 3=EUR, 4=JPY, 5=CNY',
   })
   currency: Currency;
 
@@ -65,9 +67,11 @@ export class Account {
   @Column({ type: 'boolean', default: true })
   includeInTotal: boolean; // Whether to include in total balance calculation
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
   creditLimit: number; // For credit cards
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   interestRate: number; // Annual interest rate percentage
 
@@ -81,14 +85,14 @@ export class Account {
   deletedAt?: Date;
 
   // Relationships
-  @ManyToOne(() => User, user => user.accounts)
+  @ManyToOne(() => User, (user) => user.accounts)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @OneToMany(() => Transaction, transaction => transaction.account)
+  @OneToMany(() => Transaction, (transaction) => transaction.account)
   transactions: Transaction[];
 
-  @OneToMany(() => Transaction, transaction => transaction.toAccount)
+  @OneToMany(() => Transaction, (transaction) => transaction.toAccount)
   transfersTo: Transaction[];
 
   // Virtual properties

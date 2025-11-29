@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { PaymentStatus } from '../common/constants/enums';
+import { DateToString, DecimalToNumber } from '../common/decorators';
 import { Loan } from './loan.entity';
 
 /**
@@ -23,18 +24,23 @@ export class LoanPayment {
   @Column({ type: 'date', nullable: true })
   dueDate: Date; // Original due date for scheduled payments
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   amount: number; // Total payment amount
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   principalAmount: number; // Principal portion
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   interestAmount: number; // Interest portion
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
   prepaymentAmount: number; // Extra payment towards principal
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   remainingPrincipal: number; // Principal balance after this payment
 

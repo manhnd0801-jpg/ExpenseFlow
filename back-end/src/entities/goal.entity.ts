@@ -1,14 +1,15 @@
 import {
-    Column,
-    CreateDateColumn,
-    DeleteDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { GoalStatus } from '../common/constants/enums';
+import { DateToString, DecimalToNumber } from '../common/decorators';
 import { User } from './user.entity';
 
 /**
@@ -29,28 +30,32 @@ export class Goal {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   targetAmount: number;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
   currentAmount: number;
 
   @Column({ type: 'date', nullable: true })
   targetDate: Date;
 
-  @Column({ 
+  @Column({
     type: 'smallint',
     default: GoalStatus.ACTIVE,
-    comment: '1=Active, 2=Completed, 3=Cancelled'
+    comment: '1=Active, 2=Completed, 3=Cancelled',
   })
   status: GoalStatus;
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
   monthlyTarget: number; // Suggested monthly contribution
 
   @Column({ type: 'boolean', default: false })
   autoContribute: boolean; // Auto-contribute from income
 
+  @DecimalToNumber()
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   autoContributePercentage: number; // Percentage of income to auto-contribute
 
@@ -76,7 +81,7 @@ export class Goal {
   deletedAt?: Date;
 
   // Relationships
-  @ManyToOne(() => User, user => user.goals)
+  @ManyToOne(() => User, (user) => user.goals)
   @JoinColumn({ name: 'user_id' })
   user: User;
 

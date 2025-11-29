@@ -60,7 +60,6 @@ axiosInstance.interceptors.request.use(
     }
 
     if (import.meta.env.DEV) {
-      console.log('🚀 API Request:', config.method?.toUpperCase(), config.url, config.data);
     }
 
     return config;
@@ -80,7 +79,6 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse & { config: IApiRequestConfig }) => {
     if (import.meta.env.DEV) {
-      console.log('✅ API Response:', response.config.url, response.data);
     }
 
     // Show success message if configured
@@ -90,11 +88,27 @@ axiosInstance.interceptors.response.use(
     }
 
     // Extract data field from backend response structure { success, data, message }
-    // If response has a 'data' field, return that, otherwise return the whole response
-    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+    console.log('Interceptor debug:', {
+      hasResponseData: !!response.data,
+      isObject: typeof response.data === 'object',
+      hasSuccess: response.data?.success === true,
+      hasDataProp: response.data?.hasOwnProperty('data'),
+      successValue: response.data?.success,
+      actualResponse: response.data,
+    });
+
+    // More robust check for backend response format
+    if (
+      response.data &&
+      typeof response.data === 'object' &&
+      response.data.success === true &&
+      response.data.hasOwnProperty('data')
+    ) {
+      console.log('✅ Interceptor extracting data:', response.data.data);
       return response.data.data;
     }
 
+    console.log('❌ Interceptor returning whole response:', response.data);
     return response.data;
   },
   (error) => {
@@ -131,7 +145,6 @@ axiosInstance.interceptors.response.use(
     message.error(errorMessage);
 
     if (import.meta.env.DEV) {
-      console.error('❌ API Error:', error);
     }
 
     return Promise.reject(error);

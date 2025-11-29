@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { GetUser } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/guards';
 import { BudgetsService } from './budgets.service';
@@ -8,7 +9,7 @@ import { CreateBudgetDto, UpdateBudgetDto } from './dto';
 @ApiTags('Budgets')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('budgets')
+@Controller(ApiRoutes.BUDGETS.BASE)
 export class BudgetsController {
   constructor(private readonly budgetsService: BudgetsService) {}
 

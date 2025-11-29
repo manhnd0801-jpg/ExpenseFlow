@@ -3,14 +3,15 @@
  * Handles event/project management API calls
  */
 
-import api from './api';
-import { API_ENDPOINTS } from '@utils/constants';
 import type {
+  ICreateEventRequest,
   IEvent,
   IEventSummary,
-  ICreateEventRequest,
   IUpdateEventRequest,
 } from '@/types/models';
+import { API_ENDPOINTS } from '@utils/constants';
+import { getServiceMessages } from '@utils/i18nService';
+import api from './api';
 
 export const eventService = {
   /**
@@ -38,9 +39,10 @@ export const eventService = {
    * Create new event
    */
   createEvent: async (data: ICreateEventRequest): Promise<IEvent> => {
+    const messages = getServiceMessages();
     return api.post<IEvent>(API_ENDPOINTS.EVENTS.CREATE, data, {
       showSuccessMessage: true,
-      successMessage: 'Tạo sự kiện thành công',
+      successMessage: messages.events.created,
     });
   },
 
@@ -48,9 +50,10 @@ export const eventService = {
    * Update existing event
    */
   updateEvent: async (id: string, data: IUpdateEventRequest): Promise<IEvent> => {
+    const messages = getServiceMessages();
     return api.patch<IEvent>(API_ENDPOINTS.EVENTS.UPDATE(id), data, {
       showSuccessMessage: true,
-      successMessage: 'Cập nhật sự kiện thành công',
+      successMessage: messages.events.updated,
     });
   },
 
@@ -58,9 +61,10 @@ export const eventService = {
    * Delete event (soft delete)
    */
   deleteEvent: async (id: string): Promise<void> => {
+    const messages = getServiceMessages();
     return api.delete<void>(API_ENDPOINTS.EVENTS.DELETE(id), {
       showSuccessMessage: true,
-      successMessage: 'Xóa sự kiện thành công',
+      successMessage: messages.events.deleted,
     });
   },
 };

@@ -2,6 +2,8 @@
  * Budget Form Component
  * For creating and editing budgets with advanced features
  */
+import { useI18n } from '@/hooks/useI18n';
+import type { IBudget } from '@/types/models';
 import { CalendarOutlined, DollarOutlined, WarningOutlined } from '@ant-design/icons';
 import {
   Button,
@@ -27,20 +29,7 @@ import { formatCurrency } from '../../../utils/formatters';
 const { TextArea } = Input;
 const { Option } = Select;
 
-interface IBudget {
-  id?: string;
-  name: string;
-  description?: string;
-  amount: number;
-  period: number;
-  categoryId?: string;
-  startDate: string;
-  endDate: string;
-  alertThreshold: number;
-  isActive: boolean;
-  spentAmount?: number;
-}
-
+// Local interface for category (simple version for form)
 interface ICategory {
   id: string;
   name: string;
@@ -48,13 +37,20 @@ interface ICategory {
   color?: string;
 }
 
+// Extended interface for form usage
+interface IBudgetForm extends IBudget {
+  description?: string; // Alias for note field
+  spentAmount?: number; // Alias for spent field
+}
+
 interface IBudgetFormProps {
   visible: boolean;
   onCancel: () => void;
-  onSubmit: (values: IBudget) => void;
-  initialValues?: Partial<IBudget>;
+  onSubmit: (values: IBudgetForm) => void;
+  initialValues?: Partial<IBudgetForm>;
   categories: ICategory[];
   loading?: boolean;
+  isModal?: boolean; // Control whether to render as Modal or inline form
 }
 
 const FormWrapper = styled.div`
@@ -196,24 +192,30 @@ export const BudgetForm: React.FC<IBudgetFormProps> = ({
   initialValues,
   categories,
   loading = false,
+  isModal = true,
 }) => {
+  const { t, getBudgetPeriodLabel } = useI18n();
   const [form] = Form.useForm();
   const [budgetAmount, setBudgetAmount] = useState<number>(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [alertThreshold, setAlertThreshold] = useState<number>(80);
   const [period, setPeriod] = useState<number>(BudgetPeriod.MONTHLY);
 
-  const spentAmount = initialValues?.spentAmount || 0;
+  const spentAmount = initialValues?.spentAmount || initialValues?.spent || 0;
   const progressPercent = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0;
   const remainingAmount = Math.max(0, budgetAmount - spentAmount);
 
   useEffect(() => {
     if (initialValues) {
-      form.setFieldsValue({
+      // Map backend fields to form fields
+      const formData = {
         ...initialValues,
+        description: initialValues.note, // Map 'note' to 'description' for form
         startDate: initialValues.startDate ? dayjs(initialValues.startDate) : dayjs(),
         endDate: initialValues.endDate ? dayjs(initialValues.endDate) : dayjs().add(1, 'month'),
-      });
+      };
+
+      form.setFieldsValue(formData);
       setBudgetAmount(initialValues.amount || 0);
       setSelectedCategory(initialValues.categoryId || '');
       setAlertThreshold(initialValues.alertThreshold || 80);
@@ -268,15 +270,41 @@ export const BudgetForm: React.FC<IBudgetFormProps> = ({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+
+      // Safe date formatting - handle both dayjs objects and Date objects
+      const formatDate = (dateValue: any) => {
+        if (!dateValue) return null;
+
+        // If it's a dayjs object
+        if (dateValue && typeof dateValue.format === 'function') {
+          return dateValue.format('YYYY-MM-DD');
+        }
+
+        // If it's a Date object or ISO string
+        if (dateValue instanceof Date) {
+          return dateValue.toISOString().split('T')[0];
+        }
+
+        // If it's already a string (ISO format)
+        if (typeof dateValue === 'string') {
+          return dateValue.split('T')[0];
+        }
+
+        return null;
+      };
+
       const formattedValues = {
         ...values,
         amount: budgetAmount,
         categoryId: selectedCategory,
         alertThreshold,
         period,
-        startDate: values.startDate.toISOString(),
-        endDate: values.endDate.toISOString(),
+        note: values.description, // Map 'description' back to 'note' for backend
+        startDate: formatDate(values.startDate),
+        endDate: formatDate(values.endDate),
       };
+
+      console.log('Formatted values for submission:', formattedValues);
       onSubmit(formattedValues);
     } catch (error) {
       console.error('Form validation error:', error);
@@ -300,32 +328,26 @@ export const BudgetForm: React.FC<IBudgetFormProps> = ({
   // };
 
   const periodOptions = [
-    { value: BudgetPeriod.WEEKLY, label: 'Tuần' },
-    { value: BudgetPeriod.MONTHLY, label: 'Tháng' },
-    { value: BudgetPeriod.QUARTERLY, label: 'Quý' },
-    { value: BudgetPeriod.YEARLY, label: 'Năm' },
+    { value: BudgetPeriod.WEEKLY, label: getBudgetPeriodLabel(BudgetPeriod.WEEKLY) },
+    { value: BudgetPeriod.MONTHLY, label: getBudgetPeriodLabel(BudgetPeriod.MONTHLY) },
+    { value: BudgetPeriod.QUARTERLY, label: getBudgetPeriodLabel(BudgetPeriod.QUARTERLY) },
+    { value: BudgetPeriod.YEARLY, label: getBudgetPeriodLabel(BudgetPeriod.YEARLY) },
   ];
 
-  return (
-    <Modal
-      title={initialValues?.id ? 'Chỉnh sửa ngân sách' : 'Tạo ngân sách mới'}
-      open={visible}
-      onCancel={onCancel}
-      width={600}
-      footer={null}
-      destroyOnClose
-    >
-      <FormWrapper>
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          {/* Budget Amount Section */}
-          <div className="form-section">
-            <div className="section-title">
-              <DollarOutlined />
-              Số tiền ngân sách
-            </div>
-            <div className="amount-section">
-              <div className="amount-label">Số tiền dự kiến chi tiêu</div>
-              <div className="amount-display">{formatCurrency(budgetAmount)}</div>
+  // Form content component
+  const formContent = (
+    <FormWrapper>
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        {/* Budget Amount Section */}
+        <div className="form-section">
+          <div className="section-title">
+            <DollarOutlined />
+            {t('budgets.budgetAmount')}
+          </div>
+          <div className="amount-section">
+            <div className="amount-label">{t('budgets.expectedSpending')}</div>
+            <div className="amount-display">{formatCurrency(budgetAmount)}</div>
+            <Form.Item name="amount">
               <InputNumber
                 value={budgetAmount}
                 onChange={(value) => setBudgetAmount(value || 0)}
@@ -335,180 +357,200 @@ export const BudgetForm: React.FC<IBudgetFormProps> = ({
                   const parsed = value?.replace(/\$\s?|(,*)/g, '');
                   return parsed ? Number(parsed) : 0;
                 }}
-                placeholder="Nhập số tiền"
+                placeholder={t('budgets.enterAmount')}
                 size="large"
               />
-            </div>
-          </div>
-
-          {/* Basic Information */}
-          <div className="form-section">
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item
-                  label="Tên ngân sách"
-                  name="name"
-                  rules={[{ required: true, message: 'Vui lòng nhập tên ngân sách' }]}
-                >
-                  <Input placeholder="VD: Ngân sách ăn uống tháng 12" size="large" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Form.Item label="Mô tả (tùy chọn)" name="description">
-              <TextArea placeholder="Mô tả chi tiết về ngân sách này..." rows={3} maxLength={200} />
             </Form.Item>
           </div>
+        </div>
 
-          {/* Period Selection */}
-          <div className="form-section">
-            <div className="section-title">
-              <CalendarOutlined />
-              Chu kỳ ngân sách
-            </div>
-            <div className="period-selector">
-              <Select
-                value={period}
-                onChange={handlePeriodChange}
-                style={{ width: '100%' }}
-                size="large"
-              >
-                {periodOptions.map((option) => (
-                  <Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Option>
-                ))}
-              </Select>
-            </div>
-          </div>
-
-          {/* Date Range */}
+        {/* Basic Information */}
+        <div className="form-section">
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item
-                label="Ngày bắt đầu"
-                name="startDate"
-                rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu' }]}
+                label={t('budgets.budgetName')}
+                name="name"
+                rules={[{ required: true, message: t('budgets.nameRequired') }]}
               >
-                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" size="large" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Ngày kết thúc"
-                name="endDate"
-                rules={[{ required: true, message: 'Vui lòng chọn ngày kết thúc' }]}
-              >
-                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" size="large" />
+                <Input placeholder={t('budgets.namePlaceholder')} size="large" />
               </Form.Item>
             </Col>
           </Row>
 
-          {/* Category Selection */}
-          <div className="form-section">
-            <div className="section-title">Danh mục (tùy chọn)</div>
-            <Form.Item name="categoryId">
-              <div className="category-selection">
-                <div
-                  className={`category-card ${!selectedCategory ? 'selected' : ''}`}
-                  onClick={() => handleCategorySelect('')}
-                >
-                  <span className="category-icon">📊</span>
-                  <div className="category-name">Tất cả</div>
-                </div>
-                {categories.map((category) => (
-                  <div
-                    key={category.id}
-                    className={`category-card ${
-                      selectedCategory === category.id ? 'selected' : ''
-                    }`}
-                    onClick={() => handleCategorySelect(category.id)}
-                  >
-                    <span className="category-icon">{category.icon || '📝'}</span>
-                    <div className="category-name">{category.name}</div>
-                  </div>
-                ))}
+          <Form.Item label={t('budgets.descriptionOptional')} name="description">
+            <TextArea placeholder={t('budgets.descriptionPlaceholder')} rows={3} maxLength={200} />
+          </Form.Item>
+        </div>
+
+        {/* Period Selection */}
+        <div className="form-section">
+          <div className="section-title">
+            <CalendarOutlined />
+            {t('budgets.budgetPeriod')}
+          </div>
+          <div className="period-selector">
+            <Select
+              value={period}
+              onChange={handlePeriodChange}
+              style={{ width: '100%' }}
+              size="large"
+            >
+              {periodOptions.map((option) => (
+                <Option key={option.value} value={option.value}>
+                  {option.label}
+                </Option>
+              ))}
+            </Select>
+          </div>
+        </div>
+
+        {/* Date Range */}
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              label={t('budgets.startDate')}
+              name="startDate"
+              rules={[{ required: true, message: t('budgets.startDateRequired') }]}
+            >
+              <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" size="large" />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label={t('budgets.endDate')}
+              name="endDate"
+              rules={[{ required: true, message: t('budgets.endDateRequired') }]}
+            >
+              <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" size="large" />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        {/* Category Selection */}
+        <div className="form-section">
+          <div className="section-title">{t('budgets.categoryOptional')}</div>
+          <Form.Item name="categoryId">
+            <div className="category-selection">
+              <div
+                className={`category-card ${!selectedCategory ? 'selected' : ''}`}
+                onClick={() => handleCategorySelect('')}
+              >
+                <span className="category-icon">📊</span>
+                <div className="category-name">{t('budgets.allCategories')}</div>
               </div>
+              {categories.map((category) => (
+                <div
+                  key={category.id}
+                  className={`category-card ${selectedCategory === category.id ? 'selected' : ''}`}
+                  onClick={() => handleCategorySelect(category.id)}
+                >
+                  <span className="category-icon">{category.icon || '📝'}</span>
+                  <div className="category-name">{category.name}</div>
+                </div>
+              ))}
+            </div>
+          </Form.Item>
+        </div>
+
+        {/* Alert Threshold */}
+        <div className="form-section">
+          <div className="threshold-section">
+            <div className="threshold-info">
+              <WarningOutlined />
+              {t('budgets.alertWhenReaching', { threshold: alertThreshold })}
+            </div>
+            <Form.Item label={t('budgets.alertThreshold')} name="alertThreshold">
+              <InputNumber
+                value={alertThreshold}
+                onChange={(value) => setAlertThreshold(value || 80)}
+                min={1}
+                max={100}
+                style={{ width: '100%' }}
+                formatter={(value) => `${value}%`}
+                parser={(value) => {
+                  const parsed = value?.replace('%', '');
+                  return parsed ? Number(parsed) : 0;
+                }}
+              />
             </Form.Item>
           </div>
+        </div>
 
-          {/* Alert Threshold */}
+        {/* Active Status */}
+        <Form.Item label={t('common.status')} name="isActive" valuePropName="checked">
+          <Switch
+            checkedChildren={t('budgets.activated')}
+            unCheckedChildren={t('budgets.paused')}
+          />
+        </Form.Item>
+
+        {/* Progress Preview (for edit mode) */}
+        {initialValues?.id && (
           <div className="form-section">
-            <div className="threshold-section">
-              <div className="threshold-info">
-                <WarningOutlined />
-                Cảnh báo khi đạt {alertThreshold}% ngân sách
-              </div>
-              <Form.Item label="Ngưỡng cảnh báo (%)" name="alertThreshold">
-                <InputNumber
-                  value={alertThreshold}
-                  onChange={(value) => setAlertThreshold(value || 80)}
-                  min={1}
-                  max={100}
-                  style={{ width: '100%' }}
-                  formatter={(value) => `${value}%`}
-                  parser={(value) => {
-                    const parsed = value?.replace('%', '');
-                    return parsed ? Number(parsed) : 0;
+            <Card title={t('budgets.currentBudgetStatus')} size="small">
+              <div className="progress-preview">
+                <div className="progress-info">
+                  <span>
+                    {t('budgets.spent')}:{' '}
+                    <span className="spent-amount">{formatCurrency(spentAmount)}</span>
+                  </span>
+                  <span>
+                    {t('budgets.remaining')}:{' '}
+                    <span className="remaining-amount">{formatCurrency(remainingAmount)}</span>
+                  </span>
+                </div>
+                <Progress
+                  percent={Math.round(progressPercent)}
+                  status={progressPercent > alertThreshold ? 'exception' : 'normal'}
+                  strokeColor={{
+                    '0%': '#52c41a',
+                    '70%': '#faad14',
+                    '90%': '#ff7875',
+                    '100%': '#ff4d4f',
                   }}
                 />
-              </Form.Item>
-            </div>
+              </div>
+            </Card>
           </div>
+        )}
 
-          {/* Active Status */}
-          <Form.Item label="Trạng thái" name="isActive" valuePropName="checked">
-            <Switch checkedChildren="Kích hoạt" unCheckedChildren="Tạm dừng" />
-          </Form.Item>
+        <Divider />
 
-          {/* Progress Preview (for edit mode) */}
-          {initialValues?.id && (
-            <div className="form-section">
-              <Card title="Tình trạng ngân sách hiện tại" size="small">
-                <div className="progress-preview">
-                  <div className="progress-info">
-                    <span>
-                      Đã chi: <span className="spent-amount">{formatCurrency(spentAmount)}</span>
-                    </span>
-                    <span>
-                      Còn lại:{' '}
-                      <span className="remaining-amount">{formatCurrency(remainingAmount)}</span>
-                    </span>
-                  </div>
-                  <Progress
-                    percent={Math.round(progressPercent)}
-                    status={progressPercent > alertThreshold ? 'exception' : 'normal'}
-                    strokeColor={{
-                      '0%': '#52c41a',
-                      '70%': '#faad14',
-                      '90%': '#ff7875',
-                      '100%': '#ff4d4f',
-                    }}
-                  />
-                </div>
-              </Card>
-            </div>
-          )}
-
-          <Divider />
-
-          {/* Action Buttons */}
-          <Row gutter={12}>
-            <Col span={12}>
-              <Button block size="large" onClick={onCancel}>
-                Hủy
-              </Button>
-            </Col>
-            <Col span={12}>
-              <Button type="primary" block size="large" loading={loading} onClick={handleSubmit}>
-                {initialValues?.id ? 'Cập nhật ngân sách' : 'Tạo ngân sách'}
-              </Button>
-            </Col>
-          </Row>
-        </Form>
-      </FormWrapper>
-    </Modal>
+        {/* Action Buttons */}
+        <Row gutter={12}>
+          <Col span={12}>
+            <Button block size="large" onClick={onCancel}>
+              {t('common.cancel')}
+            </Button>
+          </Col>
+          <Col span={12}>
+            <Button type="primary" block size="large" loading={loading} onClick={handleSubmit}>
+              {initialValues?.id ? t('budgets.updateBudget') : t('budgets.createBudget')}
+            </Button>
+          </Col>
+        </Row>
+      </Form>
+    </FormWrapper>
   );
+
+  // Conditional rendering based on isModal prop
+  if (isModal) {
+    return (
+      <Modal
+        title={initialValues?.id ? t('budgets.editBudget') : t('budgets.createNewBudget')}
+        open={visible}
+        onCancel={onCancel}
+        width={600}
+        footer={null}
+        destroyOnClose
+      >
+        {formContent}
+      </Modal>
+    );
+  }
+
+  return formContent;
 };
 
 export default BudgetForm;

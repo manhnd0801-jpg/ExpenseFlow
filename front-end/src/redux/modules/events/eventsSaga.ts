@@ -5,6 +5,7 @@
 import type { IEvent, IEventSummary } from '@/types/models';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { eventService } from '@services/index';
+import { translate } from '@utils/i18nService';
 import { call, put, takeLatest } from 'redux-saga/effects';
 import {
   createEventFailure,
@@ -33,7 +34,7 @@ function* fetchEventsSaga() {
     const events: IEvent[] = yield call(eventService.getEvents);
     yield put(fetchEventsSuccess(events));
   } catch (error: any) {
-    yield put(fetchEventsFailure(error.message || 'Lỗi khi tải danh sách sự kiện'));
+    yield put(fetchEventsFailure(error.message || translate('notifications.error.fetchEvents')));
   }
 }
 
@@ -43,7 +44,7 @@ function* fetchEventByIdSaga(action: PayloadAction<string>) {
     const event: IEvent = yield call(eventService.getEventById, action.payload);
     yield put(fetchEventByIdSuccess(event));
   } catch (error: any) {
-    yield put(fetchEventByIdFailure(error.message || 'Lỗi khi tải chi tiết sự kiện'));
+    yield put(fetchEventByIdFailure(error.message || translate('notifications.error.fetchEvents')));
   }
 }
 
@@ -53,7 +54,9 @@ function* fetchEventSummarySaga(action: PayloadAction<string>) {
     const summary: IEventSummary = yield call(eventService.getEventSummary, action.payload);
     yield put(fetchEventSummarySuccess(summary));
   } catch (error: any) {
-    yield put(fetchEventSummaryFailure(error.message || 'Lỗi khi tải thống kê sự kiện'));
+    yield put(
+      fetchEventSummaryFailure(error.message || translate('notifications.error.fetchEvents'))
+    );
   }
 }
 
@@ -63,7 +66,7 @@ function* createEventSaga(action: PayloadAction<any>) {
     const event: IEvent = yield call(eventService.createEvent, action.payload);
     yield put(createEventSuccess(event));
   } catch (error: any) {
-    yield put(createEventFailure(error.message || 'Lỗi khi tạo sự kiện'));
+    yield put(createEventFailure(error.message || translate('notifications.error.createEvent')));
   }
 }
 
@@ -77,7 +80,7 @@ function* updateEventSaga(action: PayloadAction<{ id: string; data: any }>) {
     );
     yield put(updateEventSuccess(event));
   } catch (error: any) {
-    yield put(updateEventFailure(error.message || 'Lỗi khi cập nhật sự kiện'));
+    yield put(updateEventFailure(error.message || translate('notifications.error.updateEvent')));
   }
 }
 
@@ -87,7 +90,7 @@ function* deleteEventSaga(action: PayloadAction<string>) {
     yield call(eventService.deleteEvent, action.payload);
     yield put(deleteEventSuccess(action.payload));
   } catch (error: any) {
-    yield put(deleteEventFailure(error.message || 'Lỗi khi xóa sự kiện'));
+    yield put(deleteEventFailure(error.message || translate('notifications.error.deleteEvent')));
   }
 }
 

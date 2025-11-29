@@ -4,81 +4,31 @@
  */
 
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Empty, Modal, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Modal, Space, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
 
 import { AccountForm } from '@/components/organisms/AccountForm';
-import { AccountTypeLabels, CurrencyCodeMap } from '@/constants/enum-labels';
+import { CurrencyCodeMap } from '@/constants/enum-labels';
 import { AccountType, Currency } from '@/constants/enums';
+import { useI18n } from '@hooks/useI18n';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import { accountActions } from '@redux/modules/accounts';
 import type { IAccount } from '@redux/modules/accounts/accountTypes';
 
-// ============================================
-// STYLED COMPONENTS
-// ============================================
-
-const StyledPageWrapper = styled.div`
-  padding: 24px;
-
-  .page-header {
-    margin-bottom: 24px;
-
-    h1 {
-      margin: 0 0 8px 0;
-      font-size: 24px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    p {
-      margin: 0;
-      font-size: 14px;
-      color: #6b7280;
-    }
-  }
-
-  .actions-row {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    margin-bottom: 24px;
-  }
-
-  .table-wrapper {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const StyledBalanceCell = styled.span`
-  font-weight: 600;
-  color: #10b981;
-`;
-
-const AccountTypeTag = styled(Tag)`
-  background-color: #f0f4ff;
-  color: #4f46e5;
-  border: 1px solid #c7d2fe;
-`;
-
-// ============================================
-// COMPONENT
-// ============================================
-
 const AccountListPage: React.FC = () => {
+  const { t, getAccountTypeLabel } = useI18n();
   const dispatch = useAppDispatch();
 
   // Redux state
   const accounts = useAppSelector((state) => state.accounts.accounts) || [];
   const isLoading = useAppSelector((state) => state.accounts.isLoading);
-  const pagination = useAppSelector((state) => state.accounts.pagination);
 
   // Local state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<IAccount | null>(null);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
   // Load accounts on mount
   useEffect(() => {
@@ -107,7 +57,16 @@ const AccountListPage: React.FC = () => {
 
   // Handle delete account
   const handleDelete = (accountId: string) => {
-    dispatch(accountActions.deleteAccountRequest({ id: accountId }));
+    setSelectedAccountId(accountId);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedAccountId) {
+      dispatch(accountActions.deleteAccountRequest({ id: selectedAccountId }));
+      setIsDeleteModalVisible(false);
+      setSelectedAccountId(null);
+    }
   };
 
   // Handle open modal
@@ -128,14 +87,11 @@ const AccountListPage: React.FC = () => {
 
   // Format currency
   const formatCurrency = (amount: number, currencyEnum: number | string = 1): string => {
-    // Convert enum number to currency code string
-    let currencyCode = 'VND'; // Default
+    let currencyCode = 'VND';
 
     if (typeof currencyEnum === 'number') {
-      // It's a Currency enum value - convert to string code
       currencyCode = CurrencyCodeMap[currencyEnum as Currency] || 'VND';
     } else if (typeof currencyEnum === 'string' && currencyEnum.length === 3) {
-      // Already a valid currency code string
       currencyCode = currencyEnum.toUpperCase();
     }
 
@@ -145,7 +101,6 @@ const AccountListPage: React.FC = () => {
         currency: currencyCode,
       }).format(amount);
     } catch (error) {
-      // Fallback if currency code is invalid
       console.warn(`Invalid currency: ${currencyEnum}, falling back to VND`);
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -155,9 +110,9 @@ const AccountListPage: React.FC = () => {
   };
 
   // Table columns
-  const columns = [
+  const columns: ColumnsType<IAccount> = [
     {
-      title: 'Name',
+      title: t('accounts.accountName'),
       dataIndex: 'name',
       key: 'name',
       render: (text: string, record: IAccount) => (
@@ -173,124 +128,117 @@ const AccountListPage: React.FC = () => {
       ),
     },
     {
-      title: 'Type',
+      title: t('accounts.accountType'),
       dataIndex: 'type',
       key: 'type',
-      render: (type: AccountType) => <AccountTypeTag>{AccountTypeLabels[type]}</AccountTypeTag>,
+      render: (type: AccountType) => <Tag color="blue">{getAccountTypeLabel(type)}</Tag>,
     },
     {
-      title: 'Balance',
+      title: t('accounts.balance'),
       dataIndex: 'balance',
       key: 'balance',
-      align: 'right' as const,
+      align: 'right',
       render: (balance: number, record: IAccount) => (
         <div>
-          <StyledBalanceCell>{formatCurrency(balance, record.currency)}</StyledBalanceCell>
+          <div style={{ fontWeight: 600, color: '#10b981' }}>
+            {formatCurrency(balance, record.currency)}
+          </div>
           <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-            Init: {formatCurrency(record.initialBalance || 0, record.currency)}
+            {t('accounts.initialBalance')}:{' '}
+            {formatCurrency(record.initialBalance || 0, record.currency)}
           </div>
         </div>
       ),
     },
     {
-      title: 'Currency',
-      dataIndex: 'currency',
-      key: 'currency',
-      width: 100,
-    },
-    {
-      title: 'Status',
+      title: t('common.status'),
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'red'}>{isActive ? 'Active' : 'Inactive'}</Tag>
+        <Tag color={isActive ? 'green' : 'red'}>
+          {isActive ? t('common.active') : t('common.inactive')}
+        </Tag>
       ),
     },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
-      width: 150,
+      width: 120,
+      align: 'center',
       render: (_: any, record: IAccount) => (
         <Space size="small">
           <Button
             type="text"
-            size="small"
             icon={<EditOutlined />}
             onClick={() => handleOpenModal(record)}
+            title={t('common.edit')}
           />
-          <Popconfirm
-            title="Delete Account"
-            description="Are you sure you want to delete this account?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
-            okButtonProps={{ danger: true }}
-          >
-            <Button type="text" size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record.id)}
+            title={t('common.delete')}
+          />
         </Space>
       ),
     },
   ];
 
   return (
-    <StyledPageWrapper>
-      {/* Page Header */}
-      <div className="page-header">
-        <h1>Accounts</h1>
-        <p>Manage your bank accounts and digital wallets</p>
-      </div>
-
-      {/* Actions */}
-      <div className="actions-row">
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
-          Add Account
-        </Button>
-      </div>
-
-      {/* Accounts Table */}
-      <Card className="table-wrapper">
+    <div>
+      <Card
+        title={t('accounts.title')}
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
+            {t('accounts.addAccount')}
+          </Button>
+        }
+      >
         <Table
           columns={columns}
-          dataSource={accounts.map((acc: IAccount) => ({ ...acc, key: acc.id }))}
+          dataSource={accounts}
+          rowKey="id"
+          bordered
           loading={isLoading}
           pagination={{
-            current: pagination.page,
-            pageSize: pagination.limit,
-            total: pagination.total,
             showSizeChanger: true,
-            showTotal: (total) => `Total ${total} accounts`,
-            onChange: (page, pageSize) => {
-              dispatch(accountActions.listAccountsRequest({ page, limit: pageSize }));
-            },
-          }}
-          locale={{
-            emptyText: (
-              <Empty
-                description="No Accounts"
-                style={{ marginTop: '48px', marginBottom: '48px' }}
-              />
-            ),
+            showQuickJumper: true,
+            showTotal: (total) => t('accounts.totalAccounts', { total }),
           }}
         />
       </Card>
 
       {/* Create/Edit Modal */}
       <Modal
-        title={editingAccount ? 'Edit Account' : 'Create Account'}
+        title={editingAccount ? t('accounts.editAccount') : t('accounts.addAccount')}
         open={isModalOpen}
         onCancel={handleCloseModal}
         footer={null}
         width={600}
+        destroyOnClose
       >
         <AccountForm
           initialValues={editingAccount || undefined}
           onSubmit={editingAccount ? handleUpdate : handleCreate}
           onCancel={handleCloseModal}
-          loading={isLoading}
         />
       </Modal>
-    </StyledPageWrapper>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title={t('accounts.deleteAccount')}
+        open={isDeleteModalVisible}
+        onOk={handleConfirmDelete}
+        onCancel={() => setIsDeleteModalVisible(false)}
+        okText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        okButtonProps={{ danger: true }}
+      >
+        <p>{t('accounts.deleteConfirmation')}</p>
+        <p>{t('common.irreversibleAction')}</p>
+      </Modal>
+    </div>
   );
 };
 

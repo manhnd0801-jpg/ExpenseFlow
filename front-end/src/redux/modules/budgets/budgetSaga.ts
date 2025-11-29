@@ -4,7 +4,7 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 import { message } from 'antd';
 import { call, put, takeLatest } from 'redux-saga/effects';
-import { budgetService } from '../../../services/api/budgetService';
+import { budgetService } from '../../../services/budgetService';
 import {
   createBudgetFailure,
   createBudgetStart,
@@ -36,8 +36,11 @@ import type {
 function* fetchBudgetsSaga(action: PayloadAction<IFetchBudgetsPayload>): Generator<any, void, any> {
   try {
     const { page = 1, pageSize = 20 } = action.payload;
+
     const response: any = yield call(budgetService.getBudgets, { page, limit: pageSize });
-    yield put(fetchBudgetsSuccess(response.items));
+    const budgets = Array.isArray(response) ? response : (response as any)?.data || [];
+    // Backend returns data directly as array, not { items: [] }
+    yield put(fetchBudgetsSuccess(budgets));
   } catch (error: any) {
     const errorMessage = error.message || 'Không thể tải danh sách ngân sách';
     yield put(fetchBudgetsFailure(errorMessage));
@@ -50,7 +53,7 @@ function* fetchBudgetsSaga(action: PayloadAction<IFetchBudgetsPayload>): Generat
  */
 function* createBudgetSaga(action: PayloadAction<ICreateBudgetPayload>): Generator<any, void, any> {
   try {
-    const response: any = yield call(() => budgetService.createBudget(action.payload as any));
+    const response: any = yield call(budgetService.createBudget, action.payload as any);
     yield put(createBudgetSuccess(response));
     message.success('Tạo ngân sách thành công');
   } catch (error: any) {

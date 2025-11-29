@@ -4,8 +4,15 @@
  */
 
 import { GithubOutlined, GoogleOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { useI18n } from '@hooks';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
-import { authActions, selectError, selectIsAuthenticated, selectIsLoading } from '@redux/modules/auth';
+import {
+  authActions,
+  selectError,
+  selectIsAuthenticated,
+  selectIsLoading,
+  selectIsLoginSuccess,
+} from '@redux/modules/auth';
 import { ROUTES } from '@utils/constants';
 import { Button, Checkbox, Divider, Form, Input, message, Space } from 'antd';
 import React from 'react';
@@ -81,6 +88,8 @@ export const LoginPage: React.FC = () => {
   const isLoading = useAppSelector(selectIsLoading);
   const error = useAppSelector(selectError);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const isLoginSuccess = useAppSelector(selectIsLoginSuccess);
+  const { t } = useI18n();
 
   /**
    * Handle form submission
@@ -95,7 +104,7 @@ export const LoginPage: React.FC = () => {
         })
       );
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Đăng nhập thất bại';
+      const errorMsg = err instanceof Error ? err.message : t('notifications.error.loadFailed');
       message.error(errorMsg);
     }
   };
@@ -115,9 +124,14 @@ export const LoginPage: React.FC = () => {
   React.useEffect(() => {
     if (isAuthenticated && !isLoading) {
       navigate(ROUTES.DASHBOARD);
-      message.success('Đăng nhập thành công!');
+      // Only show success message on actual login, not on hydration
+      if (isLoginSuccess) {
+        message.success(t('notifications.success.added'));
+        // Clear the login success flag after showing message
+        dispatch(authActions.clearLoginSuccess());
+      }
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, isLoginSuccess, navigate, dispatch]);
 
   return (
     <FormWrapper>
@@ -125,10 +139,10 @@ export const LoginPage: React.FC = () => {
         {/* Email Field */}
         <Form.Item
           name="email"
-          label="Email"
+          label={t('auth.email')}
           rules={[
-            { required: true, message: 'Vui lòng nhập email' },
-            { type: 'email', message: 'Email không hợp lệ' },
+            { required: true, message: t('validationMessages.required') },
+            { type: 'email', message: t('validationMessages.email') },
           ]}
         >
           <Input
@@ -142,20 +156,20 @@ export const LoginPage: React.FC = () => {
         {/* Password Field */}
         <Form.Item
           name="password"
-          label="Mật khẩu"
-          rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
+          label={t('auth.password')}
+          rules={[{ required: true, message: t('validationMessages.required') }]}
         >
-          <Input.Password prefix={<LockOutlined />} placeholder="Nhập mật khẩu" size="large" />
+          <Input.Password prefix={<LockOutlined />} placeholder={t('auth.password')} size="large" />
         </Form.Item>
 
         {/* Remember me & Forgot password */}
         <Form.Item>
           <Space style={{ width: '100%', justifyContent: 'space-between' }}>
             <Form.Item name="remember" valuePropName="checked" noStyle>
-              <Checkbox>Nhớ tôi</Checkbox>
+              <Checkbox>{t('auth.rememberMe')}</Checkbox>
             </Form.Item>
             <a href={ROUTES.FORGOT_PASSWORD} className="forgot-password">
-              Quên mật khẩu?
+              {t('auth.forgotPassword')}
             </a>
           </Space>
         </Form.Item>
@@ -169,12 +183,12 @@ export const LoginPage: React.FC = () => {
             size="large"
             loading={isLoading}
           >
-            Đăng nhập
+            {t('auth.login')}
           </Button>
         </Form.Item>
 
         {/* Divider */}
-        <Divider>hoặc</Divider>
+        <Divider>{t('common.or')}</Divider>
 
         {/* Social Login Buttons */}
         <Form.Item>
@@ -185,7 +199,7 @@ export const LoginPage: React.FC = () => {
               size="large"
               disabled={isLoading}
             >
-              Google
+              {t('auth.loginWithGoogle')}
             </Button>
             <Button
               className="social-btn"
@@ -201,7 +215,7 @@ export const LoginPage: React.FC = () => {
         {/* Signup Link */}
         <div className="signup-link">
           <span>
-            Chưa có tài khoản? <a href={ROUTES.SIGNUP}>Đăng ký ngay</a>
+            {t('auth.dontHaveAccount')} <a href={ROUTES.SIGNUP}>{t('auth.register')}</a>
           </span>
         </div>
       </Form>

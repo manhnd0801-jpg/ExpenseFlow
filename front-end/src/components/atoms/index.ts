@@ -22,5 +22,6 @@ export { AmountInput } from './AmountInput';
 export { CategorySelect } from './CategorySelect';
 export { ChartCard } from './ChartCard';
 export { EnumSelect } from './EnumSelect';
+export { LanguageSelector } from './LanguageSelector';
 export { ProgressCard } from './ProgressCard';
 export { StatCard } from './StatCard';

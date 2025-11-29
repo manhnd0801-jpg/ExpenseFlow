@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Type } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
+import { DateToString } from '../../../common/decorators';
 
 /**
  * Response DTO for transaction with relations
@@ -35,6 +36,7 @@ export class TransactionResponseDto {
   amount: number;
 
   @Expose()
+  @DateToString()
   @ApiProperty({ description: 'Transaction date' })
   date: Date;
 
@@ -72,49 +74,31 @@ export class TransactionResponseDto {
 
   @Expose()
   @ApiProperty({ description: 'Account details', required: false })
-  @Type(() => Object)
-  account?: {
-    id: string;
-    name: string;
-    type: number;
-    currency: number;
-  };
+  @Transform(({ value }) => value || null, { toClassOnly: true })
+  account?: any; // Will include full account object from relations
 
   @Expose()
   @ApiProperty({ description: 'Category details', required: false })
-  @Type(() => Object)
-  category?: {
-    id: string;
-    name: string;
-    type: number;
-    icon: string;
-    color: string;
-  };
+  @Transform(({ value }) => value || null, { toClassOnly: true })
+  category?: any; // Will include full category object from relations
 
   @Expose()
   @ApiProperty({ description: 'To Account details (for transfers)', required: false })
-  @Type(() => Object)
-  toAccount?: {
-    id: string;
-    name: string;
-    type: number;
-  };
+  @Transform(({ value }) => value || null, { toClassOnly: true })
+  toAccount?: any; // Will include full toAccount object from relations
 
   @Expose()
   @ApiProperty({ description: 'Event details', required: false })
-  @Type(() => Object)
-  event?: {
-    id: string;
-    name: string;
-    startDate: Date;
-    endDate: Date;
-  };
+  @Transform(({ value }) => value || null, { toClassOnly: true })
+  event?: any; // Will include full event object from relations
 
   @Expose()
+  @DateToString()
   @ApiProperty({ description: 'Created at timestamp' })
   createdAt: Date;
 
   @Expose()
+  @DateToString()
   @ApiProperty({ description: 'Updated at timestamp' })
   updatedAt: Date;
 }

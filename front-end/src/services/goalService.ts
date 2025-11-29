@@ -3,14 +3,15 @@
  * Handles financial goal-related API calls
  */
 
-import api from './api';
-import { API_ENDPOINTS } from '@utils/constants';
 import type {
-  IGoal,
-  ICreateGoalRequest,
-  IUpdateGoalRequest,
   IContributeGoalRequest,
+  ICreateGoalRequest,
+  IGoal,
+  IUpdateGoalRequest,
 } from '@/types/models';
+import { API_ENDPOINTS } from '@utils/constants';
+import { getServiceMessages } from '@utils/i18nService';
+import api from './api';
 
 export const goalService = {
   /**
@@ -31,9 +32,10 @@ export const goalService = {
    * Create new goal
    */
   createGoal: async (data: ICreateGoalRequest): Promise<IGoal> => {
+    const messages = getServiceMessages();
     return api.post<IGoal>(API_ENDPOINTS.GOALS.CREATE, data, {
       showSuccessMessage: true,
-      successMessage: 'Tạo mục tiêu thành công',
+      successMessage: messages.goals.created,
     });
   },
 
@@ -41,9 +43,10 @@ export const goalService = {
    * Update existing goal
    */
   updateGoal: async (id: string, data: IUpdateGoalRequest): Promise<IGoal> => {
+    const messages = getServiceMessages();
     return api.patch<IGoal>(API_ENDPOINTS.GOALS.UPDATE(id), data, {
       showSuccessMessage: true,
-      successMessage: 'Cập nhật mục tiêu thành công',
+      successMessage: messages.goals.updated,
     });
   },
 
@@ -51,9 +54,10 @@ export const goalService = {
    * Delete goal (soft delete)
    */
   deleteGoal: async (id: string): Promise<void> => {
+    const messages = getServiceMessages();
     return api.delete<void>(API_ENDPOINTS.GOALS.DELETE(id), {
       showSuccessMessage: true,
-      successMessage: 'Xóa mục tiêu thành công',
+      successMessage: messages.goals.deleted,
     });
   },
 
@@ -61,9 +65,10 @@ export const goalService = {
    * Contribute amount to goal
    */
   contributeToGoal: async (id: string, data: IContributeGoalRequest): Promise<IGoal> => {
+    const messages = getServiceMessages();
     return api.post<IGoal>(API_ENDPOINTS.GOALS.CONTRIBUTE(id), data, {
       showSuccessMessage: true,
-      successMessage: 'Đóng góp vào mục tiêu thành công',
+      successMessage: messages.contributedToGoal,
     });
   },
 };

@@ -17,6 +17,8 @@ const initialState: IAuthState = {
   isLoading: false,
   isAuthenticated: false,
   error: null,
+  isLoginSuccess: false,
+  isHydrated: false,
 };
 
 /**
@@ -51,6 +53,7 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
       state.error = null;
+      state.isLoginSuccess = true; // Mark as actual login success
     },
 
     /**
@@ -90,6 +93,7 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
       state.error = null;
+      state.isLoginSuccess = true; // Mark as actual signup success (like login)
     },
 
     /**
@@ -111,6 +115,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = null;
+      state.isLoginSuccess = false;
     },
 
     /**
@@ -171,6 +176,22 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
       state.isAuthenticated = !!action.payload.accessToken;
+      state.isLoginSuccess = false; // Not an actual login, just hydrating
+      state.isHydrated = true; // Mark as hydrated
+    },
+
+    /**
+     * Mark auth as hydrated (even if no tokens found)
+     */
+    setHydrated: (state) => {
+      state.isHydrated = true;
+    },
+
+    /**
+     * Clear login success flag
+     */
+    clearLoginSuccess: (state) => {
+      state.isLoginSuccess = false;
     },
   },
 });

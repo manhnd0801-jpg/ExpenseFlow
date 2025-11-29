@@ -3,9 +3,10 @@
  * Handles notification management API calls
  */
 
-import api from './api';
-import { API_ENDPOINTS } from '@utils/constants';
 import type { INotification, IUnreadNotificationCount } from '@/types/models';
+import { API_ENDPOINTS } from '@utils/constants';
+import { getServiceMessages } from '@utils/i18nService';
+import api from './api';
 
 export const notificationService = {
   /**
@@ -40,19 +41,24 @@ export const notificationService = {
    * Mark all notifications as read
    */
   markAllAsRead: async (): Promise<void> => {
-    return api.patch<void>(API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ, {}, {
-      showSuccessMessage: true,
-      successMessage: 'Đã đánh dấu tất cả là đã đọc',
-    });
+    return api.patch<void>(
+      API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ,
+      {},
+      {
+        showSuccessMessage: true,
+        successMessage: 'Đã đánh dấu tất cả là đã đọc',
+      }
+    );
   },
 
   /**
    * Delete notification
    */
   deleteNotification: async (id: string): Promise<void> => {
+    const messages = getServiceMessages();
     return api.delete<void>(API_ENDPOINTS.NOTIFICATIONS.DELETE(id), {
       showSuccessMessage: true,
-      successMessage: 'Xóa thông báo thành công',
+      successMessage: messages.deleted,
     });
   },
 
@@ -60,9 +66,10 @@ export const notificationService = {
    * Delete all read notifications
    */
   deleteAllReadNotifications: async (): Promise<void> => {
+    const messages = getServiceMessages();
     return api.delete<void>(API_ENDPOINTS.NOTIFICATIONS.DELETE_ALL_READ, {
       showSuccessMessage: true,
-      successMessage: 'Xóa tất cả thông báo đã đọc thành công',
+      successMessage: messages.deletedAllReadNotifications,
     });
   },
 };

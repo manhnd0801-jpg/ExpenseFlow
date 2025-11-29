@@ -7,18 +7,23 @@
 import {
   BankOutlined,
   BarChartOutlined,
+  BellOutlined,
+  CalendarOutlined,
   DollarOutlined,
   HomeOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  SettingOutlined,
   SwapOutlined,
   TagsOutlined,
+  TeamOutlined,
   TrophyOutlined,
   UserOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
 import { NotificationDropdown } from '@components/molecules';
+import { useI18n } from '@hooks';
 import { useAppDispatch, useAppSelector } from '@hooks/useRedux';
 import { authActions, selectUser } from '@redux/modules/auth';
 import { ROUTES } from '@utils/constants';
@@ -109,6 +114,7 @@ export const DashboardLayout: React.FC<IDashboardLayoutProps> = ({ children }) =
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector(selectUser);
+  const { t } = useI18n();
 
   /**
    * Menu items for sidebar
@@ -117,42 +123,62 @@ export const DashboardLayout: React.FC<IDashboardLayoutProps> = ({ children }) =
     {
       key: ROUTES.DASHBOARD,
       icon: <HomeOutlined />,
-      label: 'Dashboard',
+      label: t('navigation.dashboard'),
     },
     {
       key: ROUTES.TRANSACTIONS,
       icon: <SwapOutlined />,
-      label: 'Giao dịch',
+      label: t('navigation.transactions'),
     },
     {
       key: ROUTES.ACCOUNTS,
       icon: <WalletOutlined />,
-      label: 'Tài khoản',
+      label: t('navigation.accounts'),
     },
     {
       key: ROUTES.CATEGORIES,
       icon: <TagsOutlined />,
-      label: 'Danh mục',
+      label: t('navigation.categories'),
     },
     {
       key: ROUTES.BUDGETS,
       icon: <DollarOutlined />,
-      label: 'Ngân sách',
+      label: t('navigation.budgets'),
     },
     {
       key: ROUTES.GOALS,
       icon: <TrophyOutlined />,
-      label: 'Mục tiêu',
+      label: t('navigation.goals'),
     },
     {
       key: ROUTES.DEBTS,
       icon: <BankOutlined />,
-      label: 'Công nợ',
+      label: t('navigation.debts'),
+    },
+    {
+      key: ROUTES.EVENTS,
+      icon: <CalendarOutlined />,
+      label: t('navigation.events'),
+    },
+    {
+      key: ROUTES.LOANS,
+      icon: <TeamOutlined />,
+      label: t('navigation.loans'),
+    },
+    {
+      key: ROUTES.REMINDERS,
+      icon: <BellOutlined />,
+      label: t('navigation.reminders'),
     },
     {
       key: ROUTES.REPORTS,
       icon: <BarChartOutlined />,
-      label: 'Báo cáo',
+      label: t('navigation.reports'),
+    },
+    {
+      key: ROUTES.SETTINGS,
+      icon: <SettingOutlined />,
+      label: t('navigation.settings'),
     },
   ];
 
@@ -163,7 +189,7 @@ export const DashboardLayout: React.FC<IDashboardLayoutProps> = ({ children }) =
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: 'Hồ sơ',
+      label: t('settings.profile'),
     },
     {
       type: 'divider' as const,
@@ -171,7 +197,7 @@ export const DashboardLayout: React.FC<IDashboardLayoutProps> = ({ children }) =
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: 'Đăng xuất',
+      label: t('auth.logout'),
       onClick: () => {
         dispatch(authActions.logout());
         navigate(ROUTES.LOGIN);

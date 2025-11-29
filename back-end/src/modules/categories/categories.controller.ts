@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
+import { ApiRoutes } from '../../common/constants';
 import { GetUser } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/guards';
 import { CategoriesService } from './categories.service';
@@ -21,7 +22,7 @@ import { CategoryResponseDto, CreateCategoryDto, UpdateCategoryDto } from './dto
 @ApiTags('Categories')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('categories')
+@Controller(ApiRoutes.CATEGORIES.BASE)
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 

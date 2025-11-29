@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { TransactionType } from '../../constants/enums';
 import { useAppDispatch, useAppSelector } from '../../hooks';
+import { useI18n } from '../../hooks/useI18n';
 import { transactionActions } from '../../redux/modules/transactions';
 import type { ITransaction } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -61,6 +62,7 @@ const PageWrapper = styled.div`
  * Reports Page Component
  */
 export const ReportsPage: React.FC = () => {
+  const { t } = useI18n();
   const dispatch = useAppDispatch();
   const transactions = useAppSelector((state) => state.transactions.transactions);
 
@@ -125,12 +127,12 @@ export const ReportsPage: React.FC = () => {
   // Category table columns
   const categoryColumns = [
     {
-      title: 'Danh mục',
+      title: t('reports.category'),
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: 'Thu nhập',
+      title: t('reports.income'),
       dataIndex: 'income',
       key: 'income',
       align: 'right' as const,
@@ -139,7 +141,7 @@ export const ReportsPage: React.FC = () => {
       ),
     },
     {
-      title: 'Chi tiêu',
+      title: t('reports.expense'),
       dataIndex: 'expense',
       key: 'expense',
       align: 'right' as const,
@@ -148,7 +150,7 @@ export const ReportsPage: React.FC = () => {
       ),
     },
     {
-      title: 'Tổng',
+      title: t('reports.total'),
       key: 'total',
       align: 'right' as const,
       render: (_: any, record: { income: number; expense: number }) => (
@@ -161,15 +163,15 @@ export const ReportsPage: React.FC = () => {
     <PageWrapper>
       {/* Page Header */}
       <div className="page-header">
-        <h1>Báo cáo tài chính</h1>
-        <p>Xem thống kê và phân tích chi tiêu của bạn</p>
+        <h1>{t('reports.title')}</h1>
+        <p>{t('reports.description')}</p>
       </div>
 
       {/* Date Range Filter */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16} align="middle">
           <Col>
-            <span style={{ marginRight: 8 }}>Khoảng thời gian:</span>
+            <span style={{ marginRight: 8 }}>{t('reports.dateRange')}:</span>
             <DatePicker.RangePicker
               value={dateRange}
               onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
@@ -184,7 +186,7 @@ export const ReportsPage: React.FC = () => {
                 console.log('Export reports');
               }}
             >
-              Xuất báo cáo
+              {t('reports.exportReport')}
             </Button>
           </Col>
         </Row>
@@ -195,7 +197,7 @@ export const ReportsPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card className="stats-card balance" size="small">
             <Statistic
-              title="Số dư"
+              title={t('reports.balance')}
               value={stats.balance}
               prefix="₫"
               valueStyle={{ color: 'var(--primary-color)' }}
@@ -205,7 +207,7 @@ export const ReportsPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card className="stats-card income" size="small">
             <Statistic
-              title="Tổng thu nhập"
+              title={t('reports.totalIncome')}
               value={stats.income}
               prefix="₫"
               suffix={<ArrowUpOutlined style={{ color: '#52c41a' }} />}
@@ -216,7 +218,7 @@ export const ReportsPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card className="stats-card expense" size="small">
             <Statistic
-              title="Tổng chi tiêu"
+              title={t('reports.totalExpense')}
               value={stats.expense}
               prefix="₫"
               suffix={<ArrowDownOutlined style={{ color: '#ff4d4f' }} />}
@@ -227,7 +229,7 @@ export const ReportsPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card className="stats-card" size="small">
             <Statistic
-              title="Tỷ lệ chi tiêu"
+              title={t('reports.expenseRatio')}
               value={Math.round(stats.ratio)}
               suffix="%"
               valueStyle={{ color: stats.ratio > 80 ? '#ff4d4f' : '#52c41a' }}
@@ -237,13 +239,13 @@ export const ReportsPage: React.FC = () => {
       </Row>
 
       {/* Category Statistics */}
-      <Card title="Thống kê theo danh mục">
+      <Card title={t('reports.statisticsByCategory')}>
         <Table
           className="category-table"
           columns={categoryColumns}
           dataSource={categoryStats.map((stat, index) => ({ ...stat, key: index }))}
           pagination={false}
-          locale={{ emptyText: 'Chưa có dữ liệu' }}
+          locale={{ emptyText: t('common.noData') }}
         />
       </Card>
     </PageWrapper>

@@ -14,6 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CreateRecurringTransactionDto, QueryRecurringTransactionDto, UpdateRecurringTransactionDto } from './dto';
 import { RecurringTransactionsService } from './recurring-transactions.service';
@@ -24,7 +25,7 @@ import { RecurringTransactionsService } from './recurring-transactions.service';
 @ApiTags('Recurring Transactions')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('recurring-transactions')
+@Controller(ApiRoutes.RECURRING_TRANSACTIONS.BASE)
 export class RecurringTransactionsController {
   constructor(private readonly recurringTransactionsService: RecurringTransactionsService) {}
 
@@ -61,7 +62,7 @@ export class RecurringTransactionsController {
   /**
    * Get due recurring transactions (ready to execute)
    */
-  @Get('due')
+  @Get(ApiRoutes.RECURRING_TRANSACTIONS.DUE)
   @ApiOperation({ summary: 'Get due recurring transactions' })
   @ApiResponse({ status: 200, description: 'Due recurring transactions retrieved' })
   async getDueTransactions(@Request() req) {
@@ -112,7 +113,7 @@ export class RecurringTransactionsController {
   /**
    * Toggle active status
    */
-  @Patch(':id/toggle-active')
+  @Patch(`:id/${ApiRoutes.RECURRING_TRANSACTIONS.TOGGLE_ACTIVE}`)
   @ApiOperation({ summary: 'Toggle recurring transaction active status' })
   @ApiResponse({ status: 200, description: 'Status toggled successfully' })
   async toggleActive(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
@@ -127,7 +128,7 @@ export class RecurringTransactionsController {
   /**
    * Execute recurring transaction manually
    */
-  @Post(':id/execute')
+  @Post(`:id/${ApiRoutes.RECURRING_TRANSACTIONS.EXECUTE}`)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Execute recurring transaction manually' })
   @ApiResponse({ status: 200, description: 'Recurring transaction executed' })

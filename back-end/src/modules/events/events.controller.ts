@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { GetUser } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/guards';
 import { CreateEventDto, UpdateEventDto } from './dto';
@@ -8,7 +9,7 @@ import { EventsService } from './events.service';
 @ApiTags('Events')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('events')
+@Controller(ApiRoutes.EVENTS.BASE)
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
@@ -33,7 +34,7 @@ export class EventsController {
     return { success: true, data };
   }
 
-  @Get(':id/summary')
+  @Get(`:id/${ApiRoutes.EVENTS.SUMMARY}`)
   @ApiOperation({ summary: 'Get event summary with spending' })
   async getSummary(@GetUser('id') userId: string, @Param('id') id: string) {
     const data = await this.eventsService.getEventSummary(userId, id);

@@ -391,6 +391,7 @@ const LoanDetailPage: React.FC = () => {
               label: `Lịch trả nợ (${amortizationSchedule.length} tháng)`,
               children: (
                 <Table
+                  bordered
                   columns={scheduleColumns}
                   dataSource={amortizationSchedule}
                   rowKey="month"
@@ -409,6 +410,7 @@ const LoanDetailPage: React.FC = () => {
               label: `Lịch sử thanh toán (${payments.length})`,
               children: (
                 <Table
+                  bordered
                   columns={paymentColumns}
                   dataSource={payments}
                   rowKey="id"

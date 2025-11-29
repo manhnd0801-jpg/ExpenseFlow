@@ -14,6 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AddMemberDto, CreateSharedBookDto, QuerySharedBookDto, UpdateMemberRoleDto, UpdateSharedBookDto } from './dto';
 import { SharedBooksService } from './shared-books.service';
@@ -24,7 +25,7 @@ import { SharedBooksService } from './shared-books.service';
 @ApiTags('Shared Books')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('shared-books')
+@Controller(ApiRoutes.SHARED_BOOKS.BASE)
 export class SharedBooksController {
   constructor(private readonly sharedBooksService: SharedBooksService) {}
 
@@ -120,7 +121,7 @@ export class SharedBooksController {
   /**
    * Add member to shared book
    */
-  @Post(':id/members')
+  @Post(`:id/${ApiRoutes.SHARED_BOOKS.MEMBERS}`)
   @ApiOperation({ summary: 'Add member to shared book' })
   @ApiResponse({ status: 201, description: 'Member added successfully' })
   @ApiResponse({ status: 404, description: 'Shared book not found' })
@@ -136,7 +137,7 @@ export class SharedBooksController {
   /**
    * Get all members of a shared book
    */
-  @Get(':id/members')
+  @Get(`:id/${ApiRoutes.SHARED_BOOKS.MEMBERS}`)
   @ApiOperation({ summary: 'Get all members of shared book' })
   @ApiResponse({ status: 200, description: 'Members retrieved successfully' })
   async getMembers(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
@@ -151,7 +152,7 @@ export class SharedBooksController {
   /**
    * Update member role
    */
-  @Patch(':id/members/:memberId')
+  @Patch(`:id/${ApiRoutes.SHARED_BOOKS.MEMBERS}/:memberId`)
   @ApiOperation({ summary: 'Update member role' })
   @ApiResponse({ status: 200, description: 'Member role updated successfully' })
   async updateMemberRole(
@@ -171,7 +172,7 @@ export class SharedBooksController {
   /**
    * Remove member from shared book
    */
-  @Delete(':id/members/:memberId')
+  @Delete(`:id/${ApiRoutes.SHARED_BOOKS.MEMBERS}/:memberId`)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove member from shared book' })
   @ApiResponse({ status: 204, description: 'Member removed successfully' })
@@ -186,7 +187,7 @@ export class SharedBooksController {
   /**
    * Leave shared book
    */
-  @Post(':id/leave')
+  @Post(`:id/${ApiRoutes.SHARED_BOOKS.LEAVE}`)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Leave shared book' })
   @ApiResponse({ status: 200, description: 'Left shared book successfully' })

@@ -3,15 +3,16 @@
  * Handles debt management API calls (lending & borrowing)
  */
 
-import api from './api';
-import { API_ENDPOINTS } from '@utils/constants';
 import type {
+  ICreateDebtPaymentRequest,
+  ICreateDebtRequest,
   IDebt,
   IDebtPayment,
-  ICreateDebtRequest,
   IUpdateDebtRequest,
-  ICreateDebtPaymentRequest,
 } from '@/types/models';
+import { API_ENDPOINTS } from '@utils/constants';
+import { getServiceMessages } from '@utils/i18nService';
+import api from './api';
 
 export const debtService = {
   /**
@@ -32,9 +33,10 @@ export const debtService = {
    * Create new debt (lending or borrowing)
    */
   createDebt: async (data: ICreateDebtRequest): Promise<IDebt> => {
+    const messages = getServiceMessages();
     return api.post<IDebt>(API_ENDPOINTS.DEBTS.CREATE, data, {
       showSuccessMessage: true,
-      successMessage: 'Tạo khoản nợ thành công',
+      successMessage: messages.debts.created,
     });
   },
 
@@ -42,9 +44,10 @@ export const debtService = {
    * Update existing debt
    */
   updateDebt: async (id: string, data: IUpdateDebtRequest): Promise<IDebt> => {
+    const messages = getServiceMessages();
     return api.patch<IDebt>(API_ENDPOINTS.DEBTS.UPDATE(id), data, {
       showSuccessMessage: true,
-      successMessage: 'Cập nhật khoản nợ thành công',
+      successMessage: messages.debts.updated,
     });
   },
 
@@ -52,9 +55,10 @@ export const debtService = {
    * Delete debt (soft delete)
    */
   deleteDebt: async (id: string): Promise<void> => {
+    const messages = getServiceMessages();
     return api.delete<void>(API_ENDPOINTS.DEBTS.DELETE(id), {
       showSuccessMessage: true,
-      successMessage: 'Xóa khoản nợ thành công',
+      successMessage: messages.debts.deleted,
     });
   },
 
@@ -72,9 +76,10 @@ export const debtService = {
     debtId: string,
     data: ICreateDebtPaymentRequest
   ): Promise<IDebtPayment> => {
+    const messages = getServiceMessages();
     return api.post<IDebtPayment>(API_ENDPOINTS.DEBTS.CREATE_PAYMENT(debtId), data, {
       showSuccessMessage: true,
-      successMessage: 'Ghi nhận thanh toán thành công',
+      successMessage: messages.paymentRecorded,
     });
   },
 };

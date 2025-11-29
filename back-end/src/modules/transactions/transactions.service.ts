@@ -64,7 +64,13 @@ export class TransactionsService {
       // Update account balances
       await this.updateAccountBalance(transactionalEntityManager, accountId, type, amount, toAccountId);
 
-      return savedTransaction;
+      // Load transaction with relations before returning
+      const transactionWithRelations = await transactionalEntityManager.findOne(Transaction, {
+        where: { id: savedTransaction.id },
+        relations: ['account', 'category', 'toAccount', 'event'],
+      });
+
+      return transactionWithRelations || savedTransaction;
     });
   }
 
@@ -190,13 +196,22 @@ export class TransactionsService {
           updatedTransaction.toAccountId,
         );
 
-        return updatedTransaction;
+        // Load transaction with relations before returning
+        const transactionWithRelations = await transactionalEntityManager.findOne(Transaction, {
+          where: { id: updatedTransaction.id },
+          relations: ['account', 'category', 'toAccount', 'event'],
+        });
+
+        return transactionWithRelations || updatedTransaction;
       });
     }
 
     // Simple update (no balance change)
     Object.assign(transaction, rest);
-    return await this.transactionRepository.save(transaction);
+    const updated = await this.transactionRepository.save(transaction);
+
+    // Load relations for simple update too
+    return await this.findOne(userId, updated.id);
   }
 
   /**

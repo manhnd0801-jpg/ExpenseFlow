@@ -1,5 +1,6 @@
 import { Controller, Get, ParseIntPipe, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiRoutes } from '../../common/constants';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { DateRangeDto } from './dto';
 import { ReportsService } from './reports.service';
@@ -7,11 +8,11 @@ import { ReportsService } from './reports.service';
 @ApiTags('Reports')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('reports')
+@Controller(ApiRoutes.REPORTS.BASE)
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
-  @Get('income-expense')
+  @Get(ApiRoutes.REPORTS.INCOME_EXPENSE)
   @ApiOperation({
     summary: 'Income vs Expense Report',
     description: 'Báo cáo tổng thu, tổng chi, số dư trong khoảng thời gian',
@@ -29,7 +30,7 @@ export class ReportsController {
     };
   }
 
-  @Get('category-distribution')
+  @Get(ApiRoutes.REPORTS.CATEGORY_DISTRIBUTION)
   @ApiOperation({
     summary: 'Category Distribution Report',
     description: 'Phân bổ chi tiêu theo danh mục (dữ liệu cho Pie chart)',
@@ -47,7 +48,7 @@ export class ReportsController {
     };
   }
 
-  @Get('monthly-trend')
+  @Get(ApiRoutes.REPORTS.MONTHLY_TREND)
   @ApiOperation({
     summary: 'Monthly Trend Report',
     description: 'Xu hướng thu chi theo tháng trong năm',
@@ -71,7 +72,7 @@ export class ReportsController {
     };
   }
 
-  @Get('account-balance')
+  @Get(ApiRoutes.REPORTS.ACCOUNT_BALANCE)
   @ApiOperation({
     summary: 'Account Balance History',
     description: 'Lịch sử số dư của các tài khoản',
@@ -95,7 +96,7 @@ export class ReportsController {
     };
   }
 
-  @Get('cash-flow')
+  @Get(ApiRoutes.REPORTS.CASH_FLOW)
   @ApiOperation({
     summary: 'Cash Flow Report',
     description: 'Dòng tiền vào/ra theo ngày',
@@ -113,7 +114,7 @@ export class ReportsController {
     };
   }
 
-  @Get('top-spending')
+  @Get(ApiRoutes.REPORTS.TOP_SPENDING)
   @ApiOperation({
     summary: 'Top Spending Categories',
     description: 'Top danh mục chi tiêu nhiều nhất',
@@ -142,7 +143,7 @@ export class ReportsController {
     };
   }
 
-  @Get('financial-summary')
+  @Get(ApiRoutes.REPORTS.FINANCIAL_SUMMARY)
   @ApiOperation({
     summary: 'Financial Summary',
     description: 'Tổng quan tài chính toàn diện',
