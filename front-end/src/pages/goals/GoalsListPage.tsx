@@ -11,28 +11,55 @@ import {
 import { Button, Card, Modal, Progress, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
+import { ContributeGoalModal, GoalDetailModal } from '../../components/molecules';
+import { GoalForm } from '../../components/molecules/GoalForm';
 import { GoalStatus } from '../../constants/enums';
 import { useI18n } from '../../hooks/useI18n';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { deleteGoalStart, fetchGoalsStart } from '../../redux/modules/goals/goalSlice';
+import {
+  clearError,
+  contributeGoalStart,
+  createGoalStart,
+  deleteGoalStart,
+  fetchGoalsStart,
+  updateGoalStart,
+} from '../../redux/modules/goals/goalSlice';
 import type { IGoal } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 const GoalsListPage: React.FC = () => {
   const { t, getGoalStatusLabel } = useI18n();
   const dispatch = useAppDispatch();
-  const { goals, loading } = useAppSelector((state) => state.goals);
+  const { goals, loading, error } = useAppSelector((state) => state.goals);
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [isGoalFormVisible, setIsGoalFormVisible] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<IGoal | undefined>(undefined);
+  const [isContributeModalVisible, setIsContributeModalVisible] = useState(false);
+  const [contributingGoal, setContributingGoal] = useState<IGoal | null>(null);
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [viewingGoal, setViewingGoal] = useState<IGoal | null>(null);
 
   useEffect(() => {
     dispatch(fetchGoalsStart({ page: 1, pageSize: 50 }));
   }, [dispatch]);
 
+  useEffect(() => {
+    if (error) {
+      // Error is already handled by the service layer with notifications
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
+
+  const handleCreateGoal = () => {
+    setEditingGoal(undefined);
+    setIsGoalFormVisible(true);
+  };
+
   const handleEdit = (goal: IGoal) => {
-    // TODO: Navigate to edit page or open edit modal
-    console.log('Edit goal:', goal);
+    setEditingGoal(goal);
+    setIsGoalFormVisible(true);
   };
 
   const handleDelete = (goalId: string) => {
@@ -49,13 +76,59 @@ const GoalsListPage: React.FC = () => {
   };
 
   const handleView = (goal: IGoal) => {
-    // TODO: Navigate to goal detail page
-    console.log('View goal:', goal);
+    setViewingGoal(goal);
+    setIsDetailModalVisible(true);
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalVisible(false);
+    setViewingGoal(null);
   };
 
   const handleContribute = (goal: IGoal) => {
-    // TODO: Open contribute modal
-    console.log('Contribute to goal:', goal);
+    setContributingGoal(goal);
+    setIsContributeModalVisible(true);
+  };
+
+  const handleGoalFormSubmit = (values: any) => {
+    if (editingGoal) {
+      // Update existing goal
+      dispatch(
+        updateGoalStart({
+          id: editingGoal.id,
+          updates: values,
+        })
+      );
+    } else {
+      // Create new goal
+      dispatch(createGoalStart(values));
+    }
+    setIsGoalFormVisible(false);
+    setEditingGoal(undefined);
+  };
+
+  const handleGoalFormCancel = () => {
+    setIsGoalFormVisible(false);
+    setEditingGoal(undefined);
+  };
+
+  const handleContributeSubmit = (values: { amount: number; note?: string }) => {
+    if (contributingGoal) {
+      dispatch(
+        contributeGoalStart({
+          goalId: contributingGoal.id,
+          amount: values.amount,
+          note: values.note,
+        })
+      );
+      setIsContributeModalVisible(false);
+      setContributingGoal(null);
+    }
+  };
+
+  const handleContributeCancel = () => {
+    setIsContributeModalVisible(false);
+    setContributingGoal(null);
   };
 
   const renderProgress = (goal: IGoal) => {
@@ -181,14 +254,7 @@ const GoalsListPage: React.FC = () => {
       <Card
         title={t('goals.manageGoals')}
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              // TODO: Navigate to create goal page
-              console.log('Create goal');
-            }}
-          >
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateGoal}>
             {t('goals.createGoal')}
           </Button>
         }
@@ -207,6 +273,7 @@ const GoalsListPage: React.FC = () => {
         />
       </Card>
 
+      {/* Delete Confirmation Modal */}
       <Modal
         title={t('goals.deleteGoal')}
         open={isDeleteModalVisible}
@@ -215,10 +282,36 @@ const GoalsListPage: React.FC = () => {
         okText={t('common.delete')}
         cancelText={t('common.cancel')}
         okButtonProps={{ danger: true }}
+        confirmLoading={loading}
       >
         <p>{t('goals.deleteConfirmation')}</p>
         <p>{t('common.irreversibleAction')}</p>
       </Modal>
+
+      {/* Goal Form Modal */}
+      <GoalForm
+        visible={isGoalFormVisible}
+        onCancel={handleGoalFormCancel}
+        onSubmit={handleGoalFormSubmit}
+        initialValues={editingGoal}
+        loading={loading}
+      />
+
+      {/* Contribute to Goal Modal */}
+      <ContributeGoalModal
+        visible={isContributeModalVisible}
+        goal={contributingGoal}
+        onCancel={handleContributeCancel}
+        onSubmit={handleContributeSubmit}
+        loading={loading}
+      />
+
+      {/* Goal Detail Modal */}
+      <GoalDetailModal
+        visible={isDetailModalVisible}
+        goal={viewingGoal}
+        onClose={handleCloseDetailModal}
+      />
     </div>
   );
 };

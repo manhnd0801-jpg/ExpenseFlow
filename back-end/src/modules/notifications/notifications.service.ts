@@ -31,7 +31,7 @@ export class NotificationsService {
   async findAll(userId: string): Promise<Notification[]> {
     return await this.notificationRepository.find({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { updatedAt: 'DESC' },
     });
   }
 
@@ -41,7 +41,7 @@ export class NotificationsService {
   async findUnread(userId: string): Promise<Notification[]> {
     return await this.notificationRepository.find({
       where: { userId, isRead: false },
-      order: { createdAt: 'DESC' },
+      order: { updatedAt: 'DESC' },
     });
   }
 

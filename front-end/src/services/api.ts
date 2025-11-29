@@ -86,17 +86,6 @@ axiosInstance.interceptors.response.use(
     if (config.showSuccessMessage && config.successMessage) {
       message.success(config.successMessage);
     }
-
-    // Extract data field from backend response structure { success, data, message }
-    console.log('Interceptor debug:', {
-      hasResponseData: !!response.data,
-      isObject: typeof response.data === 'object',
-      hasSuccess: response.data?.success === true,
-      hasDataProp: response.data?.hasOwnProperty('data'),
-      successValue: response.data?.success,
-      actualResponse: response.data,
-    });
-
     // More robust check for backend response format
     if (
       response.data &&
@@ -104,11 +93,9 @@ axiosInstance.interceptors.response.use(
       response.data.success === true &&
       response.data.hasOwnProperty('data')
     ) {
-      console.log('✅ Interceptor extracting data:', response.data.data);
       return response.data.data;
     }
 
-    console.log('❌ Interceptor returning whole response:', response.data);
     return response.data;
   },
   (error) => {

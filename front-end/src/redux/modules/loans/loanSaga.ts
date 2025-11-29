@@ -47,19 +47,17 @@ const loanAPI = {
 // SAGA WORKERS
 // ==========================================
 
-function* listLoansSaga(action: PayloadAction<ILoanListQuery>) {
+function* listLoansSaga(action: PayloadAction<ILoanListQuery>): Generator<any, void, any> {
   try {
-    const response: {
-      data: ILoan[];
-      pagination: { page: number; limit: number; total: number };
-    } = yield call(loanAPI.list, action.payload);
+    // After Phase 1: Backend returns { items: [], total, page, limit, totalPages }
+    const response: any = yield call(loanAPI.list, action.payload);
 
     yield put(
       loanActions.listLoansSuccess({
-        loans: response.data || [],
-        total: response.pagination?.total || 0,
-        page: response.pagination?.page || 1,
-        limit: response.pagination?.limit || 10,
+        loans: response.items || response.data || [],
+        total: response.total || 0,
+        page: response.page || 1,
+        limit: response.limit || 10,
       })
     );
   } catch (error: any) {
@@ -80,10 +78,12 @@ function* getLoanDetailSaga(action: PayloadAction<string>) {
   }
 }
 
-function* createLoanSaga(action: PayloadAction<ICreateLoanPayload>) {
+function* createLoanSaga(action: PayloadAction<ICreateLoanPayload>): Generator<any, void, any> {
   try {
-    const response: ILoan = yield call(loanAPI.create, action.payload);
-    yield put(loanActions.createLoanSuccess(response));
+    const response: any = yield call(loanAPI.create, action.payload);
+    // Extract data from wrapped response {success, data, message}
+    const loan: ILoan = response.data || response;
+    yield put(loanActions.createLoanSuccess(loan));
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || 'Lỗi khi tạo khoản vay';
@@ -91,10 +91,12 @@ function* createLoanSaga(action: PayloadAction<ICreateLoanPayload>) {
   }
 }
 
-function* updateLoanSaga(action: PayloadAction<IUpdateLoanPayload>) {
+function* updateLoanSaga(action: PayloadAction<IUpdateLoanPayload>): Generator<any, void, any> {
   try {
-    const response: ILoan = yield call(loanAPI.update, action.payload);
-    yield put(loanActions.updateLoanSuccess(response));
+    const response: any = yield call(loanAPI.update, action.payload);
+    // Extract data from wrapped response {success, data, message}
+    const loan: ILoan = response.data || response;
+    yield put(loanActions.updateLoanSuccess(loan));
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật khoản vay';
@@ -113,7 +115,7 @@ function* deleteLoanSaga(action: PayloadAction<IDeleteLoanPayload>) {
   }
 }
 
-function* getAmortizationScheduleSaga(action: PayloadAction<string>) {
+function* getAmortizationScheduleSaga(action: PayloadAction<string>): Generator<any, void, any> {
   try {
     const response: any = yield call(loanAPI.getAmortizationSchedule, action.payload);
     yield put(loanActions.getAmortizationScheduleSuccess(response.schedule || []));
@@ -124,7 +126,9 @@ function* getAmortizationScheduleSaga(action: PayloadAction<string>) {
   }
 }
 
-function* recordLoanPaymentSaga(action: PayloadAction<IRecordLoanPaymentPayload>) {
+function* recordLoanPaymentSaga(
+  action: PayloadAction<IRecordLoanPaymentPayload>
+): Generator<any, void, any> {
   try {
     const response: ILoan = yield call(loanAPI.recordPayment, action.payload);
     yield put(loanActions.recordLoanPaymentSuccess(response));
@@ -141,7 +145,7 @@ function* recordLoanPaymentSaga(action: PayloadAction<IRecordLoanPaymentPayload>
   }
 }
 
-function* getLoanPaymentsSaga(action: PayloadAction<string>) {
+function* getLoanPaymentsSaga(action: PayloadAction<string>): Generator<any, void, any> {
   try {
     const response: any = yield call(loanAPI.getPayments, action.payload);
     yield put(loanActions.getLoanPaymentsSuccess(response.payments || []));
@@ -152,7 +156,9 @@ function* getLoanPaymentsSaga(action: PayloadAction<string>) {
   }
 }
 
-function* simulatePrepaymentSaga(action: PayloadAction<ISimulatePrepaymentPayload>) {
+function* simulatePrepaymentSaga(
+  action: PayloadAction<ISimulatePrepaymentPayload>
+): Generator<any, void, any> {
   try {
     const response: any = yield call(loanAPI.simulatePrepayment, action.payload);
     yield put(loanActions.simulatePrepaymentSuccess(response.simulation || response));

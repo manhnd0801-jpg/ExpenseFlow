@@ -13,8 +13,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { plainToClass } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { ApiRoutes } from '../../common/constants';
+import { apiResponseSchema } from '../../common/dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CreateReminderDto, ReminderResponseDto, UpdateReminderDto } from './dto';
 import { RemindersService } from './reminders.service';
@@ -31,19 +32,15 @@ export class RemindersController {
   @ApiResponse({
     status: 201,
     description: 'Reminder created successfully',
-    type: ReminderResponseDto,
+    ...apiResponseSchema(ReminderResponseDto),
   })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async create(@Request() req, @Body() createReminderDto: CreateReminderDto) {
+  async create(@Request() req, @Body() createReminderDto: CreateReminderDto): Promise<ReminderResponseDto> {
     const reminder = await this.remindersService.create(req.user.userId, createReminderDto);
-    return {
-      success: true,
-      data: plainToClass(ReminderResponseDto, reminder, {
-        excludeExtraneousValues: true,
-      }),
-      message: 'Reminder created successfully',
-    };
+    return plainToInstance(ReminderResponseDto, reminder, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get()
@@ -53,15 +50,11 @@ export class RemindersController {
     description: 'List of reminders',
     type: [ReminderResponseDto],
   })
-  async findAll(@Request() req) {
+  async findAll(@Request() req): Promise<ReminderResponseDto[]> {
     const reminders = await this.remindersService.findAll(req.user.userId);
-    return {
-      success: true,
-      data: plainToClass(ReminderResponseDto, reminders, {
-        excludeExtraneousValues: true,
-      }),
-      message: 'Reminders retrieved successfully',
-    };
+    return plainToInstance(ReminderResponseDto, reminders, {
+      excludeExtraneousValues: true,
+    }) as any;
   }
 
   @Get(ApiRoutes.REMINDERS.UPCOMING)
@@ -71,15 +64,11 @@ export class RemindersController {
     description: 'List of upcoming reminders',
     type: [ReminderResponseDto],
   })
-  async findUpcoming(@Request() req) {
+  async findUpcoming(@Request() req): Promise<ReminderResponseDto[]> {
     const reminders = await this.remindersService.findUpcoming(req.user.userId);
-    return {
-      success: true,
-      data: plainToClass(ReminderResponseDto, reminders, {
-        excludeExtraneousValues: true,
-      }),
-      message: 'Upcoming reminders retrieved successfully',
-    };
+    return plainToInstance(ReminderResponseDto, reminders, {
+      excludeExtraneousValues: true,
+    }) as any;
   }
 
   @Get(ApiRoutes.REMINDERS.BY_TYPE)
@@ -95,15 +84,11 @@ export class RemindersController {
     description: 'List of reminders by type',
     type: [ReminderResponseDto],
   })
-  async findByType(@Request() req, @Query('type') type: number) {
+  async findByType(@Request() req, @Query('type') type: number): Promise<ReminderResponseDto[]> {
     const reminders = await this.remindersService.findByType(req.user.userId, +type);
-    return {
-      success: true,
-      data: plainToClass(ReminderResponseDto, reminders, {
-        excludeExtraneousValues: true,
-      }),
-      message: 'Reminders retrieved successfully',
-    };
+    return plainToInstance(ReminderResponseDto, reminders, {
+      excludeExtraneousValues: true,
+    }) as any;
   }
 
   @Get(':id')
@@ -112,19 +97,15 @@ export class RemindersController {
   @ApiResponse({
     status: 200,
     description: 'Reminder details',
-    type: ReminderResponseDto,
+    ...apiResponseSchema(ReminderResponseDto),
   })
   @ApiResponse({ status: 404, description: 'Reminder not found' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async findOne(@Request() req, @Param('id') id: string) {
+  async findOne(@Request() req, @Param('id') id: string): Promise<ReminderResponseDto> {
     const reminder = await this.remindersService.findOne(id, req.user.userId);
-    return {
-      success: true,
-      data: plainToClass(ReminderResponseDto, reminder, {
-        excludeExtraneousValues: true,
-      }),
-      message: 'Reminder retrieved successfully',
-    };
+    return plainToInstance(ReminderResponseDto, reminder, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch(':id')
@@ -133,19 +114,19 @@ export class RemindersController {
   @ApiResponse({
     status: 200,
     description: 'Reminder updated successfully',
-    type: ReminderResponseDto,
+    ...apiResponseSchema(ReminderResponseDto),
   })
   @ApiResponse({ status: 404, description: 'Reminder not found' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async update(@Request() req, @Param('id') id: string, @Body() updateReminderDto: UpdateReminderDto) {
+  async update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updateReminderDto: UpdateReminderDto,
+  ): Promise<ReminderResponseDto> {
     const reminder = await this.remindersService.update(id, req.user.userId, updateReminderDto);
-    return {
-      success: true,
-      data: plainToClass(ReminderResponseDto, reminder, {
-        excludeExtraneousValues: true,
-      }),
-      message: 'Reminder updated successfully',
-    };
+    return plainToInstance(ReminderResponseDto, reminder, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch(`:id/${ApiRoutes.REMINDERS.COMPLETE}`)
@@ -154,18 +135,14 @@ export class RemindersController {
   @ApiResponse({
     status: 200,
     description: 'Reminder marked as completed',
-    type: ReminderResponseDto,
+    ...apiResponseSchema(ReminderResponseDto),
   })
   @ApiResponse({ status: 404, description: 'Reminder not found' })
-  async markAsCompleted(@Request() req, @Param('id') id: string) {
+  async markAsCompleted(@Request() req, @Param('id') id: string): Promise<ReminderResponseDto> {
     const reminder = await this.remindersService.markAsCompleted(id, req.user.userId);
-    return {
-      success: true,
-      data: plainToClass(ReminderResponseDto, reminder, {
-        excludeExtraneousValues: true,
-      }),
-      message: 'Reminder marked as completed',
-    };
+    return plainToInstance(ReminderResponseDto, reminder, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Delete(':id')

@@ -1,148 +1,246 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateAccountDto {
-  @ApiProperty({ description: 'Account name', example: 'Cash Wallet' })
+  @ApiProperty({
+    example: 'My Savings Account',
+    description: 'Account name',
+  })
   @IsString()
-  @IsNotEmpty()
-  @MaxLength(255)
   name: string;
 
   @ApiProperty({
-    description: 'Account type: 1=Cash, 2=Bank, 3=Credit Card, 4=E-Wallet, 5=Investment',
-    example: 1,
-    enum: [1, 2, 3, 4, 5],
+    example: 2,
+    description: 'Account type (1=Cash, 2=Bank, 3=Credit Card, 4=E-Wallet, 5=Investment)',
+    minimum: 1,
+    maximum: 5,
   })
-  @IsInt()
-  @Min(1)
-  @Max(5)
   @Type(() => Number)
+  @IsInt({ message: 'Account type must be an integer' })
+  @Min(1, { message: 'Invalid account type' })
+  @Max(5, { message: 'Invalid account type' })
   type: number;
 
-  @ApiProperty({ description: 'Initial balance', example: 5000000, required: false })
-  @IsNumber()
-  @Type(() => Number)
+  @ApiProperty({
+    example: 1000000.5,
+    description: 'Initial balance',
+    required: false,
+  })
   @IsOptional()
+  @Type(() => Number)
+  @Transform(({ value }) => parseFloat(value))
   balance?: number;
 
   @ApiProperty({
-    description: 'Currency: 1=VND, 2=USD, 3=EUR, 4=JPY, 5=CNY',
     example: 1,
+    description: 'Currency (1=VND, 2=USD, 3=EUR, 4=JPY, 5=CNY)',
     required: false,
-    enum: [1, 2, 3, 4, 5],
+    minimum: 1,
+    maximum: 5,
   })
-  @IsInt()
-  @Min(1)
-  @Max(5)
-  @Type(() => Number)
   @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: 'Currency must be an integer' })
+  @Min(1, { message: 'Invalid currency' })
+  @Max(5, { message: 'Invalid currency' })
   currency?: number;
 
-  @ApiProperty({ description: 'Bank name', example: 'Vietcombank', required: false })
-  @IsString()
-  @MaxLength(255)
+  @ApiProperty({
+    example: 'Vietcombank',
+    description: 'Bank name (for bank accounts)',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   bankName?: string;
 
-  @ApiProperty({ description: 'Account number', example: '1234567890', required: false })
-  @IsString()
-  @MaxLength(50)
+  @ApiProperty({
+    example: '1234567890',
+    description: 'Account number',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   accountNumber?: string;
 
-  @ApiProperty({ description: 'Description', required: false })
-  @IsString()
+  @ApiProperty({
+    example: 'My main savings account',
+    description: 'Account description',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   description?: string;
 
-  @ApiProperty({ description: 'Color (hex)', example: '#FF6B6B', required: false })
-  @IsString()
-  @MaxLength(7)
+  @ApiProperty({
+    example: '#4CAF50',
+    description: 'Color for UI (hex format)',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   color?: string;
 
-  @ApiProperty({ description: 'Icon name', example: 'wallet', required: false })
-  @IsString()
-  @MaxLength(50)
+  @ApiProperty({
+    example: 'credit-card',
+    description: 'Icon name for UI',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   icon?: string;
 
-  @ApiProperty({ description: 'Is active', example: true, required: false })
-  @IsBoolean()
+  @ApiProperty({
+    example: true,
+    description: 'Include in total balance calculation',
+    required: false,
+  })
   @IsOptional()
-  isActive?: boolean;
-
-  @ApiProperty({ description: 'Include in total balance', example: true, required: false })
   @IsBoolean()
-  @IsOptional()
   includeInTotal?: boolean;
 
-  @ApiProperty({ description: 'Credit limit (for credit cards)', example: 50000000, required: false })
-  @IsNumber()
-  @Type(() => Number)
+  @ApiProperty({
+    example: 50000000,
+    description: 'Credit limit (for credit cards)',
+    required: false,
+  })
   @IsOptional()
+  @Type(() => Number)
+  @Transform(({ value }) => parseFloat(value))
   creditLimit?: number;
 
-  @ApiProperty({ description: 'Interest rate (%)', example: 0.5, required: false })
-  @IsNumber()
-  @Type(() => Number)
+  @ApiProperty({
+    example: 12.5,
+    description: 'Annual interest rate percentage',
+    required: false,
+  })
   @IsOptional()
+  @Type(() => Number)
+  @Transform(({ value }) => parseFloat(value))
   interestRate?: number;
 }
 
 export class UpdateAccountDto {
-  @IsString()
-  @MaxLength(255)
+  @ApiProperty({
+    example: 'Updated Account Name',
+    description: 'Account name',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   name?: string;
 
-  @IsNumber()
+  @ApiProperty({
+    example: 2,
+    description: 'Account type (1=Cash, 2=Bank, 3=Credit Card, 4=E-Wallet, 5=Investment)',
+    required: false,
+    minimum: 1,
+    maximum: 5,
+  })
+  @IsOptional()
   @Type(() => Number)
-  @IsOptional()
-  balance?: number;
+  @IsInt({ message: 'Account type must be an integer' })
+  @Min(1, { message: 'Invalid account type' })
+  @Max(5, { message: 'Invalid account type' })
+  type?: number;
 
-  @IsString()
-  @MaxLength(255)
+  @ApiProperty({
+    example: 1,
+    description: 'Currency (1=VND, 2=USD, 3=EUR, 4=JPY, 5=CNY)',
+    required: false,
+    minimum: 1,
+    maximum: 5,
+  })
   @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: 'Currency must be an integer' })
+  @Min(1, { message: 'Invalid currency' })
+  @Max(5, { message: 'Invalid currency' })
+  currency?: number;
+
+  @ApiProperty({
+    example: 'Updated Bank',
+    description: 'Bank name',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
   bankName?: string;
 
-  @IsString()
-  @MaxLength(50)
+  @ApiProperty({
+    example: '9876543210',
+    description: 'Account number',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   accountNumber?: string;
 
-  @IsString()
+  @ApiProperty({
+    example: 'Updated description',
+    description: 'Account description',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   description?: string;
 
-  @IsString()
-  @MaxLength(7)
+  @ApiProperty({
+    example: '#FF5722',
+    description: 'Color for UI',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   color?: string;
 
-  @IsString()
-  @MaxLength(50)
+  @ApiProperty({
+    example: 'bank',
+    description: 'Icon name for UI',
+    required: false,
+  })
   @IsOptional()
+  @IsString()
   icon?: string;
 
-  @IsBoolean()
+  @ApiProperty({
+    example: true,
+    description: 'Whether account is active',
+    required: false,
+  })
   @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 
-  @IsBoolean()
+  @ApiProperty({
+    example: false,
+    description: 'Include in total balance calculation',
+    required: false,
+  })
   @IsOptional()
+  @IsBoolean()
   includeInTotal?: boolean;
 
-  @IsNumber()
-  @Type(() => Number)
+  @ApiProperty({
+    example: 75000000,
+    description: 'Credit limit (for credit cards)',
+    required: false,
+  })
   @IsOptional()
+  @Type(() => Number)
+  @Transform(({ value }) => parseFloat(value))
   creditLimit?: number;
 
-  @IsNumber()
-  @Type(() => Number)
+  @ApiProperty({
+    example: 15.0,
+    description: 'Annual interest rate percentage',
+    required: false,
+  })
   @IsOptional()
+  @Type(() => Number)
+  @Transform(({ value }) => parseFloat(value))
   interestRate?: number;
 }
 
-export * from './account.dto';
+export * from './account-response.dto';

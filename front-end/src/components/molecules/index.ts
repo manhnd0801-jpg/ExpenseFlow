@@ -10,6 +10,10 @@ export * from './DashboardWidgets';
 
 // Forms
 export { BudgetForm } from './BudgetForm';
+export { ContributeGoalModal } from './ContributeGoalModal';
+export { DebtForm } from './DebtForm';
+export { EventForm } from './EventForm';
+export { GoalDetailModal } from './GoalDetailModal';
 export { GoalForm } from './GoalForm';
 export { TransactionForm } from './TransactionForm';
 

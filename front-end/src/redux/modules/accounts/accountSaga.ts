@@ -4,6 +4,7 @@
  */
 
 import { accountService } from '@/services/accountService';
+import type { TPaginatedResponse } from '@/types/models';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { call, put, takeEvery } from 'redux-saga/effects';
 import { accountActions } from './accountSlice';
@@ -20,24 +21,27 @@ import {
  */
 function* listAccountsSaga(action: PayloadAction<IAccountListQuery>): Generator<any, void, any> {
   try {
-    const response: any = yield call(accountService.getAccounts);
+    const response: IAccount[] | TPaginatedResponse<IAccount> = yield call(
+      accountService.getAccounts
+    );
 
-    // Handle both array response and paginated response from backend
+    // Handle paginated response from backend
+    // After Phase 1: Backend returns { items: [], total, page, limit, totalPages }
     let accounts: IAccount[] = [];
     let total = 0;
     let page = action.payload.page || 1;
     let limit = action.payload.limit || 10;
 
     if (Array.isArray(response)) {
-      // Direct array response
+      // Direct array response (fallback)
       accounts = response;
       total = response.length;
-    } else if (response && typeof response === 'object') {
-      // Paginated response: { data: [], pagination: {...} }
-      accounts = response.data || response;
-      total = response.pagination?.total || response.total || accounts.length;
-      page = response.pagination?.page || response.page || page;
-      limit = response.pagination?.limit || response.limit || limit;
+    } else {
+      // ✅ Standardized paginated response: { items: [], total, page, limit, totalPages }
+      accounts = response.items;
+      total = response.total || 0;
+      page = response.page || page;
+      limit = response.limit || limit;
     }
 
     yield put(
@@ -70,10 +74,8 @@ function* createAccountSaga(
     // @ts-ignore - Redux Saga call effect type inference issue
     const newAccount: IAccount = yield call(accountService.createAccount, requestData);
 
+    // ✅ Store will be updated directly by slice reducer - No need to refetch list
     yield put(accountActions.createAccountSuccess(newAccount));
-
-    // Refresh account list
-    yield put(accountActions.listAccountsRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(accountActions.createAccountFailure(error?.message || 'Failed to create account'));
   }
@@ -87,17 +89,16 @@ function* updateAccountSaga(
 ): Generator<any, void, any> {
   try {
     const { id, ...updateData } = action.payload;
-    const updatedAccount: IAccount = yield call(accountService.updateAccount, id, updateData);
 
+    const response: any = yield call(accountService.updateAccount, id, updateData); // Extract account data from response
+    const updatedAccount: IAccount = response.data || response;
+
+    // ✅ Store will be updated directly by slice reducer - No need to refetch list
     yield put(accountActions.updateAccountSuccess(updatedAccount));
-
-    // Refresh account list
-    yield put(accountActions.listAccountsRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(accountActions.updateAccountFailure(error?.message || 'Failed to update account'));
   }
 }
-
 /**
  * Delete Account Saga
  */
@@ -108,10 +109,8 @@ function* deleteAccountSaga(
     const { id } = action.payload;
     yield call(accountService.deleteAccount, id);
 
+    // ✅ Store will be updated directly by slice reducer - No need to refetch list
     yield put(accountActions.deleteAccountSuccess({ id }));
-
-    // Refresh account list
-    yield put(accountActions.listAccountsRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(accountActions.deleteAccountFailure(error?.message || 'Failed to delete account'));
   }

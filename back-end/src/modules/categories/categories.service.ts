@@ -46,7 +46,7 @@ export class CategoriesService {
 
     return await this.categoryRepository.find({
       where,
-      order: { createdAt: 'DESC' },
+      order: { updatedAt: 'DESC' },
     });
   }
 
@@ -71,10 +71,8 @@ export class CategoriesService {
   async update(userId: string, id: string, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
     const category = await this.findOne(userId, id);
 
-    // Prevent updating default categories
-    if (category.isDefault) {
-      throw new BadRequestException('Cannot update default categories');
-    }
+    // Allow updating default categories - users should be able to customize them
+    // Note: When a default category is updated, it becomes customized for that user
 
     // Check for duplicate name if name is being changed
     if (updateCategoryDto.name && updateCategoryDto.name !== category.name) {
@@ -101,10 +99,8 @@ export class CategoriesService {
   async remove(userId: string, id: string): Promise<void> {
     const category = await this.findOne(userId, id);
 
-    // Prevent deleting default categories
-    if (category.isDefault) {
-      throw new BadRequestException('Cannot delete default categories');
-    }
+    // Allow deleting default categories - users should have full control over their categories
+    // Note: Users can always re-create or customize categories as needed
 
     // Check if category is being used in transactions
     // This would require checking the Transaction entity, but for now we'll allow deletion

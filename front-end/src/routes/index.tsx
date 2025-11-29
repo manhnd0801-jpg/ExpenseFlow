@@ -22,7 +22,7 @@ import { CategoryListPage } from '@pages/categories';
 import { DebtsListPage } from '@pages/debts';
 import { EventsListPage } from '@pages/events';
 import { GoalsListPage } from '@pages/goals';
-import I18nTestPage from '@pages/I18nTestPage';
+// import I18nTestPage from '@pages/I18nTestPage'; // Commented out - file doesn't exist
 import LoanDetailPage from '@pages/loans/LoanDetailPage';
 import LoanForm from '@pages/loans/LoanForm';
 import LoansListPage from '@pages/loans/LoansListPage';
@@ -188,12 +188,12 @@ const routeConfigs: IRouteConfig[] = [
   },
 
   // Dev/Test Routes
-  {
-    path: '/i18n-test',
-    element: <I18nTestPage />,
-    isPrivate: true,
-    layout: 'dashboard',
-  },
+  // {
+  //   path: '/i18n-test',
+  //   element: <I18nTestPage />,
+  //   isPrivate: true,
+  //   layout: 'dashboard',
+  // },
 ];
 
 /**

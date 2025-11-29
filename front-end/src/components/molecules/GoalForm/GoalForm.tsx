@@ -60,7 +60,7 @@ interface IMilestone {
 interface IGoalFormProps {
   visible: boolean;
   onCancel: () => void;
-  onSubmit: (values: IGoal) => void;
+  onSubmit: (values: any) => void; // Accept any for now to handle mapping
   initialValues?: Partial<IGoal>;
   loading?: boolean;
 }
@@ -132,11 +132,11 @@ const FormWrapper = styled.div`
 
   .goal-type-selector {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     gap: 12px;
 
     .type-card {
-      padding: 16px 12px;
+      padding: 10px 10px;
       border: 2px solid #f0f0f0;
       border-radius: 8px;
       text-align: center;
@@ -300,13 +300,17 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+
+      // Map to backend expected fields
       const formattedValues = {
-        ...values,
+        name: values.name,
+        description: values.description,
         targetAmount,
-        type: goalType,
-        priority,
-        targetDate: values.targetDate.toISOString(),
+        deadline: values.targetDate.toISOString(), // targetDate -> deadline
+        // NOTE: type, priority are not supported by backend yet
+        // Backend only accepts: name, targetAmount, currentAmount, deadline, description
       };
+
       onSubmit(formattedValues);
     } catch (error) {
       console.error('Form validation error:', error);

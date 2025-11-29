@@ -33,9 +33,14 @@ import {
 } from './remindersSlice';
 
 // Fetch reminders
-function* fetchRemindersSaga() {
+function* fetchRemindersSaga(): Generator<any, void, any> {
   try {
-    const reminders: IReminder[] = yield call(reminderService.getReminders);
+    const response: any = yield call(reminderService.getReminders);
+    // After Phase 1 & 2: Backend returns { items: [], total, page, limit, totalPages }
+    // Handle both array and paginated response
+    const reminders: IReminder[] = Array.isArray(response)
+      ? response
+      : response.items || response.data || [];
     yield put(fetchRemindersSuccess(reminders));
   } catch (error: any) {
     yield put(
@@ -45,9 +50,13 @@ function* fetchRemindersSaga() {
 }
 
 // Fetch upcoming reminders
-function* fetchUpcomingRemindersSaga() {
+function* fetchUpcomingRemindersSaga(): Generator<any, void, any> {
   try {
-    const reminders: IReminder[] = yield call(reminderService.getUpcomingReminders);
+    const response: any = yield call(reminderService.getUpcomingReminders);
+    // Handle both array and paginated response
+    const reminders: IReminder[] = Array.isArray(response)
+      ? response
+      : response.items || response.data || [];
     yield put(fetchUpcomingRemindersSuccess(reminders));
   } catch (error: any) {
     yield put(
@@ -59,9 +68,13 @@ function* fetchUpcomingRemindersSaga() {
 }
 
 // Fetch reminders by type
-function* fetchRemindersByTypeSaga(action: PayloadAction<ReminderType>) {
+function* fetchRemindersByTypeSaga(action: PayloadAction<ReminderType>): Generator<any, void, any> {
   try {
-    const reminders: IReminder[] = yield call(reminderService.getRemindersByType, action.payload);
+    const response: any = yield call(reminderService.getRemindersByType, action.payload);
+    // Handle both array and paginated response
+    const reminders: IReminder[] = Array.isArray(response)
+      ? response
+      : response.items || response.data || [];
     yield put(fetchRemindersByTypeSuccess(reminders));
   } catch (error: any) {
     yield put(

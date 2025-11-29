@@ -116,7 +116,13 @@ const loanSlice = createSlice({
     updateLoanSuccess: (state, action: PayloadAction<ILoan>) => {
       const index = state.loans.findIndex((loan) => loan.id === action.payload.id);
       if (index !== -1) {
-        state.loans[index] = action.payload;
+        // Remove the updated item from its current position
+        state.loans.splice(index, 1);
+        // Add the updated item to the beginning (to match backend updatedAt DESC)
+        state.loans.unshift(action.payload);
+      } else {
+        // If item not found, add it to the beginning
+        state.loans.unshift(action.payload);
       }
       if (state.currentLoan?.id === action.payload.id) {
         state.currentLoan = action.payload;

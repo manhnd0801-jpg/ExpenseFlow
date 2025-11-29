@@ -62,7 +62,13 @@ const goalSlice = createSlice({
       state.loading = false;
       const index = state.goals.findIndex((goal) => goal.id === action.payload.id);
       if (index !== -1) {
-        state.goals[index] = action.payload;
+        // Remove the updated item from its current position
+        state.goals.splice(index, 1);
+        // Add the updated item to the beginning (to match backend updatedAt DESC)
+        state.goals.unshift(action.payload);
+      } else {
+        // If item not found, add it to the beginning
+        state.goals.unshift(action.payload);
       }
       if (state.selectedGoal?.id === action.payload.id) {
         state.selectedGoal = action.payload;

@@ -229,6 +229,8 @@
     "description": "View statistics and analyze your spending",
     "dateRange": "Date Range",
     "exportReport": "Export Report",
+    "exportSuccess": "Export Successful",
+    "exportSuccessMessage": "Report has been downloaded to your computer",
     "balance": "Balance",
     "totalIncome": "Total Income",
     "totalExpense": "Total Expense",
@@ -295,7 +297,14 @@
     "totalGoals": "Total {{total}} goals",
     "noGoals": "No goals yet",
     "goalCompleted": "Goal Completed",
-    "goalActive": "Goal Active"
+    "goalActive": "Goal Active",
+    "contributionDetails": "Contribution Details",
+    "contributionAmount": "Contribution Amount",
+    "contributionNote": "Contribution Note",
+    "remainingAmount": "Remaining Amount",
+    "enterContributionAmount": "Enter contribution amount",
+    "enterContributionNote": "Enter note (optional)",
+    "noDescription": "No description available"
   },
   "debts": {
     "title": "Debt Management",
@@ -324,6 +333,7 @@
     "createBorrowing": "Create Borrowing",
     "viewDetail": "View Details",
     "recordPayment": "Record Payment",
+    "recordPaymentConfirm": "Do you want to mark this debt as fully paid?",
     "editDebtAction": "Edit",
     "deleteDebtAction": "Delete",
     "confirmDelete": "Confirm Delete",
@@ -543,6 +553,17 @@
     "positiveNumber": "Must be a positive number",
     "invalidDate": "Invalid date",
     "passwordMatch": "Passwords do not match"
+  },
+  "validation": {
+    "required": {
+      "contributionAmount": "Please enter contribution amount"
+    },
+    "min": {
+      "contributionAmount": "Minimum contribution amount is 1,000 VND"
+    },
+    "max": {
+      "contributionAmount": "Contribution amount cannot exceed remaining amount"
+    }
   },
   "notifications": {
     "success": {

@@ -22,12 +22,7 @@ export class ReportsController {
     description: 'Income vs Expense report data',
   })
   async getIncomeExpense(@Request() req, @Query() dateRange: DateRangeDto) {
-    const data = await this.reportsService.getIncomeExpenseReport(req.user.userId, dateRange);
-    return {
-      success: true,
-      data,
-      message: 'Income expense report retrieved successfully',
-    };
+    return await this.reportsService.getIncomeExpenseReport(req.user.userId, dateRange);
   }
 
   @Get(ApiRoutes.REPORTS.CATEGORY_DISTRIBUTION)
@@ -40,12 +35,7 @@ export class ReportsController {
     description: 'Category distribution data',
   })
   async getCategoryDistribution(@Request() req, @Query() dateRange: DateRangeDto) {
-    const data = await this.reportsService.getCategoryDistribution(req.user.userId, dateRange);
-    return {
-      success: true,
-      data,
-      message: 'Category distribution retrieved successfully',
-    };
+    return await this.reportsService.getCategoryDistribution(req.user.userId, dateRange);
   }
 
   @Get(ApiRoutes.REPORTS.MONTHLY_TREND)
@@ -64,12 +54,7 @@ export class ReportsController {
     description: 'Monthly trend data',
   })
   async getMonthlyTrend(@Request() req, @Query('year', ParseIntPipe) year: number) {
-    const data = await this.reportsService.getMonthlyTrend(req.user.userId, year);
-    return {
-      success: true,
-      data,
-      message: 'Monthly trend retrieved successfully',
-    };
+    return await this.reportsService.getMonthlyTrend(req.user.userId, year);
   }
 
   @Get(ApiRoutes.REPORTS.ACCOUNT_BALANCE)
@@ -88,12 +73,7 @@ export class ReportsController {
     description: 'Account balance history',
   })
   async getAccountBalance(@Request() req, @Query('accountId') accountId?: string) {
-    const data = await this.reportsService.getAccountBalanceHistory(req.user.userId, accountId);
-    return {
-      success: true,
-      data,
-      message: 'Account balance history retrieved successfully',
-    };
+    return await this.reportsService.getAccountBalanceHistory(req.user.userId, accountId);
   }
 
   @Get(ApiRoutes.REPORTS.CASH_FLOW)
@@ -106,12 +86,7 @@ export class ReportsController {
     description: 'Cash flow data',
   })
   async getCashFlow(@Request() req, @Query() dateRange: DateRangeDto) {
-    const data = await this.reportsService.getCashFlow(req.user.userId, dateRange);
-    return {
-      success: true,
-      data,
-      message: 'Cash flow report retrieved successfully',
-    };
+    return await this.reportsService.getCashFlow(req.user.userId, dateRange);
   }
 
   @Get(ApiRoutes.REPORTS.TOP_SPENDING)
@@ -135,12 +110,7 @@ export class ReportsController {
     @Query() dateRange: DateRangeDto,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ) {
-    const data = await this.reportsService.getTopSpendingCategories(req.user.userId, dateRange, limit || 10);
-    return {
-      success: true,
-      data,
-      message: 'Top spending categories retrieved successfully',
-    };
+    return await this.reportsService.getTopSpendingCategories(req.user.userId, dateRange, limit || 10);
   }
 
   @Get(ApiRoutes.REPORTS.FINANCIAL_SUMMARY)
@@ -153,11 +123,6 @@ export class ReportsController {
     description: 'Financial summary data',
   })
   async getFinancialSummary(@Request() req) {
-    const data = await this.reportsService.getFinancialSummary(req.user.userId);
-    return {
-      success: true,
-      data,
-      message: 'Financial summary retrieved successfully',
-    };
+    return await this.reportsService.getFinancialSummary(req.user.userId);
   }
 }

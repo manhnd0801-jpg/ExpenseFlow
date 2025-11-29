@@ -2,10 +2,16 @@
  * Events List Page - Redesigned to match backend Event entity
  * Events group transactions together (e.g., wedding, vacation, project)
  */
+import { EventForm } from '@/components/molecules';
 import { EventStatus } from '@/constants/enums';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useI18n } from '@/hooks/useI18n';
-import { deleteEventRequest, fetchEventsRequest } from '@/redux/modules/events';
+import {
+  createEventRequest,
+  deleteEventRequest,
+  fetchEventsRequest,
+  updateEventRequest,
+} from '@/redux/modules/events';
 import { IEvent } from '@/types/models';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import {
@@ -41,6 +47,8 @@ export const EventsListPage: React.FC = () => {
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isEventFormVisible, setIsEventFormVisible] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<IEvent | undefined>(undefined);
 
   useEffect(() => {
     dispatch(fetchEventsRequest());
@@ -56,18 +64,92 @@ export const EventsListPage: React.FC = () => {
   };
 
   const handleCreate = () => {
-    console.log('Create event');
-    // TODO: Navigate to create page or open modal
+    setEditingEvent(undefined);
+    setIsEventFormVisible(true);
   };
 
   const handleEdit = (event: IEvent) => {
-    console.log('Edit event:', event);
-    // TODO: Navigate to edit page
+    setEditingEvent(event);
+    setIsEventFormVisible(true);
+  };
+
+  const handleEventFormSubmit = (values: any) => {
+    if (editingEvent) {
+      // Update existing event
+      dispatch(
+        updateEventRequest({
+          id: editingEvent.id,
+          ...values,
+        })
+      );
+    } else {
+      // Create new event
+      dispatch(createEventRequest(values));
+    }
+    setIsEventFormVisible(false);
+    setEditingEvent(undefined);
+  };
+
+  const handleEventFormCancel = () => {
+    setIsEventFormVisible(false);
+    setEditingEvent(undefined);
   };
 
   const handleView = (event: IEvent) => {
-    console.log('View event:', event);
-    // TODO: Navigate to detail page
+    // Show event details in a modal
+    Modal.info({
+      title: event.name,
+      width: 700,
+      content: (
+        <div style={{ marginTop: 16 }}>
+          {event.description && (
+            <div style={{ marginBottom: 12 }}>
+              <strong>{t('events.description')}:</strong>
+              <p style={{ margin: '8px 0', color: '#666' }}>{event.description}</p>
+            </div>
+          )}
+
+          <div style={{ marginBottom: 12 }}>
+            <strong>{t('events.status')}:</strong>
+            <p style={{ margin: '8px 0', color: '#666' }}>{getEventStatusLabel(event.status)}</p>
+          </div>
+
+          {event.location && (
+            <div style={{ marginBottom: 12 }}>
+              <strong>{t('events.location')}:</strong>
+              <p style={{ margin: '8px 0', color: '#666' }}>{event.location}</p>
+            </div>
+          )}
+
+          <div style={{ marginBottom: 12 }}>
+            <strong>{t('events.timeRange')}:</strong>
+            <p style={{ margin: '8px 0', color: '#666' }}>
+              {formatDate(event.startDate)} {event.endDate && ` - ${formatDate(event.endDate)}`}
+            </p>
+          </div>
+
+          {event.budget && (
+            <div style={{ marginBottom: 12 }}>
+              <strong>{t('events.budget')}:</strong>
+              <p style={{ margin: '8px 0', color: '#666' }}>{formatCurrency(event.budget)}</p>
+            </div>
+          )}
+
+          <div style={{ marginBottom: 12 }}>
+            <strong>{t('events.status')}:</strong>
+            <p style={{ margin: '8px 0', color: '#666' }}>{getEventStatusLabel(event.status)}</p>
+          </div>
+
+          {event.totalSpent !== undefined && (
+            <div style={{ marginBottom: 12 }}>
+              <strong>{t('events.totalSpent')}:</strong>
+              <p style={{ margin: '8px 0', color: '#666' }}>{formatCurrency(event.totalSpent)}</p>
+            </div>
+          )}
+        </div>
+      ),
+      okText: t('common.close'),
+    });
   };
 
   const handleDelete = (id: string) => {
@@ -288,10 +370,20 @@ export const EventsListPage: React.FC = () => {
         okText={t('common.delete')}
         cancelText={t('common.cancel')}
         okButtonProps={{ danger: true }}
+        confirmLoading={loading}
       >
         <p>{t('events.deleteConfirmation')}</p>
         <p>{t('events.deleteWarning')}</p>
       </Modal>
+
+      {/* Event Form Modal */}
+      <EventForm
+        visible={isEventFormVisible}
+        onCancel={handleEventFormCancel}
+        onSubmit={handleEventFormSubmit}
+        initialValues={editingEvent}
+        loading={loading}
+      />
     </div>
   );
 };

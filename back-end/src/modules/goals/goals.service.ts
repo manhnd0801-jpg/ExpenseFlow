@@ -25,7 +25,7 @@ export class GoalsService {
   async findAll(userId: string): Promise<Goal[]> {
     return await this.goalRepository.find({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { updatedAt: 'DESC' },
     });
   }
 

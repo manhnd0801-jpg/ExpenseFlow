@@ -6,7 +6,7 @@
 import { transactionService } from '@/services/transactionService';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { call, put, select, takeEvery } from 'redux-saga/effects';
-import { selectTransactionFilters, selectTransactionPagination } from './transactionSelectors';
+import { selectTransactionPagination } from './transactionSelectors';
 import { transactionActions } from './transactionSlice';
 import {
   ICreateTransactionPayload,
@@ -32,22 +32,23 @@ function* listTransactionsSaga(
       limit: pagination.limit,
     });
 
-    // Handle both array response and paginated response from backend
+    // Handle paginated response from backend
+    // After Phase 1: Backend returns { items: [], total, page, limit, totalPages }
     let transactions: ITransaction[] = [];
     let total = 0;
     let page = pagination.page;
     let limit = pagination.limit;
 
     if (Array.isArray(response)) {
-      // Direct array response
+      // Direct array response (fallback)
       transactions = response;
       total = response.length;
     } else if (response && typeof response === 'object') {
-      // Paginated response: { data: [], pagination: {...} }
-      transactions = response.data || response;
-      total = response.pagination?.total || response.total || transactions.length;
-      page = response.pagination?.page || response.page || page;
-      limit = response.pagination?.limit || response.limit || limit;
+      // ✅ Standardized paginated response: { items: [], total, page, limit, totalPages }
+      transactions = response.items || response.data || response;
+      total = response.total || transactions.length;
+      page = response.page || page;
+      limit = response.limit || limit;
     }
 
     yield put(
@@ -74,13 +75,12 @@ function* createTransactionSaga(
   try {
     const payload = action.payload;
 
-    const newTransaction: ITransaction = yield call(transactionService.createTransaction, payload);
+    const response: any = yield call(transactionService.createTransaction, payload);
+    // Extract data from wrapped response {success, data, message}
+    const newTransaction: ITransaction = response.data || response;
 
+    // ✅ Store will be updated directly by slice reducer - No need to refetch list
     yield put(transactionActions.createTransactionSuccess(newTransaction));
-
-    // Refresh transaction list
-    const filters = yield select(selectTransactionFilters);
-    yield put(transactionActions.listTransactionsRequest(filters));
   } catch (error) {
     const errorMessage =
       error instanceof Error && error.message ? error.message : 'Failed to create transaction';
@@ -97,17 +97,12 @@ function* updateTransactionSaga(
   try {
     const { id, ...data } = action.payload;
 
-    const updatedTransaction: ITransaction = yield call(
-      transactionService.updateTransaction,
-      id,
-      data
-    );
+    const response: any = yield call(transactionService.updateTransaction, id, data);
+    // Extract data from wrapped response {success, data, message}
+    const updatedTransaction: ITransaction = response.data || response;
 
+    // ✅ Store will be updated directly by slice reducer - No need to refetch list
     yield put(transactionActions.updateTransactionSuccess(updatedTransaction));
-
-    // Refresh transaction list
-    const filters = yield select(selectTransactionFilters);
-    yield put(transactionActions.listTransactionsRequest(filters));
   } catch (error) {
     const errorMessage =
       error instanceof Error && error.message ? error.message : 'Failed to update transaction';
@@ -126,11 +121,8 @@ function* deleteTransactionSaga(
 
     yield call(transactionService.deleteTransaction, id);
 
+    // ✅ Store will be updated directly by slice reducer - No need to refetch list
     yield put(transactionActions.deleteTransactionSuccess(id));
-
-    // Refresh transaction list
-    const filters = yield select(selectTransactionFilters);
-    yield put(transactionActions.listTransactionsRequest(filters));
   } catch (error) {
     const errorMessage =
       error instanceof Error && error.message ? error.message : 'Failed to delete transaction';
@@ -145,7 +137,9 @@ function* getTransactionSaga(action: PayloadAction<string>): Generator<any, void
   try {
     const id = action.payload;
 
-    const transaction: ITransaction = yield call(transactionService.getTransactionById, id);
+    const response: any = yield call(transactionService.getTransactionById, id);
+    // Extract data from wrapped response {success, data, message}
+    const transaction: ITransaction = response.data || response;
 
     yield put(transactionActions.getTransactionSuccess(transaction));
   } catch (error) {

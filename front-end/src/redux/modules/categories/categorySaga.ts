@@ -22,22 +22,23 @@ function* listCategoriesSaga(action: PayloadAction<ICategoryListQuery>): Generat
   try {
     const response: any = yield call(categoryService.getCategories);
 
-    // Handle both array response and paginated response from backend
+    // Handle paginated response from backend
+    // After Phase 1: Backend returns { items: [], total, page, limit, totalPages }
     let categories: ICategory[] = [];
     let total = 0;
     let page = action.payload.page || 1;
     let limit = action.payload.limit || 10;
 
     if (Array.isArray(response)) {
-      // Direct array response
+      // Direct array response (fallback)
       categories = response;
       total = response.length;
     } else if (response && typeof response === 'object') {
-      // Paginated response: { data: [], pagination: {...} }
-      categories = response.data || response;
-      total = response.pagination?.total || response.total || categories.length;
-      page = response.pagination?.page || response.page || page;
-      limit = response.pagination?.limit || response.limit || limit;
+      // ✅ Standardized paginated response: { items: [], total, page, limit, totalPages }
+      categories = response.items || response.data || response;
+      total = response.total || categories.length;
+      page = response.page || page;
+      limit = response.limit || limit;
     }
 
     yield put(
@@ -62,12 +63,12 @@ function* createCategorySaga(
   action: PayloadAction<ICreateCategoryPayload>
 ): Generator<any, void, any> {
   try {
-    const newCategory: ICategory = yield call(categoryService.createCategory, action.payload);
+    const response: any = yield call(categoryService.createCategory, action.payload);
+    // Extract data from wrapped response {success, data, message}
+    const newCategory: ICategory = response.data || response;
 
+    // ✅ Store will be updated directly by slice reducer - No need to refetch list
     yield put(categoryActions.createCategorySuccess(newCategory));
-
-    // Refresh category list
-    yield put(categoryActions.listCategoriesRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(categoryActions.createCategoryFailure(error?.message || 'Failed to create category'));
   }
@@ -81,12 +82,12 @@ function* updateCategorySaga(
 ): Generator<any, void, any> {
   try {
     const { id, ...updateData } = action.payload;
-    const updatedCategory: ICategory = yield call(categoryService.updateCategory, id, updateData);
+    const response: any = yield call(categoryService.updateCategory, id, updateData);
+    // Extract data from wrapped response {success, data, message}
+    const updatedCategory: ICategory = response.data || response;
 
+    // ✅ Store will be updated directly by slice reducer - No need to refetch list
     yield put(categoryActions.updateCategorySuccess(updatedCategory));
-
-    // Refresh category list
-    yield put(categoryActions.listCategoriesRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(categoryActions.updateCategoryFailure(error?.message || 'Failed to update category'));
   }
@@ -102,10 +103,8 @@ function* deleteCategorySaga(
     const { id } = action.payload;
     yield call(categoryService.deleteCategory, id);
 
+    // ✅ Store will be updated directly by slice reducer - No need to refetch list
     yield put(categoryActions.deleteCategorySuccess({ id }));
-
-    // Refresh category list
-    yield put(categoryActions.listCategoriesRequest({ page: 1, limit: 10 }));
   } catch (error: any) {
     yield put(categoryActions.deleteCategoryFailure(error?.message || 'Failed to delete category'));
   }
@@ -117,7 +116,9 @@ function* deleteCategorySaga(
 function* getCategoryDetailSaga(action: PayloadAction<{ id: string }>): Generator<any, void, any> {
   try {
     const { id } = action.payload;
-    const category: ICategory = yield call(categoryService.getCategoryById, id);
+    const response: any = yield call(categoryService.getCategoryById, id);
+    // Extract data from wrapped response {success, data, message}
+    const category: ICategory = response.data || response;
 
     yield put(categoryActions.getCategoryDetailSuccess(category));
   } catch (error: any) {

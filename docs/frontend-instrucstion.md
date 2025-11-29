@@ -304,7 +304,35 @@ types/
 - Props interfaces for all components
 - Enum types for constants (use `as const` or `enum`)
 
-**DO NOT use `any` type** (use `unknown` if type is truly unknown)
+**❌ STRICTLY FORBIDDEN: DO NOT use `any` type**
+
+- Use specific types instead of `any`
+- Use `unknown` if type is truly unknown
+- Use union types for multiple possible types: `string | number`
+- Use generic types: `<T>` for reusable components/functions
+- Use type guards for runtime type checking
+
+```typescript
+// ❌ BAD - Using 'any' type
+const response: any = yield call(apiCall);
+function handleData(data: any): any { ... }
+interface IComponentProps { data: any; }
+
+// ✅ GOOD - Proper TypeScript typing
+const response: IApiResponse<IUser> = yield call(userService.getUser);
+function handleData(data: IUserData): IProcessedData { ... }
+interface IComponentProps { data: IUserProfile; }
+
+// ✅ GOOD - Using 'unknown' when type is truly unknown
+function parseJson(input: string): unknown { ... }
+
+// ✅ GOOD - Using generics for reusable types
+interface IApiResponse<T> {
+  data: T;
+  success: boolean;
+  message: string;
+}
+```
 
 ### 6.3. Naming Conventions
 
@@ -964,7 +992,7 @@ interface ButtonProps {}
 
 ### 17.1. DO NOT
 
-- ❌ Use `any` type in TypeScript
+- ❌ **NEVER use `any` type** - Always define proper TypeScript interfaces
 - ❌ Hardcode API URLs in components/services
 - ❌ Store sensitive data in localStorage (except tokens)
 - ❌ Use inline styles for static styling

@@ -229,6 +229,8 @@
     "description": "Xem thống kê và phân tích chi tiêu của bạn",
     "dateRange": "Khoảng thời gian",
     "exportReport": "Xuất báo cáo",
+    "exportSuccess": "Xuất báo cáo thành công",
+    "exportSuccessMessage": "Báo cáo đã được tải về máy tính của bạn",
     "balance": "Số dư",
     "totalIncome": "Tổng thu nhập",
     "totalExpense": "Tổng chi tiêu",
@@ -245,6 +247,43 @@
     "exportExcel": "Xuất Excel",
     "compareWithLastMonth": "So sánh với tháng trước",
     "topExpenses": "Chi tiêu hàng đầu"
+  },
+  "events": {
+    "title": "Sự kiện",
+    "manageEvents": "Quản lý Sự kiện & Dự án",
+    "createEvent": "Tạo sự kiện",
+    "editEvent": "Chỉnh sửa sự kiện",
+    "eventName": "Tên sự kiện",
+    "description": "Mô tả",
+    "eventType": "Loại sự kiện",
+    "budget": "Ngân sách",
+    "location": "Địa điểm",
+    "eventDuration": "Thời gian diễn ra",
+    "startDate": "Ngày bắt đầu",
+    "endDate": "Ngày kết thúc",
+    "status": "Trạng thái",
+    "isActive": "Đang hoạt động",
+    "basicInfo": "Thông tin cơ bản",
+    "budgetInfo": "Thông tin ngân sách",
+    "timeAndLocation": "Thời gian & Địa điểm",
+    "enterEventName": "Nhập tên sự kiện",
+    "enterDescription": "Nhập mô tả sự kiện",
+    "selectEventType": "Chọn loại sự kiện",
+    "enterBudget": "Nhập ngân sách",
+    "enterLocation": "Nhập địa điểm",
+    "selectStatus": "Chọn trạng thái",
+    "travel": "Du lịch",
+    "education": "Giáo dục",
+    "health": "Sức khỏe",
+    "personal": "Cá nhân",
+    "purchase": "Mua sắm",
+    "other": "Khác",
+    "planned": "Đã lên kế hoạch",
+    "active": "Đang diễn ra",
+    "completed": "Đã hoàn thành",
+    "cancelled": "Đã hủy",
+    "totalEvents": "Tổng {{total}} sự kiện",
+    "noEvents": "Chưa có sự kiện nào"
   },
   "goals": {
     "title": "Mục tiêu",
@@ -295,7 +334,16 @@
     "totalGoals": "Tổng {{total}} mục tiêu",
     "noGoals": "Chưa có mục tiêu nào",
     "goalCompleted": "Mục tiêu đã hoàn thành",
-    "goalActive": "Mục tiêu đang hoạt động"
+    "goalActive": "Mục tiêu đang hoạt động",
+    "contributionDetails": "Chi tiết đóng góp",
+    "created": "Ngày tạo",
+    "goalId": "ID Mục tiêu",
+    "contributionAmount": "Số tiền đóng góp",
+    "contributionNote": "Ghi chú đóng góp",
+    "remainingAmount": "Số tiền còn lại",
+    "enterContributionAmount": "Nhập số tiền đóng góp",
+    "enterContributionNote": "Nhập ghi chú (tùy chọn)",
+    "noDescription": "Chưa có mô tả"
   },
   "debts": {
     "title": "Quản lý Công nợ",
@@ -330,7 +378,23 @@
     "confirmDeleteMessage": "Bạn có chắc chắn muốn xóa công nợ này không?",
     "deleteWarning": "Hành động này không thể hoàn tác.",
     "totalLending": "Tổng {{total}} khoản cho vay",
-    "totalBorrowing": "Tổng {{total}} khoản đi vay"
+    "totalBorrowing": "Tổng {{total}} khoản đi vay",
+    "debtType": "Loại công nợ",
+    "personAndAmount": "Thông tin người & số tiền",
+    "enterPersonName": "Nhập tên người liên quan",
+    "enterOriginalAmount": "Nhập số tiền gốc",
+    "enterInterestRate": "Nhập lãi suất (%/năm)",
+    "selectBorrowedDate": "Chọn ngày vay",
+    "selectDueDate": "Chọn hạn trả",
+    "selectStatus": "Chọn trạng thái",
+    "enterNote": "Nhập ghi chú",
+    "active": "Đang hoạt động",
+    "partialPaid": "Đã trả một phần",
+    "completed": "Đã hoàn thành",
+    "overdue": "Quá hạn",
+    "note": "Ghi chú",
+    "recordPayment": "Ghi nhận thanh toán",
+    "recordPaymentConfirm": "Bạn muốn đánh dấu khoản này là đã thanh toán hoàn tất?"
   },
   "loans": {
     "title": "Khoản vay",
@@ -381,7 +445,25 @@
     "cancelled": "Đã hủy",
     "status": "Trạng thái",
     "description": "Mô tả",
-    "noEvents": "Chưa có sự kiện nào"
+    "noEvents": "Chưa có sự kiện nào",
+    "eventDuration": "Thời gian diễn ra",
+    "location": "Địa điểm",
+    "isActive": "Đang hoạt động",
+    "basicInfo": "Thông tin cơ bản",
+    "budgetInfo": "Thông tin ngân sách",
+    "timeAndLocation": "Thời gian & Địa điểm",
+    "enterEventName": "Nhập tên sự kiện",
+    "enterDescription": "Nhập mô tả sự kiện",
+    "selectEventType": "Chọn loại sự kiện",
+    "enterBudget": "Nhập ngân sách",
+    "enterLocation": "Nhập địa điểm",
+    "selectStatus": "Chọn trạng thái",
+    "travel": "Du lịch",
+    "education": "Giáo dục",
+    "health": "Sức khỏe",
+    "personal": "Cá nhân",
+    "purchase": "Mua sắm",
+    "other": "Khác"
   },
   "reminders": {
     "title": "Nhắc nhở",
@@ -543,6 +625,26 @@
     "positiveNumber": "Phải là số dương",
     "invalidDate": "Ngày không hợp lệ",
     "passwordMatch": "Mật khẩu không khớp"
+  },
+  "validation": {
+    "required": {
+      "contributionAmount": "Vui lòng nhập số tiền đóng góp",
+      "eventName": "Vui lòng nhập tên sự kiện",
+      "eventType": "Vui lòng chọn loại sự kiện",
+      "eventDates": "Vui lòng chọn thời gian diễn ra",
+      "debtType": "Vui lòng chọn loại công nợ",
+      "personName": "Vui lòng nhập tên người liên quan",
+      "originalAmount": "Vui lòng nhập số tiền gốc",
+      "borrowedDate": "Vui lòng chọn ngày vay"
+    },
+    "min": {
+      "contributionAmount": "Số tiền đóng góp tối thiểu là 1,000 VND",
+      "budget": "Ngân sách phải lớn hơn 0",
+      "originalAmount": "Số tiền gốc tối thiểu là 1,000 VND"
+    },
+    "max": {
+      "contributionAmount": "Số tiền đóng góp không được vượt quá số tiền còn lại"
+    }
   },
   "notifications": {
     "success": {

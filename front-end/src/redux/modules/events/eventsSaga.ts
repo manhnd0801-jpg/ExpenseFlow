@@ -29,9 +29,14 @@ import {
 } from './eventsSlice';
 
 // Fetch events
-function* fetchEventsSaga() {
+function* fetchEventsSaga(): Generator<any, void, any> {
   try {
-    const events: IEvent[] = yield call(eventService.getEvents);
+    const response: any = yield call(eventService.getEvents);
+    // After Phase 1 & 2: Backend returns { items: [], total, page, limit, totalPages }
+    // Handle both array and paginated response
+    const events: IEvent[] = Array.isArray(response)
+      ? response
+      : response.items || response.data || [];
     yield put(fetchEventsSuccess(events));
   } catch (error: any) {
     yield put(fetchEventsFailure(error.message || translate('notifications.error.fetchEvents')));
@@ -39,7 +44,7 @@ function* fetchEventsSaga() {
 }
 
 // Fetch event by ID
-function* fetchEventByIdSaga(action: PayloadAction<string>) {
+function* fetchEventByIdSaga(action: PayloadAction<string>): Generator<any, void, any> {
   try {
     const event: IEvent = yield call(eventService.getEventById, action.payload);
     yield put(fetchEventByIdSuccess(event));
@@ -49,7 +54,7 @@ function* fetchEventByIdSaga(action: PayloadAction<string>) {
 }
 
 // Fetch event summary
-function* fetchEventSummarySaga(action: PayloadAction<string>) {
+function* fetchEventSummarySaga(action: PayloadAction<string>): Generator<any, void, any> {
   try {
     const summary: IEventSummary = yield call(eventService.getEventSummary, action.payload);
     yield put(fetchEventSummarySuccess(summary));
@@ -61,9 +66,11 @@ function* fetchEventSummarySaga(action: PayloadAction<string>) {
 }
 
 // Create event
-function* createEventSaga(action: PayloadAction<any>) {
+function* createEventSaga(action: PayloadAction<any>): Generator<any, void, any> {
   try {
-    const event: IEvent = yield call(eventService.createEvent, action.payload);
+    const response: any = yield call(eventService.createEvent, action.payload);
+    // Extract data from wrapped response {success, data, message}
+    const event: IEvent = response.data || response;
     yield put(createEventSuccess(event));
   } catch (error: any) {
     yield put(createEventFailure(error.message || translate('notifications.error.createEvent')));
@@ -71,13 +78,17 @@ function* createEventSaga(action: PayloadAction<any>) {
 }
 
 // Update event
-function* updateEventSaga(action: PayloadAction<{ id: string; data: any }>) {
+function* updateEventSaga(
+  action: PayloadAction<{ id: string; data: any }>
+): Generator<any, void, any> {
   try {
-    const event: IEvent = yield call(
+    const response: any = yield call(
       eventService.updateEvent,
       action.payload.id,
       action.payload.data
     );
+    // Extract data from wrapped response {success, data, message}
+    const event: IEvent = response.data || response;
     yield put(updateEventSuccess(event));
   } catch (error: any) {
     yield put(updateEventFailure(error.message || translate('notifications.error.updateEvent')));
@@ -85,7 +96,7 @@ function* updateEventSaga(action: PayloadAction<{ id: string; data: any }>) {
 }
 
 // Delete event
-function* deleteEventSaga(action: PayloadAction<string>) {
+function* deleteEventSaga(action: PayloadAction<string>): Generator<any, void, any> {
   try {
     yield call(eventService.deleteEvent, action.payload);
     yield put(deleteEventSuccess(action.payload));
@@ -95,7 +106,7 @@ function* deleteEventSaga(action: PayloadAction<string>) {
 }
 
 // Root saga
-export default function* eventsSaga() {
+export default function* eventsSaga(): Generator<any, void, any> {
   yield takeLatest(fetchEventsRequest.type, fetchEventsSaga);
   yield takeLatest(fetchEventByIdRequest.type, fetchEventByIdSaga);
   yield takeLatest(fetchEventSummaryRequest.type, fetchEventSummarySaga);

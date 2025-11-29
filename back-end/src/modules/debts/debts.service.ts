@@ -31,7 +31,7 @@ export class DebtsService {
     return await this.debtRepository.find({
       where,
       relations: ['payments'],
-      order: { createdAt: 'DESC' },
+      order: { updatedAt: 'DESC' },
     });
   }
 

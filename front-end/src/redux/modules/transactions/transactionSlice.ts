@@ -93,7 +93,14 @@ const transactionSlice = createSlice({
     updateTransactionSuccess: (state, action: PayloadAction<ITransaction>) => {
       const index = state.transactions.findIndex((t) => t.id === action.payload.id);
       if (index !== -1) {
-        state.transactions[index] = action.payload;
+        // Remove the updated item from its current position
+        state.transactions.splice(index, 1);
+        // Add the updated item to the beginning (to match backend updatedAt DESC)
+        state.transactions.unshift(action.payload);
+      } else {
+        // If item not found, add it to the beginning
+        state.transactions.unshift(action.payload);
+        state.pagination.total += 1;
       }
       if (state.currentTransaction?.id === action.payload.id) {
         state.currentTransaction = action.payload;

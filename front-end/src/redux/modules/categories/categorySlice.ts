@@ -90,7 +90,13 @@ const categorySlice = createSlice({
     updateCategorySuccess: (state, action: PayloadAction<ICategory>) => {
       const index = state.categories.findIndex((cat) => cat.id === action.payload.id);
       if (index > -1) {
-        state.categories[index] = action.payload;
+        // Remove the updated item from its current position
+        state.categories.splice(index, 1);
+        // Add the updated item to the beginning (to match backend updatedAt DESC)
+        state.categories.unshift(action.payload);
+      } else {
+        // If item not found, add it to the beginning
+        state.categories.unshift(action.payload);
       }
       state.isLoading = false;
       state.error = null;

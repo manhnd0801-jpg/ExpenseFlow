@@ -38,8 +38,9 @@ function* fetchBudgetsSaga(action: PayloadAction<IFetchBudgetsPayload>): Generat
     const { page = 1, pageSize = 20 } = action.payload;
 
     const response: any = yield call(budgetService.getBudgets, { page, limit: pageSize });
-    const budgets = Array.isArray(response) ? response : (response as any)?.data || [];
-    // Backend returns data directly as array, not { items: [] }
+    // After Phase 1 & 2: Backend returns { items: [], total, page, limit, totalPages }
+    // Handle both array and paginated response
+    const budgets = Array.isArray(response) ? response : response.items || response.data || [];
     yield put(fetchBudgetsSuccess(budgets));
   } catch (error: any) {
     const errorMessage = error.message || 'Không thể tải danh sách ngân sách';
@@ -54,7 +55,9 @@ function* fetchBudgetsSaga(action: PayloadAction<IFetchBudgetsPayload>): Generat
 function* createBudgetSaga(action: PayloadAction<ICreateBudgetPayload>): Generator<any, void, any> {
   try {
     const response: any = yield call(budgetService.createBudget, action.payload as any);
-    yield put(createBudgetSuccess(response));
+    // Extract data from wrapped response {success, data, message}
+    const budget = response.data || response;
+    yield put(createBudgetSuccess(budget));
     message.success('Tạo ngân sách thành công');
   } catch (error: any) {
     const errorMessage = error.message || 'Không thể tạo ngân sách';
@@ -70,7 +73,9 @@ function* updateBudgetSaga(action: PayloadAction<IUpdateBudgetPayload>): Generat
   try {
     const { id, updates } = action.payload;
     const response: any = yield call(budgetService.updateBudget, id, updates);
-    yield put(updateBudgetSuccess(response));
+    // Extract data from wrapped response {success, data, message}
+    const budget = response.data || response;
+    yield put(updateBudgetSuccess(budget));
     message.success('Cập nhật ngân sách thành công');
   } catch (error: any) {
     const errorMessage = error.message || 'Không thể cập nhật ngân sách';
@@ -104,7 +109,9 @@ function* fetchBudgetProgressSaga(
   try {
     const { budgetId } = action.payload;
     const response: any = yield call(budgetService.getBudgetProgress, budgetId);
-    yield put(fetchBudgetProgressSuccess(response));
+    // Extract data from wrapped response {success, data, message}
+    const progress = response.data || response;
+    yield put(fetchBudgetProgressSuccess(progress));
   } catch (error: any) {
     const errorMessage = error.message || 'Không thể tải tiến độ ngân sách';
     yield put(fetchBudgetProgressFailure(errorMessage));

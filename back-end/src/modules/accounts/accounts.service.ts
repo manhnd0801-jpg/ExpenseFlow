@@ -23,7 +23,7 @@ export class AccountsService {
   async findAll(userId: string): Promise<Account[]> {
     return await this.accountRepository.find({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { updatedAt: 'DESC' },
     });
   }
 

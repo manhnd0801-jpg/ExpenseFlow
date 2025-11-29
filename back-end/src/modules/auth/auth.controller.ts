@@ -72,21 +72,18 @@ export class AuthController {
   }
 
   @Post(ApiRoutes.AUTH.LOGOUT)
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'User logout',
     description: 'Invalidate user session and tokens',
   })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'User successfully logged out',
   })
-  async logout(): Promise<{ success: boolean; message: string }> {
+  async logout(): Promise<void> {
     // TODO: Implement token blacklisting in Redis
-    return {
-      success: true,
-      message: 'Successfully logged out',
-    };
+    // Returns void - interceptor will wrap with success message
   }
 }

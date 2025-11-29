@@ -15,24 +15,14 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Get all notifications' })
   @ApiResponse({ status: 200, description: 'List of notifications' })
   async findAll(@Request() req) {
-    const notifications = await this.notificationsService.findAll(req.user.userId);
-    return {
-      success: true,
-      data: notifications,
-      message: 'Notifications retrieved successfully',
-    };
+    return await this.notificationsService.findAll(req.user.userId);
   }
 
   @Get(ApiRoutes.NOTIFICATIONS.UNREAD)
   @ApiOperation({ summary: 'Get unread notifications' })
   @ApiResponse({ status: 200, description: 'List of unread notifications' })
   async findUnread(@Request() req) {
-    const notifications = await this.notificationsService.findUnread(req.user.userId);
-    return {
-      success: true,
-      data: notifications,
-      message: 'Unread notifications retrieved successfully',
-    };
+    return await this.notificationsService.findUnread(req.user.userId);
   }
 
   @Get(ApiRoutes.NOTIFICATIONS.UNREAD_COUNT)
@@ -40,11 +30,7 @@ export class NotificationsController {
   @ApiResponse({ status: 200, description: 'Unread count' })
   async getUnreadCount(@Request() req) {
     const count = await this.notificationsService.getUnreadCount(req.user.userId);
-    return {
-      success: true,
-      data: { count },
-      message: 'Unread count retrieved successfully',
-    };
+    return { count };
   }
 
   @Patch(`:id/${ApiRoutes.NOTIFICATIONS.READ}`)
@@ -53,23 +39,14 @@ export class NotificationsController {
   @ApiResponse({ status: 200, description: 'Notification marked as read' })
   @ApiResponse({ status: 404, description: 'Notification not found' })
   async markAsRead(@Request() req, @Param('id') id: string) {
-    const notification = await this.notificationsService.markAsRead(id, req.user.userId);
-    return {
-      success: true,
-      data: notification,
-      message: 'Notification marked as read',
-    };
+    return await this.notificationsService.markAsRead(id, req.user.userId);
   }
 
   @Patch(ApiRoutes.NOTIFICATIONS.READ_ALL)
   @ApiOperation({ summary: 'Mark all notifications as read' })
   @ApiResponse({ status: 200, description: 'All notifications marked as read' })
-  async markAllAsRead(@Request() req) {
+  async markAllAsRead(@Request() req): Promise<void> {
     await this.notificationsService.markAllAsRead(req.user.userId);
-    return {
-      success: true,
-      message: 'All notifications marked as read',
-    };
   }
 
   @Delete(':id')

@@ -31,9 +31,14 @@ import {
 } from './notificationsSlice';
 
 // Fetch notifications
-function* fetchNotificationsSaga() {
+function* fetchNotificationsSaga(): Generator<any, void, any> {
   try {
-    const notifications: INotification[] = yield call(notificationService.getNotifications);
+    const response: any = yield call(notificationService.getNotifications);
+    // After Phase 1 & 2: Backend returns { items: [], total, page, limit, totalPages }
+    // Handle both array and paginated response
+    const notifications: INotification[] = Array.isArray(response)
+      ? response
+      : response.items || response.data || [];
     yield put(fetchNotificationsSuccess(notifications));
   } catch (error: any) {
     yield put(fetchNotificationsFailure(error.message || 'Lỗi khi tải thông báo'));
@@ -41,9 +46,13 @@ function* fetchNotificationsSaga() {
 }
 
 // Fetch unread notifications
-function* fetchUnreadNotificationsSaga() {
+function* fetchUnreadNotificationsSaga(): Generator<any, void, any> {
   try {
-    const notifications: INotification[] = yield call(notificationService.getUnreadNotifications);
+    const response: any = yield call(notificationService.getUnreadNotifications);
+    // Handle both array and paginated response
+    const notifications: INotification[] = Array.isArray(response)
+      ? response
+      : response.items || response.data || [];
     yield put(fetchUnreadNotificationsSuccess(notifications));
   } catch (error: any) {
     yield put(fetchUnreadNotificationsFailure(error.message || 'Lỗi khi tải thông báo chưa đọc'));
@@ -51,7 +60,7 @@ function* fetchUnreadNotificationsSaga() {
 }
 
 // Fetch unread count
-function* fetchUnreadCountSaga() {
+function* fetchUnreadCountSaga(): Generator<any, void, any> {
   try {
     const count: IUnreadNotificationCount = yield call(notificationService.getUnreadCount);
     yield put(fetchUnreadCountSuccess(count));
@@ -61,9 +70,11 @@ function* fetchUnreadCountSaga() {
 }
 
 // Mark as read
-function* markAsReadSaga(action: PayloadAction<string>) {
+function* markAsReadSaga(action: PayloadAction<string>): Generator<any, void, any> {
   try {
-    const notification: INotification = yield call(notificationService.markAsRead, action.payload);
+    const response: any = yield call(notificationService.markAsRead, action.payload);
+    // Extract data from wrapped response {success, data, message}
+    const notification: INotification = response.data || response;
     yield put(markAsReadSuccess(notification));
   } catch (error: any) {
     yield put(markAsReadFailure(error.message || 'Lỗi khi đánh dấu đã đọc'));
@@ -71,7 +82,7 @@ function* markAsReadSaga(action: PayloadAction<string>) {
 }
 
 // Mark all as read
-function* markAllAsReadSaga() {
+function* markAllAsReadSaga(): Generator<any, void, any> {
   try {
     yield call(notificationService.markAllAsRead);
     yield put(markAllAsReadSuccess());
@@ -81,7 +92,7 @@ function* markAllAsReadSaga() {
 }
 
 // Delete notification
-function* deleteNotificationSaga(action: PayloadAction<string>) {
+function* deleteNotificationSaga(action: PayloadAction<string>): Generator<any, void, any> {
   try {
     yield call(notificationService.deleteNotification, action.payload);
     yield put(deleteNotificationSuccess(action.payload));
@@ -91,7 +102,7 @@ function* deleteNotificationSaga(action: PayloadAction<string>) {
 }
 
 // Delete all read
-function* deleteAllReadSaga() {
+function* deleteAllReadSaga(): Generator<any, void, any> {
   try {
     yield call(notificationService.deleteAllReadNotifications);
     yield put(deleteAllReadSuccess());
@@ -101,7 +112,7 @@ function* deleteAllReadSaga() {
 }
 
 // Root saga
-export default function* notificationsSaga() {
+export default function* notificationsSaga(): Generator<any, void, any> {
   yield takeLatest(fetchNotificationsRequest.type, fetchNotificationsSaga);
   yield takeLatest(fetchUnreadNotificationsRequest.type, fetchUnreadNotificationsSaga);
   yield takeLatest(fetchUnreadCountRequest.type, fetchUnreadCountSaga);

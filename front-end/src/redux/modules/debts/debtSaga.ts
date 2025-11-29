@@ -31,7 +31,9 @@ import {
 function* fetchDebtsSaga(): Generator<any, void, any> {
   try {
     const response = yield call(debtService.getDebts);
-    const debts = Array.isArray(response) ? response : (response as any)?.data || [];
+    // After Phase 1 & 2: Backend returns { items: [], total, page, limit, totalPages }
+    // Handle both array and paginated response
+    const debts = Array.isArray(response) ? response : response.items || response.data || [];
 
     yield put(fetchDebtsSuccess(debts));
   } catch (error: any) {
@@ -40,9 +42,11 @@ function* fetchDebtsSaga(): Generator<any, void, any> {
 }
 
 // Create debt
-function* createDebtSaga(action: PayloadAction<any>) {
+function* createDebtSaga(action: PayloadAction<any>): Generator<any, void, any> {
   try {
-    const debt: IDebt = yield call(debtService.createDebt, action.payload);
+    const response: any = yield call(debtService.createDebt, action.payload);
+    // Extract data from wrapped response {success, data, message}
+    const debt: IDebt = response.data || response;
     yield put(createDebtSuccess(debt));
   } catch (error: any) {
     yield put(createDebtFailure(error.message || 'Lỗi khi tạo khoản nợ'));
@@ -50,9 +54,17 @@ function* createDebtSaga(action: PayloadAction<any>) {
 }
 
 // Update debt
-function* updateDebtSaga(action: PayloadAction<{ id: string; data: any }>) {
+function* updateDebtSaga(
+  action: PayloadAction<{ id: string; data: any }>
+): Generator<any, void, any> {
   try {
-    const debt: IDebt = yield call(debtService.updateDebt, action.payload.id, action.payload.data);
+    const response: any = yield call(
+      debtService.updateDebt,
+      action.payload.id,
+      action.payload.data
+    );
+    // Extract data from wrapped response {success, data, message}
+    const debt: IDebt = response.data || response;
     yield put(updateDebtSuccess(debt));
   } catch (error: any) {
     yield put(updateDebtFailure(error.message || 'Lỗi khi cập nhật khoản nợ'));
@@ -70,9 +82,13 @@ function* deleteDebtSaga(action: PayloadAction<string>) {
 }
 
 // Fetch debt payments
-function* fetchDebtPaymentsSaga(action: PayloadAction<string>) {
+function* fetchDebtPaymentsSaga(action: PayloadAction<string>): Generator<any, void, any> {
   try {
-    const payments: IDebtPayment[] = yield call(debtService.getDebtPayments, action.payload);
+    const response: any = yield call(debtService.getDebtPayments, action.payload);
+    // Handle both array and paginated response
+    const payments: IDebtPayment[] = Array.isArray(response)
+      ? response
+      : response.items || response.data || [];
     yield put(fetchDebtPaymentsSuccess(payments));
   } catch (error: any) {
     yield put(fetchDebtPaymentsFailure(error.message || 'Lỗi khi tải lịch sử thanh toán'));
@@ -80,13 +96,17 @@ function* fetchDebtPaymentsSaga(action: PayloadAction<string>) {
 }
 
 // Create debt payment
-function* createDebtPaymentSaga(action: PayloadAction<{ debtId: string; data: any }>) {
+function* createDebtPaymentSaga(
+  action: PayloadAction<{ debtId: string; data: any }>
+): Generator<any, void, any> {
   try {
-    const payment: IDebtPayment = yield call(
+    const response: any = yield call(
       debtService.createDebtPayment,
       action.payload.debtId,
       action.payload.data
     );
+    // Extract data from wrapped response {success, data, message}
+    const payment: IDebtPayment = response.data || response;
     yield put(createDebtPaymentSuccess(payment));
   } catch (error: any) {
     yield put(createDebtPaymentFailure(error.message || 'Lỗi khi ghi nhận thanh toán'));

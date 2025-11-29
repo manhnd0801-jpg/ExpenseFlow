@@ -15,6 +15,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { plainToInstance } from 'class-transformer';
 import { ApiRoutes } from '../../common/constants';
 import { GetUser } from '../../common/decorators';
+import { apiResponseSchema } from '../../common/dto';
 import { JwtAuthGuard } from '../../common/guards';
 import { CategoriesService } from './categories.service';
 import { CategoryResponseDto, CreateCategoryDto, UpdateCategoryDto } from './dto';
@@ -31,22 +32,18 @@ export class CategoriesController {
   @ApiResponse({
     status: 201,
     description: 'Category created successfully',
-    type: CategoryResponseDto,
+    ...apiResponseSchema(CategoryResponseDto),
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async create(
     @GetUser('id') userId: string,
     @Body() createCategoryDto: CreateCategoryDto,
-  ): Promise<{ success: boolean; data: CategoryResponseDto; message: string }> {
+  ): Promise<CategoryResponseDto> {
     const category = await this.categoriesService.create(userId, createCategoryDto);
 
-    return {
-      success: true,
-      data: plainToInstance(CategoryResponseDto, category, {
-        excludeExtraneousValues: true,
-      }),
-      message: 'Category created successfully',
-    };
+    return plainToInstance(CategoryResponseDto, category, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get()
@@ -56,18 +53,12 @@ export class CategoriesController {
     description: 'Categories retrieved successfully',
     type: [CategoryResponseDto],
   })
-  async findAll(
-    @GetUser('id') userId: string,
-    @Query('type') type?: number,
-  ): Promise<{ success: boolean; data: CategoryResponseDto[] }> {
+  async findAll(@GetUser('id') userId: string, @Query('type') type?: number): Promise<CategoryResponseDto[]> {
     const categories = await this.categoriesService.findAll(userId, type);
 
-    return {
-      success: true,
-      data: plainToInstance(CategoryResponseDto, categories, {
-        excludeExtraneousValues: true,
-      }),
-    };
+    return plainToInstance(CategoryResponseDto, categories, {
+      excludeExtraneousValues: true,
+    }) as any;
   }
 
   @Get(':id')
@@ -75,21 +66,15 @@ export class CategoriesController {
   @ApiResponse({
     status: 200,
     description: 'Category retrieved successfully',
-    type: CategoryResponseDto,
+    ...apiResponseSchema(CategoryResponseDto),
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
-  async findOne(
-    @GetUser('id') userId: string,
-    @Param('id') id: string,
-  ): Promise<{ success: boolean; data: CategoryResponseDto }> {
+  async findOne(@GetUser('id') userId: string, @Param('id') id: string): Promise<CategoryResponseDto> {
     const category = await this.categoriesService.findOne(userId, id);
 
-    return {
-      success: true,
-      data: plainToInstance(CategoryResponseDto, category, {
-        excludeExtraneousValues: true,
-      }),
-    };
+    return plainToInstance(CategoryResponseDto, category, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch(':id')
@@ -97,7 +82,7 @@ export class CategoriesController {
   @ApiResponse({
     status: 200,
     description: 'Category updated successfully',
-    type: CategoryResponseDto,
+    ...apiResponseSchema(CategoryResponseDto),
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
   @ApiResponse({ status: 400, description: 'Cannot update default categories' })
@@ -105,33 +90,24 @@ export class CategoriesController {
     @GetUser('id') userId: string,
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
-  ): Promise<{ success: boolean; data: CategoryResponseDto; message: string }> {
+  ): Promise<CategoryResponseDto> {
     const category = await this.categoriesService.update(userId, id, updateCategoryDto);
 
-    return {
-      success: true,
-      data: plainToInstance(CategoryResponseDto, category, {
-        excludeExtraneousValues: true,
-      }),
-      message: 'Category updated successfully',
-    };
+    return plainToInstance(CategoryResponseDto, category, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a category' })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'Category deleted successfully',
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
   @ApiResponse({ status: 400, description: 'Cannot delete default categories' })
-  async remove(@GetUser('id') userId: string, @Param('id') id: string): Promise<{ success: boolean; message: string }> {
+  async remove(@GetUser('id') userId: string, @Param('id') id: string): Promise<void> {
     await this.categoriesService.remove(userId, id);
-
-    return {
-      success: true,
-      message: 'Category deleted successfully',
-    };
   }
 }

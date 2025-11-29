@@ -63,7 +63,13 @@ const budgetSlice = createSlice({
       state.loading = false;
       const index = state.budgets.findIndex((budget) => budget.id === action.payload.id);
       if (index !== -1) {
-        state.budgets[index] = action.payload;
+        // Remove the updated item from its current position
+        state.budgets.splice(index, 1);
+        // Add the updated item to the beginning (to match backend updatedAt DESC)
+        state.budgets.unshift(action.payload);
+      } else {
+        // If item not found, add it to the beginning
+        state.budgets.unshift(action.payload);
       }
       if (state.selectedBudget?.id === action.payload.id) {
         state.selectedBudget = action.payload;

@@ -3,7 +3,7 @@
  * Financial reports and analytics
  */
 import { ArrowDownOutlined, ArrowUpOutlined, DownloadOutlined } from '@ant-design/icons';
-import { Button, Card, Col, DatePicker, Row, Statistic, Table } from 'antd';
+import { Button, Card, Col, DatePicker, Modal, Row, Statistic, Table } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
@@ -11,7 +11,7 @@ import { TransactionType } from '../../constants/enums';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { useI18n } from '../../hooks/useI18n';
 import { transactionActions } from '../../redux/modules/transactions';
-import type { ITransaction } from '../../types';
+import type { ITransaction } from '../../redux/modules/transactions/transactionTypes';
 import { formatCurrency } from '../../utils/formatters';
 
 /**
@@ -102,6 +102,39 @@ export const ReportsPage: React.FC = () => {
     return { income, expense, balance, ratio };
   }, [filteredTransactions]);
 
+  // Handle export functionality
+  const handleExportReport = () => {
+    const reportData = {
+      dateRange: dateRange
+        ? [dateRange[0]?.format('YYYY-MM-DD'), dateRange[1]?.format('YYYY-MM-DD')]
+        : null,
+      summary: stats,
+      transactions: filteredTransactions.map((t) => ({
+        date: t.date,
+        type: t.type === TransactionType.INCOME ? 'Thu nhập' : 'Chi tiêu',
+        amount: t.amount,
+        category: 'Danh mục', // Simplified
+        note: t.note || '',
+      })),
+    };
+
+    // Create and download JSON file
+    const dataStr = JSON.stringify(reportData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = `expense-report-${dayjs().format('YYYY-MM-DD')}.json`;
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+
+    // Show success message
+    Modal.success({
+      title: t('reports.exportSuccess'),
+      content: t('reports.exportSuccessMessage'),
+    });
+  };
+
   // Group transactions by category
   const categoryStats = useMemo(() => {
     const grouped: Record<string, { name: string; income: number; expense: number }> = {};
@@ -179,13 +212,7 @@ export const ReportsPage: React.FC = () => {
             />
           </Col>
           <Col>
-            <Button
-              icon={<DownloadOutlined />}
-              onClick={() => {
-                // TODO: Implement export functionality
-                console.log('Export reports');
-              }}
-            >
+            <Button icon={<DownloadOutlined />} onClick={handleExportReport}>
               {t('reports.exportReport')}
             </Button>
           </Col>

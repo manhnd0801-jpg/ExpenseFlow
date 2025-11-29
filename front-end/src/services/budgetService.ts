@@ -12,8 +12,8 @@ export const budgetService = {
   /**
    * Get all budgets for current user
    */
-  getBudgets: async (): Promise<IBudget[]> => {
-    return api.get<IBudget[]>(API_ENDPOINTS.BUDGETS.LIST);
+  getBudgets: async (params?: { page?: number; limit?: number }): Promise<IBudget[]> => {
+    return api.get<IBudget[]>(API_ENDPOINTS.BUDGETS.LIST, { params });
   },
 
   /**
@@ -21,6 +21,13 @@ export const budgetService = {
    */
   getBudgetById: async (id: string): Promise<IBudget> => {
     return api.get<IBudget>(API_ENDPOINTS.BUDGETS.GET_BY_ID(id));
+  },
+
+  /**
+   * Get budget progress/statistics
+   */
+  getBudgetProgress: async (id: string): Promise<any> => {
+    return api.get<any>(`${API_ENDPOINTS.BUDGETS.GET_BY_ID(id)}/progress`);
   },
 
   /**

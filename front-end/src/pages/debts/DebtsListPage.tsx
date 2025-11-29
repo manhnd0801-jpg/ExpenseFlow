@@ -1,10 +1,16 @@
 /**
  * Debts List Page
  */
+import { DebtForm } from '@/components/molecules';
 import { DebtStatus, DebtType } from '@/constants/enums';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useI18n } from '@/hooks/useI18n';
-import { deleteDebtRequest, fetchDebtsRequest } from '@/redux/modules/debts';
+import {
+  createDebtRequest,
+  deleteDebtRequest,
+  fetchDebtsRequest,
+  updateDebtRequest,
+} from '@/redux/modules/debts';
 import { IDebt } from '@/types/models';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import {
@@ -25,11 +31,13 @@ const DebtsListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const debts = useAppSelector((state) => state.debts.debts);
   const isLoading = useAppSelector((state) => state.debts.loading);
-  console.log(debts, 'debts');
+  // Debts loaded from Redux store
 
   const [activeTab, setActiveTab] = useState('1');
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDebtFormVisible, setIsDebtFormVisible] = useState(false);
+  const [editingDebt, setEditingDebt] = useState<IDebt | undefined>(undefined);
 
   // Load debts on mount
   useEffect(() => {
@@ -44,7 +52,40 @@ const DebtsListPage: React.FC = () => {
   );
 
   const handleEdit = (debt: IDebt) => {
-    console.log('Edit debt:', debt);
+    setEditingDebt(debt);
+    setIsDebtFormVisible(true);
+  };
+
+  const handleCreateLending = () => {
+    setEditingDebt(undefined);
+    setIsDebtFormVisible(true);
+  };
+
+  const handleCreateBorrowing = () => {
+    setEditingDebt(undefined);
+    setIsDebtFormVisible(true);
+  };
+
+  const handleDebtFormSubmit = (values: any) => {
+    if (editingDebt) {
+      // Update existing debt
+      dispatch(
+        updateDebtRequest({
+          id: editingDebt.id,
+          ...values,
+        })
+      );
+    } else {
+      // Create new debt
+      dispatch(createDebtRequest(values));
+    }
+    setIsDebtFormVisible(false);
+    setEditingDebt(undefined);
+  };
+
+  const handleDebtFormCancel = () => {
+    setIsDebtFormVisible(false);
+    setEditingDebt(undefined);
   };
 
   const handleDelete = (debtId: string) => {
@@ -61,11 +102,85 @@ const DebtsListPage: React.FC = () => {
   };
 
   const handleView = (debt: IDebt) => {
-    console.log('View debt:', debt);
+    // Show debt details in a modal
+    Modal.info({
+      title: `${debt.type === DebtType.LENDING ? t('debts.lending') : t('debts.borrowing')} - ${
+        debt.personName
+      }`,
+      width: 600,
+      content: (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ marginBottom: 12 }}>
+            <strong>{t('debts.personName')}:</strong>
+            <p style={{ margin: '8px 0', color: '#666' }}>{debt.personName}</p>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <strong>{t('debts.originalAmount')}:</strong>
+            <p style={{ margin: '8px 0', color: '#666' }}>{formatCurrency(debt.amount)}</p>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <strong>{t('debts.remainingAmount')}:</strong>
+            <p style={{ margin: '8px 0', color: '#666' }}>{formatCurrency(debt.remainingAmount)}</p>
+          </div>
+
+          {debt.interestRate && (
+            <div style={{ marginBottom: 12 }}>
+              <strong>{t('debts.interestRate')}:</strong>
+              <p style={{ margin: '8px 0', color: '#666' }}>{debt.interestRate}%/năm</p>
+            </div>
+          )}
+
+          <div style={{ marginBottom: 12 }}>
+            <strong>{t('debts.borrowedDate')}:</strong>
+            <p style={{ margin: '8px 0', color: '#666' }}>{formatDate(debt.borrowedDate)}</p>
+          </div>
+
+          {debt.dueDate && (
+            <div style={{ marginBottom: 12 }}>
+              <strong>{t('debts.dueDate')}:</strong>
+              <p style={{ margin: '8px 0', color: '#666' }}>{formatDate(debt.dueDate)}</p>
+            </div>
+          )}
+
+          <div style={{ marginBottom: 12 }}>
+            <strong>{t('debts.status')}:</strong>
+            <div style={{ margin: '8px 0' }}>{renderStatus(debt.status)}</div>
+          </div>
+
+          {debt.note && (
+            <div style={{ marginBottom: 12 }}>
+              <strong>{t('debts.note')}:</strong>
+              <p style={{ margin: '8px 0', color: '#666' }}>{debt.note}</p>
+            </div>
+          )}
+        </div>
+      ),
+      okText: t('common.close'),
+    });
   };
 
   const handlePayment = (debt: IDebt) => {
-    console.log('Make payment for debt:', debt);
+    // Simple payment modal - can be extended with full payment form later
+    Modal.confirm({
+      title: t('debts.recordPayment'),
+      content: t('debts.recordPaymentConfirm'),
+      okText: t('debts.recordPayment'),
+      cancelText: t('common.cancel'),
+      onOk: () => {
+        // For now, just mark as completed - can be extended with partial payment amounts
+        dispatch(
+          updateDebtRequest({
+            id: debt.id,
+            data: {
+              status: DebtStatus.COMPLETED,
+              remainingAmount: 0,
+            },
+          })
+        );
+      },
+    });
   };
 
   const renderStatus = (status: DebtStatus) => {
@@ -177,13 +292,7 @@ const DebtsListPage: React.FC = () => {
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
           <TabPane tab={t('debts.lending')} key="1">
             <div style={{ marginBottom: 16 }}>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  console.log('Create lending');
-                }}
-              >
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateLending}>
                 {t('debts.createLending')}
               </Button>
             </div>
@@ -206,13 +315,7 @@ const DebtsListPage: React.FC = () => {
 
           <TabPane tab={t('debts.borrowing')} key="2">
             <div style={{ marginBottom: 16 }}>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  console.log('Create borrowing');
-                }}
-              >
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateBorrowing}>
                 {t('debts.createBorrowing')}
               </Button>
             </div>
@@ -235,6 +338,7 @@ const DebtsListPage: React.FC = () => {
         </Tabs>
       </Card>
 
+      {/* Delete Confirmation Modal */}
       <Modal
         title={t('debts.confirmDelete')}
         open={isDeleteModalVisible}
@@ -243,10 +347,20 @@ const DebtsListPage: React.FC = () => {
         okText={t('common.delete')}
         cancelText={t('common.cancel')}
         okButtonProps={{ danger: true }}
+        confirmLoading={isLoading}
       >
         <p>{t('debts.confirmDeleteMessage')}</p>
         <p>{t('debts.deleteWarning')}</p>
       </Modal>
+
+      {/* Debt Form Modal */}
+      <DebtForm
+        visible={isDebtFormVisible}
+        onCancel={handleDebtFormCancel}
+        onSubmit={handleDebtFormSubmit}
+        initialValues={editingDebt}
+        loading={isLoading}
+      />
     </div>
   );
 };

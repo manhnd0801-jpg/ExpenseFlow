@@ -90,13 +90,13 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
 
   // Handle form submit
   const handleSubmit = (values: any) => {
-    console.log('values', values);
+    // Form values received
 
     const payload: ICreateTransactionPayload = {
       ...values,
       date: values.date.format('YYYY-MM-DD'),
     };
-    console.log(initialValues, 'initialValues');
+    // Initial values for editing transaction
 
     if (initialValues) {
       // Update existing transaction

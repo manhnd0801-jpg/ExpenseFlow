@@ -75,7 +75,7 @@ const BudgetEditPage: React.FC = () => {
   const handleSubmit = (values: any) => {
     if (!id) return;
 
-    console.log('BudgetEditPage received values:', values);
+    // Update budget with form values
 
     // Only send fields that UpdateBudgetDto accepts
     const updateData = {
@@ -87,7 +87,7 @@ const BudgetEditPage: React.FC = () => {
       alertThreshold: values.alertThreshold,
     };
 
-    console.log('Update data to send:', updateData);
+    // Dispatch update budget action
     setIsSubmitting(true);
     dispatch(updateBudgetStart({ id, updates: updateData }));
   };
@@ -113,7 +113,7 @@ const BudgetEditPage: React.FC = () => {
       </div>
     );
   }
-  console.log(budgetData, 'budgetData');
+  // Budget data loaded from Redux
 
   return (
     <div>

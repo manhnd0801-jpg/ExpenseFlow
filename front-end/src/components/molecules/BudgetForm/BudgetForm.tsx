@@ -125,7 +125,7 @@ const FormWrapper = styled.div`
 
   .category-selection {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: 12px;
     margin-top: 8px;
 
@@ -150,7 +150,7 @@ const FormWrapper = styled.div`
       }
 
       .category-icon {
-        font-size: 24px;
+        font-size: 20px;
         margin-bottom: 8px;
         display: block;
       }
@@ -304,7 +304,7 @@ export const BudgetForm: React.FC<IBudgetFormProps> = ({
         endDate: formatDate(values.endDate),
       };
 
-      console.log('Formatted values for submission:', formattedValues);
+      // Formatted values ready for submission
       onSubmit(formattedValues);
     } catch (error) {
       console.error('Form validation error:', error);

@@ -89,7 +89,13 @@ const eventsSlice = createSlice({
     updateEventSuccess: (state, action: PayloadAction<IEvent>) => {
       const index = state.events.findIndex((e) => e.id === action.payload.id);
       if (index !== -1) {
-        state.events[index] = action.payload;
+        // Remove the updated item from its current position
+        state.events.splice(index, 1);
+        // Add the updated item to the beginning (to match backend updatedAt DESC)
+        state.events.unshift(action.payload);
+      } else {
+        // If item not found, add it to the beginning
+        state.events.unshift(action.payload);
       }
       if (state.currentEvent?.id === action.payload.id) {
         state.currentEvent = action.payload;

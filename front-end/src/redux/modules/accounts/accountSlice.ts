@@ -89,9 +89,17 @@ const accountSlice = createSlice({
 
     updateAccountSuccess: (state, action: PayloadAction<IAccount>) => {
       const index = state.accounts.findIndex((acc) => acc.id === action.payload.id);
+
       if (index > -1) {
-        state.accounts[index] = action.payload;
+        // Remove the updated item from its current position
+        state.accounts.splice(index, 1);
+        // Add the updated item to the beginning (to match backend updatedAt DESC)
+        state.accounts.unshift(action.payload);
+      } else {
+        // If item not found, add it to the beginning
+        state.accounts.unshift(action.payload);
       }
+
       state.isLoading = false;
       state.error = null;
       state.errors.update = undefined;

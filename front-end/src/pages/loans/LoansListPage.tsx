@@ -3,6 +3,13 @@
  * Displays loans with filters, pagination, and CRUD operations
  */
 
+import { LoanStatusLabels, LoanTypeLabels } from '@/constants/enum-labels';
+import { LoanStatus, LoanType } from '@/constants/enums';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useI18n } from '@/hooks/useI18n';
+import { loanActions, selectIsLoanLoading, selectLoanError } from '@/redux/modules/loans';
+import type { ILoan } from '@/types/models';
+import { formatCurrency } from '@/utils/formatters';
 import {
   BankOutlined,
   CarOutlined,
@@ -14,13 +21,6 @@ import {
   ReadOutlined,
   ShopOutlined,
 } from '@ant-design/icons';
-import { LoanStatusLabels, LoanTypeLabels } from '@/constants/enum-labels';
-import { LoanStatus, LoanType } from '@/constants/enums';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { useI18n } from '@/hooks/useI18n';
-import { loanActions, selectIsLoanLoading, selectLoanError } from '@/redux/modules/loans';
-import type { ILoan } from '@/types/models';
-import { formatCurrency } from '@/utils/formatters';
 import {
   Button,
   Card,
@@ -51,7 +51,7 @@ const LoansListPage: React.FC = () => {
   const [deletingLoanId, setDeletingLoanId] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(loanActions.fetchLoansRequest());
+    dispatch(loanActions.listLoansRequest({ page: 1, limit: 100 }));
   }, [dispatch]);
 
   // ============================================
@@ -147,9 +147,7 @@ const LoansListPage: React.FC = () => {
           {getLoanTypeIcon(record.type)}
           <div>
             <div style={{ fontWeight: 600 }}>{text}</div>
-            <div style={{ fontSize: '12px', color: '#6b7280' }}>
-              {LoanTypeLabels[record.type]}
-            </div>
+            <div style={{ fontSize: '12px', color: '#6b7280' }}>{LoanTypeLabels[record.type]}</div>
           </div>
         </Space>
       ),
@@ -327,10 +325,7 @@ const LoansListPage: React.FC = () => {
           bordered
           locale={{
             emptyText: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={t('loans.noLoans')}
-              />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('loans.noLoans')} />
             ),
           }}
           pagination={{

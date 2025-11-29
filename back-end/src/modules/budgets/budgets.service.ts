@@ -24,7 +24,7 @@ export class BudgetsService {
     const budgets = await this.budgetRepository.find({
       where: { userId },
       relations: ['category'],
-      order: { createdAt: 'DESC' },
+      order: { updatedAt: 'DESC' },
     });
 
     // Calculate spent amount for each budget

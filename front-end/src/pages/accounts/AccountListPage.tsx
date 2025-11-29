@@ -53,9 +53,7 @@ const AccountListPage: React.FC = () => {
       setEditingAccount(null);
       setIsModalOpen(false);
     }
-  };
-
-  // Handle delete account
+  }; // Handle delete account
   const handleDelete = (accountId: string) => {
     setSelectedAccountId(accountId);
     setIsDeleteModalVisible(true);

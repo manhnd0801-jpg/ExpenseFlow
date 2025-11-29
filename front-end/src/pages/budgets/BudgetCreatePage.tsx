@@ -29,7 +29,7 @@ const BudgetCreatePage: React.FC = () => {
   }, [dispatch]);
 
   const handleSubmit = (values: any) => {
-    console.log('BudgetCreatePage received values:', values);
+    // Create budget with form values
 
     // Only send fields that CreateBudgetDto accepts
     const budgetData = {
@@ -42,7 +42,7 @@ const BudgetCreatePage: React.FC = () => {
       alertThreshold: values.alertThreshold,
     };
 
-    console.log('Budget data to create:', budgetData);
+    // Dispatch create budget action
     dispatch(createBudgetStart(budgetData));
 
     // Navigate back to list after successful creation

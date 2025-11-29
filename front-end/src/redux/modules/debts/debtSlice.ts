@@ -61,7 +61,13 @@ const debtsSlice = createSlice({
     updateDebtSuccess: (state, action: PayloadAction<IDebt>) => {
       const index = state.debts.findIndex((d) => d.id === action.payload.id);
       if (index !== -1) {
-        state.debts[index] = action.payload;
+        // Remove the updated item from its current position
+        state.debts.splice(index, 1);
+        // Add the updated item to the beginning (to match backend updatedAt DESC)
+        state.debts.unshift(action.payload);
+      } else {
+        // If item not found, add it to the beginning
+        state.debts.unshift(action.payload);
       }
       state.loading = false;
     },

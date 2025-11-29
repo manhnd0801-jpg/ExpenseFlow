@@ -212,7 +212,7 @@ export class LoansService {
     }
 
     queryBuilder
-      .orderBy('loan.createdAt', 'DESC')
+      .orderBy('loan.updatedAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
