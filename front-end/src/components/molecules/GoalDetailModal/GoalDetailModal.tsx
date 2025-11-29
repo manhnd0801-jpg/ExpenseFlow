@@ -304,14 +304,7 @@ export const GoalDetailModal: React.FC<IGoalDetailModalProps> = ({ visible, goal
                 </Tag>
               )}
             </div>
-          </div>
-
-          <div className="detail-row">
-            <div className="detail-label">
-              <TrophyOutlined />
-              {t('goals.goalId')}
-            </div>
-            <div className="detail-value">#{goal.id}</div>
+            . Khi
           </div>
         </div>
 

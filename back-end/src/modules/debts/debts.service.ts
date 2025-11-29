@@ -17,10 +17,17 @@ export class DebtsService {
 
   async create(userId: string, dto: CreateDebtDto): Promise<Debt> {
     const debt = this.debtRepository.create({
-      ...dto,
       userId,
+      type: dto.type,
+      personName: dto.personName,
+      contactInfo: dto.contactInfo,
+      originalAmount: dto.amount, // Map DTO amount -> entity originalAmount
       remainingAmount: dto.amount,
+      interestRate: dto.interestRate ?? 0,
+      borrowedDate: dto.borrowedDate,
+      dueDate: dto.dueDate,
       status: DebtStatus.ACTIVE,
+      description: dto.description,
     });
     return await this.debtRepository.save(debt);
   }
@@ -46,7 +53,21 @@ export class DebtsService {
 
   async update(userId: string, id: string, dto: UpdateDebtDto): Promise<Debt> {
     const debt = await this.findOne(userId, id);
-    Object.assign(debt, dto);
+
+    // Map DTO fields to entity fields
+    if (dto.personName !== undefined) debt.personName = dto.personName;
+    if (dto.amount !== undefined) {
+      debt.originalAmount = dto.amount; // Map DTO amount -> entity originalAmount
+      // Recalculate remaining amount based on payments
+      const payments = await this.debtPaymentRepository.find({ where: { debtId: id } });
+      const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+      debt.remainingAmount = dto.amount - totalPaid;
+    }
+    if (dto.interestRate !== undefined) debt.interestRate = dto.interestRate;
+    if (dto.dueDate !== undefined) debt.dueDate = dto.dueDate;
+    if (dto.description !== undefined) debt.description = dto.description;
+    if (dto.contactInfo !== undefined) debt.contactInfo = dto.contactInfo;
+
     return await this.debtRepository.save(debt);
   }
 

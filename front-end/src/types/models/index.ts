@@ -185,6 +185,7 @@ export interface IBudget {
   updatedAt: TTimestamp;
   deletedAt?: TTimestamp;
   category?: ICategory;
+  transactions?: ITransaction[]; // List of related transactions (only in detail view)
 }
 
 export interface ICreateBudgetRequest {
@@ -243,6 +244,33 @@ export interface IUpdateGoalRequest {
 
 export interface IContributeGoalRequest {
   amount: number;
+  accountId: TId;
+  note?: string;
+}
+
+export interface IWithdrawGoalRequest {
+  amount: number;
+  accountId: TId;
+  reason?: string;
+}
+
+export interface IDeleteGoalRequest {
+  refundOption?: 'REFUND_TO_ACCOUNT' | 'TRANSFER_TO_GOAL' | 'DELETE_WITHOUT_REFUND';
+  targetAccountId?: TId;
+  targetGoalId?: TId;
+}
+
+export interface IGoalTransaction {
+  id: TId;
+  goalId: TId;
+  accountId: TId;
+  transactionId?: TId;
+  amount: number;
+  type: 'CONTRIBUTION' | 'WITHDRAWAL';
+  note?: string;
+  createdAt: TTimestamp;
+  account?: IAccount;
+  transaction?: ITransaction;
 }
 
 export interface IDebt {
@@ -250,14 +278,15 @@ export interface IDebt {
   userId: TId;
   type: DebtType;
   personName: string;
-  amount: number;
+  originalAmount: number; // Backend returns originalAmount
   paidAmount: number;
   remainingAmount: number;
   interestRate?: number;
   borrowedDate: TTimestamp;
   dueDate: TTimestamp;
   status: DebtStatus;
-  note?: string;
+  description?: string;
+  contactInfo?: string;
   createdAt: TTimestamp;
   updatedAt: TTimestamp;
   deletedAt?: TTimestamp;
@@ -275,21 +304,23 @@ export interface IDebtPayment {
 export interface ICreateDebtRequest {
   type: DebtType;
   personName: string;
-  amount: number;
+  amount: number; // Send as "amount" to backend
   interestRate?: number;
   borrowedDate: string;
   dueDate: string;
-  note?: string;
+  description?: string;
+  contactInfo?: string;
 }
 
 export interface IUpdateDebtRequest {
   personName?: string;
-  amount?: number;
+  amount?: number; // Send as "amount" to backend
   interestRate?: number;
   borrowedDate?: string;
   dueDate?: string;
   status?: DebtStatus;
-  note?: string;
+  description?: string;
+  contactInfo?: string;
 }
 
 export interface ICreateDebtPaymentRequest {

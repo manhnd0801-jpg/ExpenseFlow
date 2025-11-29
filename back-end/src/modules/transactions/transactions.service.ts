@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindOptionsWhere, Repository } from 'typeorm';
 import { TransactionType } from '../../common/constants/enums';
 import { Account } from '../../entities/account.entity';
+import { Goal } from '../../entities/goal.entity';
 import { Transaction } from '../../entities/transaction.entity';
 import { CreateTransactionDto, QueryTransactionDto, UpdateTransactionDto } from './dto';
 
@@ -13,6 +14,8 @@ export class TransactionsService {
     private readonly transactionRepository: Repository<Transaction>,
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
+    @InjectRepository(Goal)
+    private readonly goalRepository: Repository<Goal>,
   ) {}
 
   /**
@@ -176,6 +179,36 @@ export class TransactionsService {
           transaction.toAccountId,
         );
 
+        // If transaction is linked to a goal and amount changed, update goal's current_amount
+        if (transaction.goalId && amountChanged) {
+          const goal = await transactionalEntityManager.findOne(Goal, {
+            where: { id: transaction.goalId, userId },
+          });
+
+          if (goal) {
+            // Revert old amount impact
+            const oldAdjustment =
+              transaction.type === TransactionType.EXPENSE
+                ? -transaction.amount // Remove old contribution
+                : transaction.amount; // Remove old withdrawal
+
+            // Apply new amount impact
+            const newAdjustment =
+              (type || transaction.type) === TransactionType.EXPENSE
+                ? amount // Add new contribution
+                : -amount; // Add new withdrawal
+
+            goal.currentAmount = Number(goal.currentAmount) + oldAdjustment + newAdjustment;
+
+            // Ensure currentAmount doesn't go negative
+            if (goal.currentAmount < 0) {
+              goal.currentAmount = 0;
+            }
+
+            await transactionalEntityManager.save(Goal, goal);
+          }
+        }
+
         // Update transaction
         Object.assign(transaction, {
           accountId: accountId || transaction.accountId,
@@ -222,13 +255,49 @@ export class TransactionsService {
 
     await this.transactionRepository.manager.transaction(async (transactionalEntityManager) => {
       // Revert transaction impact on balance
-      await this.updateAccountBalance(
-        transactionalEntityManager,
-        transaction.accountId,
-        this.getReversedType(transaction.type),
-        transaction.amount,
-        transaction.toAccountId,
-      );
+      if (transaction.type === TransactionType.TRANSFER) {
+        // Special handling for TRANSFER: reverse both accounts
+        await this.revertTransferBalance(
+          transactionalEntityManager,
+          transaction.accountId,
+          transaction.amount,
+          transaction.toAccountId,
+        );
+      } else {
+        // Normal transaction: use reversed type
+        await this.updateAccountBalance(
+          transactionalEntityManager,
+          transaction.accountId,
+          this.getReversedType(transaction.type),
+          transaction.amount,
+          transaction.toAccountId,
+        );
+      }
+
+      // If transaction is linked to a goal, update goal's current_amount
+      if (transaction.goalId) {
+        const goal = await transactionalEntityManager.findOne(Goal, {
+          where: { id: transaction.goalId, userId },
+        });
+
+        if (goal) {
+          // Since we're deleting a contribution (expense), we need to decrease current_amount
+          // If it was a withdrawal (income), we need to increase current_amount back
+          const adjustmentAmount =
+            transaction.type === TransactionType.EXPENSE
+              ? -transaction.amount // Subtract contribution
+              : transaction.amount; // Add back withdrawal
+
+          goal.currentAmount = Number(goal.currentAmount) + adjustmentAmount;
+
+          // Ensure currentAmount doesn't go negative
+          if (goal.currentAmount < 0) {
+            goal.currentAmount = 0;
+          }
+
+          await transactionalEntityManager.save(Goal, goal);
+        }
+      }
 
       // Soft delete
       await transactionalEntityManager.softDelete(Transaction, id);
@@ -336,7 +405,10 @@ export class TransactionsService {
     // Update from account balance
     if (type === TransactionType.INCOME) {
       account.balance = Number(account.balance) + Number(amount);
-    } else if (type === TransactionType.EXPENSE || type === TransactionType.TRANSFER) {
+    } else if (type === TransactionType.EXPENSE) {
+      account.balance = Number(account.balance) - Number(amount);
+    } else if (type === TransactionType.TRANSFER) {
+      // For TRANSFER: subtract from source account (when creating/deleting needs reversal)
       account.balance = Number(account.balance) - Number(amount);
     }
 
@@ -353,6 +425,43 @@ export class TransactionsService {
       }
 
       toAccount.balance = Number(toAccount.balance) + Number(amount);
+      await transactionalEntityManager.save(Account, toAccount);
+    }
+  }
+
+  /**
+   * Revert transfer balance when deleting a transfer transaction
+   * This adds money back to fromAccount and subtracts from toAccount
+   */
+  private async revertTransferBalance(
+    transactionalEntityManager: any,
+    fromAccountId: string,
+    amount: number,
+    toAccountId?: string,
+  ): Promise<void> {
+    // Add money back to source account
+    const fromAccount = await transactionalEntityManager.findOne(Account, {
+      where: { id: fromAccountId },
+    });
+
+    if (!fromAccount) {
+      throw new NotFoundException('From account not found');
+    }
+
+    fromAccount.balance = Number(fromAccount.balance) + Number(amount);
+    await transactionalEntityManager.save(Account, fromAccount);
+
+    // Subtract money from destination account
+    if (toAccountId) {
+      const toAccount = await transactionalEntityManager.findOne(Account, {
+        where: { id: toAccountId },
+      });
+
+      if (!toAccount) {
+        throw new NotFoundException('To account not found');
+      }
+
+      toAccount.balance = Number(toAccount.balance) - Number(amount);
       await transactionalEntityManager.save(Account, toAccount);
     }
   }

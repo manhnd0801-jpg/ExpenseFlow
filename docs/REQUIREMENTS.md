@@ -111,9 +111,71 @@
 ### 2.9. Mục Tiêu Tài Chính
 
 - **Đặt mục tiêu**: Tiết kiệm cho kỳ nghỉ, mua nhà, xe, v.v.
-- **Theo dõi tiến độ**: Hiển thị phần trăm hoàn thành mục tiêu
-- **Thời hạn mục tiêu**: Đặt deadline cho mỗi mục tiêu
-- **Đóng góp tự động**: Tự động trừ một phần thu nhập vào mục tiêu
+  - Tên mục tiêu
+  - Số tiền mục tiêu (target amount)
+  - Số tiền hiện tại (current amount - khởi tạo = 0)
+  - Thời hạn (deadline)
+  - Mô tả (tùy chọn)
+  - Tài khoản liên kết (account_id) - tùy chọn
+- **Đóng góp vào mục tiêu**:
+  - User nhập số tiền muốn đóng góp
+  - Chọn tài khoản nguồn (tiền mặt, ngân hàng, ví điện tử)
+  - Số dư tài khoản nguồn **giảm** tương ứng
+  - `currentAmount` của goal **tăng** tương ứng
+  - Tạo transaction loại `GOAL_CONTRIBUTION` để tracking:
+    - `type`: Chi tiêu (EXPENSE)
+    - `category`: "Tiết kiệm" (Savings)
+    - `amount`: Số tiền đóng góp
+    - `account_id`: Tài khoản nguồn
+    - `goal_id`: ID mục tiêu (foreign key)
+    - `note`: "Đóng góp vào mục tiêu: [Tên mục tiêu]"
+  - Ghi nhận lịch sử đóng góp (contribution history)
+- **Theo dõi tiến độ**:
+  - Hiển thị phần trăm hoàn thành mục tiêu
+  - Số tiền hiện tại / Số tiền mục tiêu
+  - Số tiền còn thiếu
+  - Thời gian còn lại đến deadline
+- **Thời hạn mục tiêu**:
+  - Đặt deadline cho mỗi mục tiêu
+  - Cảnh báo khi gần đến deadline nhưng chưa đạt mục tiêu
+  - Tự động đánh dấu "Completed" khi `currentAmount >= targetAmount`
+  - Đánh dấu "Overdue" nếu quá deadline mà chưa đạt
+- **Hoàn thành mục tiêu**:
+  - Khi đạt 100% tiến độ, hỏi user:
+    - Option 1: **Rút tiền về tài khoản** (tạo transaction INCOME ngược lại)
+    - Option 2: **Giữ tiền và đánh dấu hoàn thành** (tiền vẫn trong goal)
+    - Option 3: **Chuyển sang mục tiêu khác**
+- **Hủy/Xóa mục tiêu**:
+  - Khi user muốn xóa goal, hỏi xử lý tiền đã đóng góp:
+    - Option 1: **Hoàn tiền về tài khoản gốc**
+      - Tạo transaction INCOME để hoàn `currentAmount` về account
+      - Xóa goal và tất cả transaction liên quan
+    - Option 2: **Chuyển sang mục tiêu khác**
+      - Chuyển `currentAmount` sang goal khác
+      - Xóa goal cũ
+    - Option 3: **Xóa luôn (không hoàn tiền)**
+      - Chỉ xóa goal tracking
+      - Giữ nguyên transaction history (để audit)
+      - User tự quản lý số tiền
+- **Rút tiền từ mục tiêu**:
+  - Cho phép rút một phần hoặc toàn bộ tiền từ goal
+  - `currentAmount` **giảm** tương ứng
+  - Số dư tài khoản đích **tăng** tương ứng
+  - Tạo transaction loại `GOAL_WITHDRAWAL`
+  - Ghi nhận lý do rút tiền
+- **Lịch sử đóng góp/rút tiền**:
+  - Xem tất cả lần đóng góp/rút tiền
+  - Thời gian, số tiền, tài khoản nguồn/đích
+  - Ghi chú từng lần
+- **Đóng góp tự động** (Phase nâng cao):
+  - Thiết lập quy tắc tự động: "Mỗi tháng trừ X% lương vào mục tiêu Y"
+  - Tự động chạy vào ngày được chọn (VD: ngày 1, 15 hàng tháng)
+  - Gửi thông báo xác nhận sau mỗi lần đóng góp tự động
+- **Phân tích mục tiêu**:
+  - Tốc độ tiết kiệm trung bình (VND/tháng)
+  - Dự đoán thời gian đạt mục tiêu dựa trên tốc độ hiện tại
+  - So sánh với timeline deadline
+  - Gợi ý số tiền cần đóng góp hàng tháng để đạt deadline
 
 ### 2.10. Quản Lý Theo Sự Kiện/Dự Án
 
@@ -281,9 +343,10 @@
 users (id, email, password, name, avatar, created_at, updated_at)
 accounts (id, user_id, name, type, balance, currency, created_at)
 categories (id, user_id, name, type, icon, color, is_default)
-transactions (id, user_id, account_id, category_id, amount, type, date, note, image_url, event_id)
+transactions (id, user_id, account_id, category_id, amount, type, date, note, image_url, event_id, goal_id)
 budgets (id, user_id, category_id, amount, period, start_date, end_date)
-goals (id, user_id, name, target_amount, current_amount, deadline, status)
+goals (id, user_id, name, target_amount, current_amount, deadline, status, description, linked_account_id)
+goal_transactions (id, goal_id, account_id, transaction_id, amount, type, note, created_at)
 recurring_transactions (id, user_id, transaction_template, frequency, next_date)
 debts (id, user_id, type, person_name, amount, interest_rate, borrowed_date, due_date, status)
 debt_payments (id, debt_id, amount, payment_date, note)
@@ -292,6 +355,14 @@ reminders (id, user_id, title, type, due_date, frequency, is_active)
 shared_books (id, owner_id, name, permission_type)
 shared_book_members (id, book_id, user_id, role)
 ```
+
+**Chi tiết quan trọng**:
+
+- **transactions**: Thêm `goal_id` để link transaction với goal (khi đóng góp/rút tiền từ goal)
+- **goals**: Thêm `description`, `linked_account_id` (tài khoản mặc định cho goal)
+- **goal_transactions**: Bảng mới tracking lịch sử đóng góp/rút tiền từ goal
+  - `type`: 'CONTRIBUTION' (đóng góp) hoặc 'WITHDRAWAL' (rút tiền)
+  - Link với `transactions` table để đồng bộ số dư account
 
 ### 4.4. DevOps & Infrastructure
 
@@ -356,6 +427,11 @@ shared_book_members (id, book_id, user_id, role)
 ### Người Dùng Nâng Cao
 
 - Là người dùng, tôi muốn tạo mục tiêu tiết kiệm để đạt được kế hoạch tài chính
+- Là người dùng, tôi muốn đóng góp tiền từ tài khoản vào mục tiêu và hệ thống tự động giảm số dư tài khoản
+- Là người dùng, tôi muốn xem lịch sử đóng góp vào mục tiêu để biết tôi đã tiết kiệm được bao nhiêu
+- Là người dùng, tôi muốn rút tiền từ mục tiêu về tài khoản khi cần dùng đột xuất
+- Là người dùng, tôi muốn được hỏi xử lý tiền đã đóng góp khi xóa mục tiêu (hoàn về tài khoản hoặc chuyển sang mục tiêu khác)
+- Là người dùng, tôi muốn hệ thống dự đoán thời gian đạt mục tiêu dựa trên tốc độ tiết kiệm hiện tại
 - Là người dùng, tôi muốn nhận thông báo khi sắp vượt ngân sách để kịp thời điều chỉnh
 - Là người dùng, tôi muốn xuất báo cáo Excel để lưu trữ hoặc chia sẻ
 - Là người dùng, tôi muốn ghi nhận các khoản cho vay/đi vay để quản lý công nợ

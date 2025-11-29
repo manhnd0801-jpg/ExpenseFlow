@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { DebtStatus, DebtType } from '../common/constants/enums';
-import { DateToString, DecimalToNumber } from '../common/decorators';
+import { DecimalToNumber } from '../common/decorators';
 import { DebtPayment } from './debt-payment.entity';
 import { User } from './user.entity';
 
@@ -32,28 +32,28 @@ export class Debt {
   })
   type: DebtType;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ name: 'personName', type: 'varchar', length: 255 })
   personName: string; // Name of person/organization
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ name: 'contactInfo', type: 'varchar', length: 255, nullable: true })
   contactInfo: string; // Phone, email, etc.
 
   @DecimalToNumber()
-  @Column({ type: 'decimal', precision: 15, scale: 2 })
+  @Column({ name: 'originalAmount', type: 'decimal', precision: 15, scale: 2 })
   originalAmount: number;
 
   @DecimalToNumber()
-  @Column({ type: 'decimal', precision: 15, scale: 2 })
+  @Column({ name: 'remainingAmount', type: 'decimal', precision: 15, scale: 2 })
   remainingAmount: number;
 
   @DecimalToNumber()
-  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  @Column({ name: 'interestRate', type: 'decimal', precision: 5, scale: 2, default: 0 })
   interestRate: number; // Annual interest rate percentage
 
-  @Column({ type: 'date' })
+  @Column({ name: 'borrowedDate', type: 'date' })
   borrowedDate: Date;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ name: 'dueDate', type: 'date', nullable: true })
   dueDate: Date;
 
   @Column({
@@ -65,21 +65,6 @@ export class Debt {
 
   @Column({ type: 'text', nullable: true })
   description: string;
-
-  @Column({ type: 'text', nullable: true })
-  terms: string; // Agreement terms
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  collateral: string; // Collateral description
-
-  @Column({ type: 'boolean', default: true })
-  reminderEnabled: boolean;
-
-  @Column({ type: 'integer', default: 7 })
-  reminderDaysBefore: number;
-
-  @Column({ type: 'date', nullable: true })
-  lastPaymentDate: Date;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

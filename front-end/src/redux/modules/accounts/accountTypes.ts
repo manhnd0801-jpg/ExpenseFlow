@@ -67,6 +67,16 @@ export interface IDeleteAccountPayload {
 }
 
 /**
+ * Transfer Between Accounts Payload
+ */
+export interface ITransferPayload {
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  description?: string;
+}
+
+/**
  * Account Filters
  */
 export interface IAccountFilters {
@@ -108,6 +118,7 @@ export interface IAccountState {
     create?: string;
     update?: string;
     delete?: string;
+    transfer?: string;
   };
   pagination: IAccountPagination;
   filters: IAccountFilters;
@@ -137,6 +148,7 @@ export const initialAccountState: IAccountState = {
     create: undefined,
     update: undefined,
     delete: undefined,
+    transfer: undefined,
   },
   pagination: {
     page: 1,

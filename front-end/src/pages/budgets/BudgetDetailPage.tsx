@@ -184,7 +184,6 @@ const BudgetDetailPage: React.FC = () => {
             <Statistic
               title="Tiến độ"
               value={Math.round(progressPercent)}
-              suffix="%"
               prefix={<PercentageOutlined />}
               valueStyle={{ color: isOverBudget ? '#ff4d4f' : '#1890ff' }}
             />
@@ -240,7 +239,7 @@ const BudgetDetailPage: React.FC = () => {
         </Descriptions>
       </Card>
 
-      {/* Related Transactions - Placeholder */}
+      {/* Related Transactions */}
       <Card>
         <h3>Giao dịch liên quan</h3>
         <Table
@@ -251,6 +250,7 @@ const BudgetDetailPage: React.FC = () => {
               dataIndex: 'date',
               key: 'date',
               render: (date) => formatDate(date),
+              width: 120,
             },
             {
               title: 'Mô tả',
@@ -258,15 +258,38 @@ const BudgetDetailPage: React.FC = () => {
               key: 'description',
             },
             {
+              title: 'Danh mục',
+              dataIndex: ['category', 'name'],
+              key: 'category',
+              render: (name) => name || '-',
+              width: 150,
+            },
+            {
+              title: 'Tài khoản',
+              dataIndex: ['account', 'name'],
+              key: 'account',
+              render: (name) => name || '-',
+              width: 150,
+            },
+            {
               title: 'Số tiền',
               dataIndex: 'amount',
               key: 'amount',
-              render: (amount) => formatCurrency(amount),
+              render: (amount) => (
+                <span style={{ color: '#ff4d4f', fontWeight: 500 }}>{formatCurrency(amount)}</span>
+              ),
+              width: 120,
+              align: 'right' as const,
             },
           ]}
-          dataSource={[]}
+          dataSource={budgetData.transactions || []}
+          rowKey="id"
           locale={{ emptyText: 'Chưa có giao dịch nào cho ngân sách này' }}
-          pagination={false}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Tổng ${total} giao dịch`,
+          }}
         />
       </Card>
 

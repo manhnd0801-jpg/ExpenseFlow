@@ -67,4 +67,18 @@ export const accountService = {
       successMessage: messages.accounts.deleted,
     });
   },
+
+  /**
+   * Transfer money between accounts
+   */
+  transfer: async (
+    fromAccountId: string,
+    data: { toAccountId: string; amount: number; description?: string }
+  ): Promise<void> => {
+    const messages = getServiceMessages();
+    return api.post<void>(API_ENDPOINTS.ACCOUNTS.TRANSFER(fromAccountId), data, {
+      showSuccessMessage: true,
+      successMessage: messages.accounts.transferred || 'Transfer completed successfully',
+    });
+  },
 };

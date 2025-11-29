@@ -16,13 +16,14 @@ interface IDebt {
   id?: string;
   type: number;
   personName: string;
-  originalAmount: number;
+  amount: number;
   remainingAmount?: number;
   interestRate?: number;
   borrowedDate: string;
   dueDate?: string;
-  status: number;
-  note?: string;
+  status?: number;
+  description?: string;
+  contactInfo?: string;
 }
 
 interface IDebtFormProps {
@@ -103,7 +104,6 @@ export const DebtForm: React.FC<IDebtFormProps> = ({
       form.resetFields();
       form.setFieldsValue({
         type: DebtType.LENDING,
-        status: DebtStatus.ACTIVE,
         borrowedDate: dayjs(),
       });
     }
@@ -187,16 +187,16 @@ export const DebtForm: React.FC<IDebtFormProps> = ({
             </Form.Item>
 
             <Form.Item
-              name="originalAmount"
-              label={t('debts.originalAmount')}
+              name="amount"
+              label={t('debts.amount')}
               rules={[
-                { required: true, message: t('validation.required.originalAmount') },
-                { type: 'number', min: 1000, message: t('validation.min.originalAmount') },
+                { required: true, message: t('validation.required.amount') },
+                { type: 'number', min: 1000, message: t('validation.min.amount') },
               ]}
             >
               <InputNumber
                 style={{ width: '100%' }}
-                placeholder={t('debts.enterOriginalAmount')}
+                placeholder={t('debts.enterAmount')}
                 formatter={(value) => `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => Number(value!.replace(/₫\s?|(,*)/g, '')) as any}
                 min={1000}
@@ -232,13 +232,26 @@ export const DebtForm: React.FC<IDebtFormProps> = ({
           </div>
 
           {/* Status & Notes */}
+          {initialValues?.id && (
+            <div className="form-section">
+              <Form.Item name="status" label={t('debts.status')}>
+                <Select placeholder={t('debts.selectStatus')} options={statusOptions} />
+              </Form.Item>
+            </div>
+          )}
+
           <div className="form-section">
-            <Form.Item name="status" label={t('debts.status')}>
-              <Select placeholder={t('debts.selectStatus')} options={statusOptions} />
+            <Form.Item name="description" label={t('debts.description')}>
+              <TextArea
+                placeholder={t('debts.enterDescription')}
+                rows={3}
+                maxLength={1000}
+                showCount
+              />
             </Form.Item>
 
-            <Form.Item name="note" label={t('debts.note')}>
-              <TextArea placeholder={t('debts.enterNote')} rows={3} maxLength={1000} showCount />
+            <Form.Item name="contactInfo" label={t('debts.contactInfo')}>
+              <Input placeholder={t('debts.enterContactInfo')} maxLength={255} />
             </Form.Item>
           </div>
         </Form>

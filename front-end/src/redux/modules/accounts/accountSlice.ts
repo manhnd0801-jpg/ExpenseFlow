@@ -11,6 +11,7 @@ import {
   ICreateAccountPayload,
   IDeleteAccountPayload,
   initialAccountState,
+  ITransferPayload,
   IUpdateAccountPayload,
 } from './accountTypes';
 
@@ -131,6 +132,31 @@ const accountSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
       state.errors.delete = action.payload;
+    },
+
+    // ==========================================
+    // TRANSFER BETWEEN ACCOUNTS
+    // ==========================================
+    transferRequest: (state, _action: PayloadAction<ITransferPayload>) => {
+      state.isLoading = true;
+      state.error = null;
+      state.errors.transfer = undefined;
+    },
+
+    transferSuccess: (
+      state,
+      action: PayloadAction<{ fromAccountId: string; toAccountId: string }>
+    ) => {
+      // Reload accounts after transfer
+      state.isLoading = false;
+      state.error = null;
+      state.errors.transfer = undefined;
+    },
+
+    transferFailure: (state, action: PayloadAction<string>) => {
+      state.isLoading = false;
+      state.error = action.payload;
+      state.errors.transfer = action.payload;
     },
 
     // ==========================================

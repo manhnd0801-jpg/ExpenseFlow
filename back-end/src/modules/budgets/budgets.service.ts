@@ -51,12 +51,13 @@ export class BudgetsService {
       throw new NotFoundException('Budget not found');
     }
 
-    const spent = await this.calculateSpent(budget);
+    const { spent, transactions } = await this.calculateSpentWithTransactions(budget);
     return {
       ...budget,
       spent,
       remaining: Number(budget.amount) - spent,
       percentage: (spent / Number(budget.amount)) * 100,
+      transactions, // Include transactions list
     };
   }
 
@@ -89,6 +90,33 @@ export class BudgetsService {
 
     const transactions = await this.transactionRepository.find({ where });
     return transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+  }
+
+  private async calculateSpentWithTransactions(
+    budget: Budget,
+  ): Promise<{ spent: number; transactions: Transaction[] }> {
+    const startDate = budget.startDate;
+    const endDate = budget.endDate || this.calculateEndDate(budget.startDate, budget.period);
+
+    const where: any = {
+      userId: budget.userId,
+      type: TransactionType.EXPENSE,
+      date: Between(startDate, endDate),
+    };
+
+    if (budget.categoryId) {
+      where.categoryId = budget.categoryId;
+    }
+
+    const transactions = await this.transactionRepository.find({
+      where,
+      relations: ['category', 'account'],
+      order: { date: 'DESC' },
+    });
+
+    const spent = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+
+    return { spent, transactions };
   }
 
   private calculateEndDate(startDate: Date, period: number): Date {

@@ -4,6 +4,7 @@ export { Category } from './category.entity';
 export { DebtPayment } from './debt-payment.entity';
 export { Debt } from './debt.entity';
 export { Event } from './event.entity';
+export { GoalTransaction } from './goal-transaction.entity';
 export { Goal } from './goal.entity';
 export { LoanPayment } from './loan-payment.entity';
 export { Loan } from './loan.entity';

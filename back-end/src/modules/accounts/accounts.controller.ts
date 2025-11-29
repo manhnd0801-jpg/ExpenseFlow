@@ -6,7 +6,7 @@ import { GetUser } from '../../common/decorators';
 import { apiResponseSchema } from '../../common/dto';
 import { JwtAuthGuard } from '../../common/guards';
 import { AccountsService } from './accounts.service';
-import { AccountResponseDto, CreateAccountDto, UpdateAccountDto } from './dto';
+import { AccountResponseDto, CreateAccountDto, TransferDto, UpdateAccountDto } from './dto';
 
 @ApiTags('Accounts')
 @ApiBearerAuth()
@@ -52,6 +52,23 @@ export class AccountsController {
   async getTotalBalance(@GetUser('id') userId: string): Promise<{ totalBalance: number }> {
     const totalBalance = await this.accountsService.getTotalBalance(userId);
     return { totalBalance };
+  }
+
+  @Post(':id/transfer')
+  @ApiOperation({ summary: 'Transfer money between accounts' })
+  @ApiResponse({
+    status: 200,
+    description: 'Transfer completed successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid transfer request' })
+  @ApiResponse({ status: 404, description: 'Account not found' })
+  async transfer(
+    @GetUser('id') userId: string,
+    @Param('id') fromAccountId: string,
+    @Body() dto: TransferDto,
+  ): Promise<{ success: boolean; message: string }> {
+    await this.accountsService.transfer(userId, fromAccountId, dto);
+    return { success: true, message: 'Transfer completed successfully' };
   }
 
   @Get(':id')

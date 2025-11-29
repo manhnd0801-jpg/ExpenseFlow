@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Max, Min } from 'class-validator';
 
 export class CreateAccountDto {
   @ApiProperty({
@@ -249,12 +249,15 @@ export class TransferDto {
     description: 'Target account ID',
   })
   @IsString()
+  @IsNotEmpty()
   toAccountId: string;
 
   @ApiProperty({
     example: 500000,
     description: 'Transfer amount',
   })
+  @IsNumber()
+  @IsPositive()
   @Type(() => Number)
   @Transform(({ value }) => parseFloat(value))
   amount: number;

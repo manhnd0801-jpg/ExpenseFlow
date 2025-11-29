@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { EventStatus } from '../common/constants/enums';
-import { DateToString, DecimalToNumber } from '../common/decorators';
+import { DecimalToNumber } from '../common/decorators';
 import { Transaction } from './transaction.entity';
 import { User } from './user.entity';
 
@@ -31,6 +31,13 @@ export class Event {
 
   @Column({ type: 'text', nullable: true })
   description: string;
+
+  @Column({
+    type: 'smallint',
+    nullable: true,
+    comment: '1=Personal, 2=Family, 3=Travel, 4=Business, 5=Other',
+  })
+  type: number;
 
   @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })

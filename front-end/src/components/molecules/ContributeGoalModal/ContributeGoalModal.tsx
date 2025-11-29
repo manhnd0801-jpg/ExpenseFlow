@@ -1,13 +1,27 @@
 /**
  * Contribute to Goal Modal Component
  */
+import { AccountTypeLabels } from '@/constants/enum-labels';
 import { useI18n } from '@/hooks/useI18n';
-import { DollarOutlined } from '@ant-design/icons';
-import { Divider, Form, Input, InputNumber, Modal, Progress, Space, Tag, Typography } from 'antd';
-import React, { useEffect } from 'react';
+import { accountService } from '@/services/accountService';
+import type { IAccount, IGoal } from '@/types';
+import { formatCurrency } from '@/utils/formatters';
+import { BankOutlined, DollarOutlined, WalletOutlined } from '@ant-design/icons';
+import {
+  Divider,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Progress,
+  Select,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+} from 'antd';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import type { IGoal } from '../../../types';
-import { formatCurrency } from '../../../utils/formatters';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -16,7 +30,7 @@ interface IContributeGoalModalProps {
   visible: boolean;
   goal: IGoal | null;
   onCancel: () => void;
-  onSubmit: (values: { amount: number; note?: string }) => void;
+  onSubmit: (values: { accountId: string; amount: number; note?: string }) => void;
   loading?: boolean;
 }
 
@@ -62,6 +76,33 @@ const GoalInfoContainer = styled.div`
   }
 `;
 
+const AccountOption = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+
+  .account-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .account-name {
+      font-weight: 500;
+    }
+
+    .account-type {
+      font-size: 12px;
+      color: #999;
+    }
+  }
+
+  .account-balance {
+    font-weight: 600;
+    color: ${(props) => props.color || '#13c2c2'};
+  }
+`;
+
 export const ContributeGoalModal: React.FC<IContributeGoalModalProps> = ({
   visible,
   goal,
@@ -71,12 +112,46 @@ export const ContributeGoalModal: React.FC<IContributeGoalModalProps> = ({
 }) => {
   const { t } = useI18n();
   const [form] = Form.useForm();
+  const [accounts, setAccounts] = useState<IAccount[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<IAccount | null>(null);
+
+  // Fetch accounts when modal opens
+  useEffect(() => {
+    if (visible) {
+      fetchAccounts();
+    }
+  }, [visible]);
 
   useEffect(() => {
     if (visible && goal) {
       form.resetFields();
+      setSelectedAccount(null);
     }
   }, [visible, goal, form]);
+
+  const fetchAccounts = async () => {
+    try {
+      setLoadingAccounts(true);
+      const data = await accountService.getAccounts();
+      setAccounts(data);
+    } catch (error) {
+      console.error('Failed to fetch accounts:', error);
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
+
+  const handleAccountChange = (accountId: string) => {
+    const account = accounts.find((acc) => acc.id === accountId);
+    setSelectedAccount(account || null);
+
+    // Reset amount if it exceeds new account balance
+    const currentAmount = form.getFieldValue('amount');
+    if (account && currentAmount > account.balance) {
+      form.setFieldsValue({ amount: undefined });
+    }
+  };
 
   const handleSubmit = async () => {
     try {
@@ -92,6 +167,25 @@ export const ContributeGoalModal: React.FC<IContributeGoalModalProps> = ({
 
   const progressPercent = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
   const remainingAmount = Math.max(0, goal.targetAmount - goal.currentAmount);
+
+  const getMaxContributionAmount = () => {
+    if (!selectedAccount) return remainingAmount;
+    const maxByAccount = selectedAccount.balance;
+    return remainingAmount > 0 ? Math.min(remainingAmount, maxByAccount) : maxByAccount;
+  };
+
+  const getAccountIcon = (type: number) => {
+    switch (type) {
+      case 1: // CASH
+        return <WalletOutlined />;
+      case 2: // BANK
+        return <BankOutlined />;
+      case 3: // CREDIT_CARD
+        return <DollarOutlined />;
+      default:
+        return <WalletOutlined />;
+    }
+  };
 
   return (
     <Modal
@@ -143,39 +237,108 @@ export const ContributeGoalModal: React.FC<IContributeGoalModalProps> = ({
 
       <Divider>{t('goals.contributionDetails')}</Divider>
 
-      <Form form={form} layout="vertical" autoComplete="off">
-        <Form.Item
-          name="amount"
-          label={t('goals.contributionAmount')}
-          rules={[
-            { required: true, message: t('validation.required.contributionAmount') },
-            { type: 'number', min: 1000, message: t('validation.min.contributionAmount') },
-            {
-              type: 'number',
-              max: remainingAmount > 0 ? remainingAmount : undefined,
-              message: t('validation.max.contributionAmount'),
-            },
-          ]}
-        >
-          <InputNumber
-            style={{ width: '100%' }}
-            placeholder={t('goals.enterContributionAmount')}
-            formatter={(value) => `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={(value) => Number(value!.replace(/₫\s?|(,*)/g, ''))}
-            min={1000}
-            max={remainingAmount > 0 ? remainingAmount : undefined}
-          />
-        </Form.Item>
+      <Spin spinning={loadingAccounts}>
+        <Form form={form} layout="vertical" autoComplete="off">
+          <Form.Item
+            name="accountId"
+            label={t('goals.selectAccount')}
+            rules={[{ required: true, message: t('validation.required.account') }]}
+          >
+            <Select
+              placeholder={t('goals.selectAccountPlaceholder')}
+              onChange={handleAccountChange}
+              showSearch
+              optionLabelProp="label"
+              filterOption={(input, option) => {
+                const account = accounts.find((a) => a.id === option?.value);
+                if (!account) return false;
+                return account.name.toLowerCase().includes(input.toLowerCase());
+              }}
+            >
+              {accounts.map((account) => (
+                <Select.Option key={account.id} value={account.id} label={`${account.name}`}>
+                  <AccountOption>
+                    <div className="account-info">
+                      {getAccountIcon(account.type)}
+                      <div>
+                        <div className="account-name">{account.name}</div>
+                        <div className="account-type">{AccountTypeLabels[account.type]}</div>
+                      </div>
+                    </div>
+                    <div className="account-balance">{formatCurrency(account.balance)}</div>
+                  </AccountOption>
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-        <Form.Item name="note" label={t('goals.contributionNote')}>
-          <TextArea
-            placeholder={t('goals.enterContributionNote')}
-            rows={3}
-            maxLength={500}
-            showCount
-          />
-        </Form.Item>
-      </Form>
+          {selectedAccount && (
+            <div
+              style={{
+                marginBottom: 16,
+                padding: 12,
+                background: '#f0f5ff',
+                borderRadius: 6,
+                border: '1px solid #adc6ff',
+              }}
+            >
+              <Space>
+                <Text type="secondary">{t('goals.accountBalance')}:</Text>
+                <Text strong style={{ color: '#1890ff' }}>
+                  {formatCurrency(selectedAccount.balance)}
+                </Text>
+              </Space>
+            </div>
+          )}
+
+          <Form.Item
+            name="amount"
+            label={t('goals.contributionAmount')}
+            rules={[
+              { required: true, message: t('validation.required.contributionAmount') },
+              { type: 'number', min: 1000, message: t('validation.min.contributionAmount') },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+
+                  if (!selectedAccount) {
+                    return Promise.reject(new Error(t('validation.required.account')));
+                  }
+
+                  if (value > selectedAccount.balance) {
+                    return Promise.reject(new Error(t('validation.insufficientBalance')));
+                  }
+
+                  if (remainingAmount > 0 && value > remainingAmount) {
+                    return Promise.reject(new Error(t('validation.max.contributionAmount')));
+                  }
+
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              placeholder={t('goals.enterContributionAmount')}
+              formatter={(value) => `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(value) => Number(value!.replace(/₫\s?|(,*)/g, ''))}
+              min={1000}
+              max={getMaxContributionAmount()}
+              disabled={!selectedAccount}
+            />
+          </Form.Item>
+
+          <Form.Item name="note" label={t('goals.contributionNote')}>
+            <TextArea
+              placeholder={t('goals.enterContributionNote')}
+              rows={3}
+              maxLength={500}
+              showCount
+            />
+          </Form.Item>
+        </Form>
+      </Spin>
 
       {remainingAmount <= 0 && (
         <div

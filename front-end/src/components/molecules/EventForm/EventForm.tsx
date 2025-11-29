@@ -4,7 +4,7 @@
  */
 import { useI18n } from '@/hooks/useI18n';
 import { CalendarOutlined, DollarOutlined, EnvironmentOutlined } from '@ant-design/icons';
-import { DatePicker, Form, Input, InputNumber, Modal, Select, Space, Switch } from 'antd';
+import { DatePicker, Form, Input, InputNumber, Modal, Select, Space } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
@@ -23,7 +23,6 @@ interface IEvent {
   startDate: string;
   endDate?: string;
   status: number;
-  isActive: boolean;
 }
 
 interface IEventFormProps {
@@ -77,7 +76,6 @@ export const EventForm: React.FC<IEventFormProps> = ({
       form.setFieldsValue({
         type: EventType.PERSONAL,
         status: EventStatus.ACTIVE,
-        isActive: true,
       });
     }
   }, [initialValues, form, visible]);
@@ -221,10 +219,6 @@ export const EventForm: React.FC<IEventFormProps> = ({
           <div className="form-section">
             <Form.Item name="status" label={t('events.status')}>
               <Select placeholder={t('events.selectStatus')} options={statusOptions} />
-            </Form.Item>
-
-            <Form.Item name="isActive" label={t('events.isActive')} valuePropName="checked">
-              <Switch />
             </Form.Item>
           </div>
         </Form>

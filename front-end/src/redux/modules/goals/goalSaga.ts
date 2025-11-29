@@ -82,8 +82,8 @@ function* contributeGoalSaga(
   action: PayloadAction<IContributeGoalPayload>
 ): Generator<any, void, any> {
   try {
-    const { goalId, amount, note } = action.payload;
-    const contributionData = { amount, note };
+    const { goalId, accountId, amount, note } = action.payload;
+    const contributionData = { accountId, amount, note };
     const response: any = yield call(goalService.contributeToGoal, goalId, contributionData);
     // Extract data from wrapped response {success, data, message}
     const goal: IGoal = response.data || response;

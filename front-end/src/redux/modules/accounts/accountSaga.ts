@@ -13,6 +13,7 @@ import {
   IAccountListQuery,
   ICreateAccountPayload,
   IDeleteAccountPayload,
+  ITransferPayload,
   IUpdateAccountPayload,
 } from './accountTypes';
 
@@ -131,6 +132,28 @@ function* getAccountDetailSaga(action: PayloadAction<{ id: string }>): Generator
 }
 
 /**
+ * Transfer Between Accounts Saga
+ */
+function* transferSaga(action: PayloadAction<ITransferPayload>): Generator<any, void, any> {
+  try {
+    const { fromAccountId, toAccountId, amount, description } = action.payload;
+
+    // Call API to transfer
+    yield call(accountService.transfer, fromAccountId, {
+      toAccountId,
+      amount,
+      description,
+    });
+
+    // Success - Reload accounts to get updated balances
+    yield put(accountActions.transferSuccess({ fromAccountId, toAccountId }));
+    yield put(accountActions.listAccountsRequest({}));
+  } catch (error: any) {
+    yield put(accountActions.transferFailure(error?.message || 'Failed to transfer funds'));
+  }
+}
+
+/**
  * Root Account Saga
  */
 export default function* accountSaga() {
@@ -139,4 +162,5 @@ export default function* accountSaga() {
   yield takeEvery(accountActions.updateAccountRequest.type, updateAccountSaga);
   yield takeEvery(accountActions.deleteAccountRequest.type, deleteAccountSaga);
   yield takeEvery(accountActions.getAccountDetailRequest.type, getAccountDetailSaga);
+  yield takeEvery(accountActions.transferRequest.type, transferSaga);
 }

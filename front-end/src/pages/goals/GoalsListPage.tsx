@@ -112,11 +112,12 @@ const GoalsListPage: React.FC = () => {
     setEditingGoal(undefined);
   };
 
-  const handleContributeSubmit = (values: { amount: number; note?: string }) => {
+  const handleContributeSubmit = (values: { accountId: string; amount: number; note?: string }) => {
     if (contributingGoal) {
       dispatch(
         contributeGoalStart({
           goalId: contributingGoal.id,
+          accountId: values.accountId,
           amount: values.amount,
           note: values.note,
         })

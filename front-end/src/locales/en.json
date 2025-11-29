@@ -200,7 +200,26 @@
     "currencyRequired": "Please select currency",
     "selectCurrency": "Select currency",
     "iconPlaceholder": "E.g.: 💰, 🏦, 💳...",
-    "descriptionPlaceholder": "Notes about account (optional)"
+    "descriptionPlaceholder": "Notes about account (optional)",
+    "transfer": "Transfer",
+    "confirmTransfer": "Confirm Transfer",
+    "fromAccount": "From Account",
+    "toAccount": "To Account",
+    "transferAmount": "Transfer Amount",
+    "transferDescription": "Transfer Note",
+    "transferDescriptionPlaceholder": "E.g.: Transfer to savings...",
+    "fromAccountRequired": "Please select source account",
+    "toAccountRequired": "Please select destination account",
+    "amountRequired": "Please enter amount",
+    "amountMustBePositive": "Amount must be greater than 0",
+    "insufficientBalance": "Insufficient balance",
+    "selectFromAccount": "Select source account",
+    "selectToAccount": "Select destination account",
+    "availableBalance": "Available Balance",
+    "transferSuccess": "Transfer completed successfully",
+    "createSuccess": "Account created successfully",
+    "updateSuccess": "Account updated successfully",
+    "deleteSuccess": "Account deleted successfully"
   },
   "categories": {
     "title": "Categories",
@@ -304,6 +323,9 @@
     "remainingAmount": "Remaining Amount",
     "enterContributionAmount": "Enter contribution amount",
     "enterContributionNote": "Enter note (optional)",
+    "selectAccount": "Select Account",
+    "selectAccountPlaceholder": "Select account to contribute from",
+    "accountBalance": "Account Balance",
     "noDescription": "No description available"
   },
   "debts": {
@@ -556,14 +578,16 @@
   },
   "validation": {
     "required": {
-      "contributionAmount": "Please enter contribution amount"
+      "contributionAmount": "Please enter contribution amount",
+      "account": "Please select an account"
     },
     "min": {
       "contributionAmount": "Minimum contribution amount is 1,000 VND"
     },
     "max": {
       "contributionAmount": "Contribution amount cannot exceed remaining amount"
-    }
+    },
+    "insufficientBalance": "Insufficient account balance"
   },
   "notifications": {
     "success": {

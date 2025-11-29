@@ -38,6 +38,7 @@ export interface IDeleteGoalPayload {
 
 export interface IContributeGoalPayload {
   goalId: string;
+  accountId: string;
   amount: number;
   note?: string;
 }

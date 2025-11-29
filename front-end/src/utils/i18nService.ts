@@ -67,6 +67,7 @@ export const getServiceMessages = () => {
       created: t('notifications.success.added'),
       updated: t('notifications.success.updated'),
       deleted: t('notifications.success.deleted'),
+      transferred: t('accounts.transferSuccess'),
     },
     budgets: {
       created: t('notifications.success.added'),

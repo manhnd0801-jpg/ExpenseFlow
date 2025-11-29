@@ -200,7 +200,26 @@
     "currencyRequired": "Vui lòng chọn đơn vị tiền tệ",
     "selectCurrency": "Chọn đơn vị",
     "iconPlaceholder": "Ví dụ: 💰, 🏦, 💳...",
-    "descriptionPlaceholder": "Ghi chú về tài khoản (tùy chọn)"
+    "descriptionPlaceholder": "Ghi chú về tài khoản (tùy chọn)",
+    "transfer": "Chuyển khoản",
+    "confirmTransfer": "Xác nhận chuyển",
+    "fromAccount": "Từ tài khoản",
+    "toAccount": "Đến tài khoản",
+    "transferAmount": "Số tiền chuyển",
+    "transferDescription": "Ghi chú chuyển khoản",
+    "transferDescriptionPlaceholder": "Ví dụ: Chuyển tiền tiết kiệm...",
+    "fromAccountRequired": "Vui lòng chọn tài khoản nguồn",
+    "toAccountRequired": "Vui lòng chọn tài khoản đích",
+    "amountRequired": "Vui lòng nhập số tiền",
+    "amountMustBePositive": "Số tiền phải lớn hơn 0",
+    "insufficientBalance": "Số dư không đủ",
+    "selectFromAccount": "Chọn tài khoản nguồn",
+    "selectToAccount": "Chọn tài khoản đích",
+    "availableBalance": "Số dư khả dụng",
+    "transferSuccess": "Chuyển khoản thành công",
+    "createSuccess": "Tạo tài khoản thành công",
+    "updateSuccess": "Cập nhật tài khoản thành công",
+    "deleteSuccess": "Xóa tài khoản thành công"
   },
   "categories": {
     "title": "Danh mục",
@@ -343,6 +362,9 @@
     "remainingAmount": "Số tiền còn lại",
     "enterContributionAmount": "Nhập số tiền đóng góp",
     "enterContributionNote": "Nhập ghi chú (tùy chọn)",
+    "selectAccount": "Chọn tài khoản",
+    "selectAccountPlaceholder": "Chọn tài khoản để đóng góp",
+    "accountBalance": "Số dư tài khoản",
     "noDescription": "Chưa có mô tả"
   },
   "debts": {
@@ -629,6 +651,7 @@
   "validation": {
     "required": {
       "contributionAmount": "Vui lòng nhập số tiền đóng góp",
+      "account": "Vui lòng chọn tài khoản",
       "eventName": "Vui lòng nhập tên sự kiện",
       "eventType": "Vui lòng chọn loại sự kiện",
       "eventDates": "Vui lòng chọn thời gian diễn ra",
@@ -644,7 +667,8 @@
     },
     "max": {
       "contributionAmount": "Số tiền đóng góp không được vượt quá số tiền còn lại"
-    }
+    },
+    "insufficientBalance": "Số dư tài khoản không đủ"
   },
   "notifications": {
     "success": {

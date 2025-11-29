@@ -6,8 +6,11 @@
 import type {
   IContributeGoalRequest,
   ICreateGoalRequest,
+  IDeleteGoalRequest,
   IGoal,
+  IGoalTransaction,
   IUpdateGoalRequest,
+  IWithdrawGoalRequest,
 } from '@/types/models';
 import { API_ENDPOINTS } from '@utils/constants';
 import { getServiceMessages } from '@utils/i18nService';
@@ -26,6 +29,13 @@ export const goalService = {
    */
   getGoalById: async (id: string): Promise<IGoal> => {
     return api.get<IGoal>(API_ENDPOINTS.GOALS.GET_BY_ID(id));
+  },
+
+  /**
+   * Get goal transaction history
+   */
+  getGoalTransactions: async (id: string): Promise<IGoalTransaction[]> => {
+    return api.get<IGoalTransaction[]>(`${API_ENDPOINTS.GOALS.GET_BY_ID(id)}/transactions`);
   },
 
   /**
@@ -51,24 +61,34 @@ export const goalService = {
   },
 
   /**
-   * Delete goal (soft delete)
+   * Delete goal with refund options
    */
-  deleteGoal: async (id: string): Promise<void> => {
+  deleteGoal: async (id: string, data?: IDeleteGoalRequest): Promise<void> => {
     const messages = getServiceMessages();
     return api.delete<void>(API_ENDPOINTS.GOALS.DELETE(id), {
       showSuccessMessage: true,
       successMessage: messages.goals.deleted,
+      data, // Pass delete options in request body
     });
   },
 
   /**
-   * Contribute amount to goal
+   * Contribute amount to goal (deduct from account)
    */
   contributeToGoal: async (id: string, data: IContributeGoalRequest): Promise<IGoal> => {
-    const messages = getServiceMessages();
     return api.post<IGoal>(API_ENDPOINTS.GOALS.CONTRIBUTE(id), data, {
       showSuccessMessage: true,
-      successMessage: messages.contributedToGoal,
+      successMessage: 'Đóng góp vào mục tiêu thành công',
+    });
+  },
+
+  /**
+   * Withdraw amount from goal (refund to account)
+   */
+  withdrawFromGoal: async (id: string, data: IWithdrawGoalRequest): Promise<IGoal> => {
+    return api.post<IGoal>(`${API_ENDPOINTS.GOALS.GET_BY_ID(id)}/withdraw`, data, {
+      showSuccessMessage: true,
+      successMessage: 'Rút tiền từ mục tiêu thành công',
     });
   },
 };

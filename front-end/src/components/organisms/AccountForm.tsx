@@ -96,58 +96,63 @@ export const AccountForm: React.FC<IAccountFormProps> = ({
       >
         <Input placeholder={t('accounts.namePlaceholder')} />
       </Form.Item>
+      {!initialValues && (
+        <>
+          <Form.Item
+            label={t('accounts.accountType')}
+            name="type"
+            rules={[{ required: true, message: t('accounts.typeRequired') }]}
+          >
+            <Select placeholder={t('accounts.selectType')} disabled={!!initialValues}>
+              {[
+                AccountType.CASH,
+                AccountType.BANK,
+                AccountType.CREDIT_CARD,
+                AccountType.DIGITAL_WALLET,
+              ].map((value) => (
+                <Select.Option key={value} value={value}>
+                  {getAccountTypeLabel(value)}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-      <Form.Item
-        label={t('accounts.accountType')}
-        name="type"
-        rules={[{ required: true, message: t('accounts.typeRequired') }]}
-      >
-        <Select placeholder={t('accounts.selectType')} disabled={!!initialValues}>
-          {[
-            AccountType.CASH,
-            AccountType.BANK,
-            AccountType.CREDIT_CARD,
-            AccountType.DIGITAL_WALLET,
-          ].map((value) => (
-            <Select.Option key={value} value={value}>
-              {getAccountTypeLabel(value)}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
+          <Form.Item
+            label={t('accounts.initialBalance')}
+            name="initialBalance"
+            rules={[
+              { required: true, message: t('accounts.balanceRequired') },
+              { type: 'number', min: 0, message: t('accounts.balanceMinimum') },
+            ]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              min={0}
+              formatter={formatCurrency}
+              parser={parseCurrency}
+              placeholder="0"
+              addonAfter="VND"
+              disabled={!!initialValues}
+            />
+          </Form.Item>
 
-      <Form.Item
-        label={t('accounts.initialBalance')}
-        name="initialBalance"
-        rules={[
-          { required: true, message: t('accounts.balanceRequired') },
-          { type: 'number', min: 0, message: t('accounts.balanceMinimum') },
-        ]}
-      >
-        <InputNumber
-          style={{ width: '100%' }}
-          min={0}
-          formatter={formatCurrency}
-          parser={parseCurrency}
-          placeholder="0"
-          addonAfter="VND"
-          disabled={!!initialValues}
-        />
-      </Form.Item>
-
-      <Form.Item
-        label={t('accounts.currency')}
-        name="currency"
-        rules={[{ required: true, message: t('accounts.currencyRequired') }]}
-      >
-        <Select placeholder={t('accounts.selectCurrency')} disabled={!!initialValues}>
-          {[Currency.VND, Currency.USD, Currency.EUR, Currency.JPY, Currency.CNY].map((value) => (
-            <Select.Option key={value} value={value}>
-              {getCurrencyLabel(value)}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
+          <Form.Item
+            label={t('accounts.currency')}
+            name="currency"
+            rules={[{ required: true, message: t('accounts.currencyRequired') }]}
+          >
+            <Select placeholder={t('accounts.selectCurrency')} disabled={!!initialValues}>
+              {[Currency.VND, Currency.USD, Currency.EUR, Currency.JPY, Currency.CNY].map(
+                (value) => (
+                  <Select.Option key={value} value={value}>
+                    {getCurrencyLabel(value)}
+                  </Select.Option>
+                )
+              )}
+            </Select>
+          </Form.Item>
+        </>
+      )}
 
       <Form.Item label={t('accounts.color')} name="color">
         <Input type="color" style={{ width: '100px' }} />

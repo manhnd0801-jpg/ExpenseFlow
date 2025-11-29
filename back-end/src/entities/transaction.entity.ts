@@ -39,6 +39,9 @@ export class Transaction {
   @Column({ name: 'event_id', type: 'uuid', nullable: true })
   eventId?: string;
 
+  @Column({ name: 'goal_id', type: 'uuid', nullable: true })
+  goalId?: string; // Link to goal (for goal contributions/withdrawals)
+
   @Column({
     type: 'smallint',
     comment: '1=Income, 2=Expense, 3=Transfer',

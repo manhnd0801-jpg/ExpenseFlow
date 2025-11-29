@@ -35,7 +35,8 @@ export interface IUpdateDebtPayload {
     interestRate?: number;
     borrowedDate?: string;
     dueDate?: string;
-    status?: number;
+    description?: string;
+    contactInfo?: string;
   };
 }
 

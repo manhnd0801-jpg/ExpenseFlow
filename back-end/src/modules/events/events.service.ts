@@ -16,7 +16,7 @@ export class EventsService {
     const event = this.eventRepository.create({
       ...dto,
       userId,
-      status: EventStatus.PLANNED,
+      status: dto.status ?? EventStatus.PLANNED,
     });
     return await this.eventRepository.save(event);
   }

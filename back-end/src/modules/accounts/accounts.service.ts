@@ -1,14 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { TransactionType } from '../../common/constants/enums';
 import { Account } from '../../entities/account.entity';
-import { CreateAccountDto, UpdateAccountDto } from './dto';
+import { Transaction } from '../../entities/transaction.entity';
+import { CreateAccountDto, TransferDto, UpdateAccountDto } from './dto';
 
 @Injectable()
 export class AccountsService {
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
+    @InjectRepository(Transaction)
+    private readonly transactionRepository: Repository<Transaction>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(userId: string, dto: CreateAccountDto): Promise<Account> {
@@ -51,5 +56,63 @@ export class AccountsService {
       where: { userId, includeInTotal: true, isActive: true },
     });
     return accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+  }
+
+  /**
+   * Transfer money between accounts
+   * Creates a TRANSFER transaction and updates both account balances
+   */
+  async transfer(userId: string, fromAccountId: string, dto: TransferDto): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Validate accounts exist and belong to user
+      const fromAccount = await this.findOne(userId, fromAccountId);
+      const toAccount = await this.findOne(userId, dto.toAccountId);
+
+      // Validate transfer is not to same account
+      if (fromAccountId === dto.toAccountId) {
+        throw new BadRequestException('Cannot transfer to the same account');
+      }
+
+      // Validate sufficient balance
+      if (fromAccount.balance < dto.amount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+
+      // Validate amount is positive
+      if (dto.amount <= 0) {
+        throw new BadRequestException('Transfer amount must be positive');
+      }
+
+      // Update account balances
+      fromAccount.balance = Number(fromAccount.balance) - Number(dto.amount);
+      toAccount.balance = Number(toAccount.balance) + Number(dto.amount);
+
+      await queryRunner.manager.save(fromAccount);
+      await queryRunner.manager.save(toAccount);
+
+      // Create transfer transaction
+      const transaction = this.transactionRepository.create({
+        userId,
+        accountId: fromAccountId,
+        toAccountId: dto.toAccountId,
+        type: TransactionType.TRANSFER,
+        amount: dto.amount,
+        date: new Date(),
+        description: dto.description || `Transfer from ${fromAccount.name} to ${toAccount.name}`,
+      });
+
+      await queryRunner.manager.save(transaction);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

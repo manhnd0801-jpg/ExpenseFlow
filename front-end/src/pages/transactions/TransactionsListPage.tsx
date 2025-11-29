@@ -134,15 +134,27 @@ export const TransactionsPage: React.FC = () => {
       dataIndex: 'category',
       key: 'category',
       width: 180,
-      render: (category: any) =>
-        category ? (
+      render: (category: any, record: ITransaction) => {
+        // For TRANSFER type, show destination account instead of category
+        if (record.type === TransactionType.TRANSFER) {
+          return record.toAccount ? (
+            <Space>
+              <span>→ {record.toAccount.name}</span>
+            </Space>
+          ) : (
+            <span>Transfer</span>
+          );
+        }
+
+        return category ? (
           <Space>
             {category.icon && <span style={{ color: category.color }}>{category.icon}</span>}
             <span>{category.name}</span>
           </Space>
         ) : (
           '-'
-        ),
+        );
+      },
     },
     {
       title: t('transactions.type'),
@@ -150,7 +162,11 @@ export const TransactionsPage: React.FC = () => {
       key: 'type',
       width: 120,
       render: (type: TransactionType) => {
-        const color = type === TransactionType.INCOME ? 'green' : 'red';
+        let color = 'blue';
+        if (type === TransactionType.INCOME) color = 'green';
+        else if (type === TransactionType.EXPENSE) color = 'red';
+        else if (type === TransactionType.TRANSFER) color = 'orange';
+
         return <Tag color={color}>{getTransactionTypeLabel(type)}</Tag>;
       },
     },
@@ -161,8 +177,20 @@ export const TransactionsPage: React.FC = () => {
       width: 150,
       align: 'right',
       render: (amount: number, record: ITransaction) => {
-        const color = record.type === TransactionType.INCOME ? '#52c41a' : '#ff4d4f';
-        const prefix = record.type === TransactionType.INCOME ? '+' : '-';
+        let color = '#1890ff'; // blue for transfer
+        let prefix = '';
+
+        if (record.type === TransactionType.INCOME) {
+          color = '#52c41a'; // green
+          prefix = '+';
+        } else if (record.type === TransactionType.EXPENSE) {
+          color = '#ff4d4f'; // red
+          prefix = '-';
+        } else if (record.type === TransactionType.TRANSFER) {
+          color = '#fa8c16'; // orange
+          prefix = '→'; // arrow for transfer
+        }
+
         return (
           <span style={{ color, fontWeight: 500 }}>
             {prefix}{' '}
@@ -187,12 +215,15 @@ export const TransactionsPage: React.FC = () => {
       align: 'center',
       render: (_: any, record: ITransaction) => (
         <Space>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            title={t('common.edit')}
-          />
+          {/* Don't allow editing TRANSFER transactions */}
+          {record.type !== TransactionType.TRANSFER && (
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              title={t('common.edit')}
+            />
+          )}
           <Button
             type="text"
             danger

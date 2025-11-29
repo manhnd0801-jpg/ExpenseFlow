@@ -802,10 +802,10 @@ Cronjob chạy hàng ngày (00:00):
          * Mục tiêu: 20,000,000 VND
          * Hiện tại: 5,000,000 VND (25%)
          * Còn thiếu: 15,000,000 VND
-
+       
        - Form:
          * Số tiền đóng góp: [___________] VND
-         * Chọn tài khoản nguồn:
+         * Chọn tài khoản nguồn: 
            ○ Tiền mặt (Số dư: 10,000,000 VND) ✓
            ○ Ngân hàng VCB (Số dư: 50,000,000 VND)
            ○ Ví MoMo (Số dư: 2,000,000 VND)
@@ -821,26 +821,26 @@ Cronjob chạy hàng ngày (00:00):
   - Tài khoản đã được chọn?
               ↓
 [Business Logic - CRITICAL]
-
+  
   Step 1: Validate account balance
     account = findAccount(account_id, user_id)
     if (account.balance < amount):
       → Throw "Số dư không đủ"
               ↓
-
+  
   Step 2: BEGIN TRANSACTION
     ├─ Update accounts (Giảm số dư)
     │   UPDATE accounts
     │   SET balance = balance - 3,000,000
     │   WHERE id = account_id
-    │
+    │   
     │   Kết quả: Tiền mặt: 10,000,000 → 7,000,000
     │
     ├─ Update goals (Tăng current_amount)
     │   UPDATE goals
     │   SET current_amount = current_amount + 3,000,000
     │   WHERE id = goal_id
-    │
+    │   
     │   Kết quả: Goal: 5,000,000 → 8,000,000 (40%)
     │
     ├─ Tạo transaction tracking (EXPENSE)
@@ -901,20 +901,20 @@ Cronjob chạy hàng ngày (00:00):
   - Số tiền <= current_amount của goal?
               ↓
 [Business Logic]
-
+  
   BEGIN TRANSACTION
     ├─ Update goals (Giảm current_amount)
     │   UPDATE goals
     │   SET current_amount = current_amount - 2,000,000
     │   WHERE id = goal_id
-    │
+    │   
     │   Kết quả: Goal: 8,000,000 → 6,000,000 (30%)
     │
     ├─ Update accounts (Tăng số dư)
     │   UPDATE accounts
     │   SET balance = balance + 2,000,000
     │   WHERE id = account_id
-    │
+    │   
     │   Kết quả: Tiền mặt: 7,000,000 → 9,000,000
     │
     ├─ Tạo transaction (INCOME)
@@ -960,23 +960,23 @@ Cronjob chạy hàng ngày (00:00):
 [UI] → Modal cảnh báo:
 
     ⚠️ Cảnh báo: Mục tiêu có tiền đã đóng góp!
-
+    
     Mục tiêu: Mua Laptop Gaming
     Số tiền đã đóng góp: 6,000,000 VND
-
+    
     ❓ Bạn muốn xử lý số tiền này như thế nào?
-
+    
     ○ Hoàn tiền về tài khoản ✓
       └─ Chọn tài khoản nhận:
           [Dropdown: Tiền mặt / Ngân hàng / Ví MoMo]
-
+      
     ○ Chuyển sang mục tiêu khác
       └─ Chọn mục tiêu đích:
           [Dropdown: Mua Ô tô / Du lịch Nhật / ...]
-
+      
     ○ Xóa luôn (không hoàn tiền)
       └─ ⚠️ Số tiền sẽ mất, chỉ giữ lại lịch sử giao dịch
-
+    
     [Hủy] [Xác nhận xóa]
               ↓
 [Người dùng] → Chọn option → Confirm
@@ -990,7 +990,7 @@ Cronjob chạy hàng ngày (00:00):
       │   UPDATE accounts
       │   SET balance = balance + 6,000,000
       │   WHERE id = selected_account_id
-      │
+      │   
       │   Kết quả: Tiền mặt: 9,000,000 → 15,000,000
       │
       ├─ Tạo transaction (INCOME)
@@ -1010,7 +1010,7 @@ Cronjob chạy hàng ngày (00:00):
       │   "Đã hoàn 6,000,000 VND về tài khoản Tiền mặt"
       │
       └─ COMMIT
-
+  
   CASE 2: Chuyển sang mục tiêu khác
   ─────────────────────────────────
     BEGIN TRANSACTION
@@ -1039,7 +1039,7 @@ Cronjob chạy hàng ngày (00:00):
       │     UPDATE status = 2  -- 2 = Completed
       │
       └─ COMMIT
-
+  
   CASE 3: Xóa luôn (không hoàn tiền)
   ─────────────────────────────────
     BEGIN TRANSACTION
@@ -1047,7 +1047,7 @@ Cronjob chạy hàng ngày (00:00):
       │   UPDATE goals
       │   SET deleted_at = NOW()
       │   WHERE id = goal_id
-      │
+      │   
       │   Note: current_amount giữ nguyên để audit
       │
       ├─ Giữ nguyên ALL transactions
@@ -1061,7 +1061,7 @@ Cronjob chạy hàng ngày (00:00):
   - Case 1: "Đã xóa mục tiêu và hoàn 6,000,000 VND"
   - Case 2: "Đã chuyển 6,000,000 VND sang mục tiêu Mua Ô tô"
   - Case 3: "Đã xóa mục tiêu"
-
+  
   - Refresh danh sách goals
   - Update số dư tài khoản (nếu case 1)
 ```
@@ -1078,33 +1078,33 @@ Cronjob chạy hàng ngày (00:00):
 [UI] → Hiển thị timeline:
 
     📊 Lịch sử giao dịch - Mua Laptop Gaming
-
+    
     ════════════════════════════════════════
-
+    
     📅 29/11/2025 - 14:30
     ➕ Đóng góp: +3,000,000 VND
     Từ: Tiền mặt
     Ghi chú: Tiết kiệm tháng 11
     Số dư sau: 8,000,000 VND (40%)
-
+    
     ────────────────────────────────────────
-
+    
     📅 15/11/2025 - 10:00
     ➖ Rút tiền: -2,000,000 VND
     Về: Tiền mặt
     Lý do: Cần tiền gấp
     Số dư sau: 5,000,000 VND (25%)
-
+    
     ────────────────────────────────────────
-
+    
     📅 01/11/2025 - 09:00
     ➕ Đóng góp: +5,000,000 VND
     Từ: Ngân hàng VCB
     Ghi chú: Lương tháng 11
     Số dư sau: 7,000,000 VND (35%)
-
+    
     ════════════════════════════════════════
-
+    
     📈 Thống kê:
     - Tổng đóng góp: 8,000,000 VND
     - Tổng rút: 2,000,000 VND
@@ -1127,19 +1127,19 @@ Trigger khi đóng góp làm current_amount >= target_amount:
          Show celebration modal 🎉
               ↓
 [UI] → Modal:
-
+    
     🎉 Chúc mừng! Bạn đã đạt mục tiêu!
-
+    
     Mục tiêu: Mua Laptop Gaming
     Đã hoàn thành: 100%
     Số tiền: 20,000,000 / 20,000,000 VND
-
+    
     ❓ Bạn muốn làm gì tiếp theo?
-
+    
     ○ Rút tiền về tài khoản để sử dụng
     ○ Giữ tiền trong mục tiêu
     ○ Chuyển sang mục tiêu khác
-
+    
     [Quyết định sau] [Xác nhận]
               ↓
 [Người dùng] → Chọn action
@@ -1194,26 +1194,26 @@ Cronjob chạy hàng ngày (00:00):
     - Đang hoạt động: 3
     - Đã hoàn thành: 1
     - Quá hạn: 1
-
+    
     - Tổng tiền mục tiêu: 100,000,000 VND
     - Đã tiết kiệm: 45,000,000 VND (45%)
     - Còn thiếu: 55,000,000 VND
-
+    
     TIẾN ĐỘ CỤ THỂ:
     ═══════════════
-
+    
     📱 Mua iPhone 16 Pro Max
        Progress: ███████░░░ 70%
        35,000,000 / 50,000,000 VND
        Deadline: 31/12/2025 (còn 32 ngày)
        Gợi ý: Đóng góp 468,750 VND/ngày
-
+    
     💻 Mua Laptop Gaming
        Progress: ████░░░░░░ 40%
        8,000,000 / 20,000,000 VND
        Deadline: 30/06/2026 (còn 213 ngày)
        Gợi ý: Đóng góp 56,338 VND/ngày
-
+    
     🚗 Mua Ô tô
        Progress: ██░░░░░░░░ 20%
        100,000,000 / 500,000,000 VND
@@ -1225,7 +1225,7 @@ Cronjob chạy hàng ngày (00:00):
 
 ## 6. Quy Trình Giao Dịch Định Kỳ
 
-### 6.1. Tạo Giao Dịch Định Kỳ
+### 5.1. Tạo Giao Dịch Định Kỳ
 
 ```
 [Người dùng] → Tạo giao dịch → Chọn "Lặp lại"
@@ -1242,7 +1242,7 @@ Cronjob chạy hàng ngày (00:00):
            Tạo transaction đầu tiên (nếu start_date = today)
 ```
 
-### 6.2. Thực Thi Giao Dịch Định Kỳ
+### 5.2. Thực Thi Giao Dịch Định Kỳ
 
 ```
 Cronjob chạy hàng ngày (00:00):
@@ -1283,7 +1283,7 @@ Cronjob chạy hàng ngày (00:00):
               - role = 'admin'
 ```
 
-### 7.2. Mời Thành Viên
+### 6.2. Mời Thành Viên
 
 ```
 [Owner] → Nhập email người muốn mời
@@ -1307,7 +1307,7 @@ Cronjob chạy hàng ngày (00:00):
             └─ Notification "Bạn đã tham gia sổ X"
 ```
 
-### 7.3. Đồng Bộ Real-time
+### 6.3. Đồng Bộ Real-time
 
 ```
 Khi member thêm giao dịch vào shared book:
@@ -1326,7 +1326,7 @@ Khi member thêm giao dịch vào shared book:
     → Update UI real-time
 ```
 
-### 7.4. Kiểm Soát Quyền
+### 6.4. Kiểm Soát Quyền
 
 ```
 Khi member thực hiện action:
@@ -1383,7 +1383,7 @@ Khi member thực hiện action:
 [Frontend] → Tự động download file
 ```
 
-### 8.2. Xuất PDF
+### 7.2. Xuất PDF
 
 ```
 Similar flow như Excel, nhưng:
@@ -1418,7 +1418,7 @@ Cronjob chạy hàng ngày (02:00):
            └─ Xóa backup cũ > 30 ngày
 ```
 
-### 9.2. Manual Backup
+### 8.2. Manual Backup
 
 ```
 [Người dùng] → Click "Sao lưu dữ liệu"
@@ -1427,7 +1427,7 @@ Cronjob chạy hàng ngày (02:00):
            → Download về máy user
 ```
 
-### 9.3. Restore
+### 8.3. Restore
 
 ```
 [Người dùng] → Upload backup file

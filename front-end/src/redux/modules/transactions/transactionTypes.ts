@@ -21,6 +21,7 @@ export interface ITransaction {
   userId: string;
   categoryId: string;
   accountId: string;
+  toAccountId?: string; // For TRANSFER transactions
   type: TransactionType;
   amount: number;
   description: string;
@@ -39,6 +40,13 @@ export interface ITransaction {
     color?: string;
   };
   account?: {
+    id: string;
+    name: string;
+    type: number;
+    balance: number;
+    currency: string;
+  };
+  toAccount?: {
     id: string;
     name: string;
     type: number;

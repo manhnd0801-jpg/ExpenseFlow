@@ -129,6 +129,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/accounts/${id}`,
     DELETE: (id: string) => `/accounts/${id}`,
     TOTAL_BALANCE: '/accounts/total-balance',
+    TRANSFER: (id: string) => `/accounts/${id}/transfer`,
   },
 
   // Categories
