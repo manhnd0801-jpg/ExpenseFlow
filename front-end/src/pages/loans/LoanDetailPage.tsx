@@ -5,7 +5,9 @@
 
 import {
   ArrowLeftOutlined,
+  CalculatorOutlined,
   CalendarOutlined,
+  DeleteOutlined,
   DollarOutlined,
   EditOutlined,
   PercentageOutlined,
@@ -16,6 +18,7 @@ import {
   Card,
   Col,
   Descriptions,
+  Popconfirm,
   Progress,
   Row,
   Space,
@@ -30,18 +33,26 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
+import ExtraPrincipalPaymentModal, {
+  IExtraPrincipalPaymentFormData,
+} from '@/components/organisms/ExtraPrincipalPaymentModal';
+import PrepaymentSimulatorModal from '@/components/organisms/PrepaymentSimulatorModal';
+import RecordPaymentModal from '@/components/organisms/RecordPaymentModal';
 import { LoanStatusLabels, LoanTypeLabels } from '@/constants/enum-labels';
 import { LoanStatus } from '@/constants/enums';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useI18n } from '@/hooks/useI18n';
+import { accountActions, selectAccounts } from '@/redux/modules/accounts';
+import { categoryActions, selectCategories } from '@/redux/modules/categories';
 import {
-  IAmortizationScheduleItem,
-  ILoanPayment,
+  IExtraPrincipalTransaction,
+  IPaymentScheduleWithStatus,
   loanActions,
-  selectAmortizationSchedule,
   selectCurrentLoan,
+  selectExtraPrincipalTransactions,
   selectIsLoanLoading,
-  selectLoanPayments,
+  selectPaymentScheduleWithStatus,
+  selectPrepaymentSimulation,
 } from '@/redux/modules/loans';
 import { formatCurrency } from '@/utils/formatters';
 
@@ -135,19 +146,33 @@ const LoanDetailPage: React.FC = () => {
 
   // Redux selectors
   const loan = useAppSelector(selectCurrentLoan);
-  const amortizationSchedule = useAppSelector(selectAmortizationSchedule);
-  const payments = useAppSelector(selectLoanPayments);
+  const paymentScheduleWithStatus = useAppSelector(selectPaymentScheduleWithStatus);
+  const extraPrincipalTransactions = useAppSelector(selectExtraPrincipalTransactions);
+  const prepaymentSimulation = useAppSelector(selectPrepaymentSimulation);
   const isLoading = useAppSelector(selectIsLoanLoading);
+  const accounts = useAppSelector(selectAccounts);
+  const categories = useAppSelector(selectCategories);
+
+  // Payment history: all transactions (paid + extra principal)
+  const paymentHistory = [...extraPrincipalTransactions]
+    .filter((tx) => !tx.description?.includes('disbursement'))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   // Local state
-  const [activeTab, setActiveTab] = useState('schedule');
+  const [activeTab, setActiveTab] = useState('status');
+  const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+  const [isSimulatorModalVisible, setIsSimulatorModalVisible] = useState(false);
+  const [isExtraPrincipalModalVisible, setIsExtraPrincipalModalVisible] = useState(false);
 
-  // Load loan detail
+  // Load loan detail, accounts, and categories
   useEffect(() => {
+    dispatch(accountActions.listAccountsRequest({}));
+    dispatch(categoryActions.listCategoriesRequest({}));
+
     if (id) {
       dispatch(loanActions.getLoanDetailRequest(id));
-      dispatch(loanActions.getAmortizationScheduleRequest(id));
-      dispatch(loanActions.getLoanPaymentsRequest(id));
+      dispatch(loanActions.getPaymentScheduleWithStatusRequest(id));
+      dispatch(loanActions.getExtraPrincipalTransactionsRequest(id));
     }
 
     return () => {
@@ -168,68 +193,206 @@ const LoanDetailPage: React.FC = () => {
   }
 
   // Calculate progress
-  const paidAmount = loan.principal - loan.remainingBalance;
-  const paidPercentage = (paidAmount / loan.principal) * 100;
+  const paidAmount = loan.originalAmount - loan.remainingPrincipal;
+  const paidPercentage = (paidAmount / loan.originalAmount) * 100;
 
-  // Amortization schedule columns
-  const scheduleColumns: ColumnsType<IAmortizationScheduleItem> = [
+  // Check if overdue - only for active loans with remaining payments
+  const isOverdue =
+    loan.status === 1 && // LoanStatus.ACTIVE = 1
+    loan.remainingMonths > 0 &&
+    dayjs(loan.nextPaymentDate).isBefore(dayjs(), 'day');
+
+  const progressColor =
+    paidPercentage === 100
+      ? '#10b981' // Green - completed
+      : isOverdue
+      ? '#f59e0b' // Orange - overdue
+      : '#3b82f6'; // Blue - on track
+
+  // Find disbursement account
+  const disbursementAccount = loan.accountId
+    ? accounts.find((acc: any) => acc.id === loan.accountId)
+    : null;
+
+  // Handlers
+  const handleRecordPayment = (values: {
+    accountId: string;
+    amount: number;
+    paymentDate: string;
+    note?: string;
+    categoryId?: string;
+    principalCategoryId?: string;
+    interestCategoryId?: string;
+  }) => {
+    if (!loan?.id) return;
+    dispatch(
+      loanActions.recordLoanPaymentRequest({
+        loanId: loan.id,
+        accountId: values.accountId,
+        amount: values.amount,
+        paymentDate: values.paymentDate,
+        note: values.note,
+        categoryId: values.categoryId,
+        principalCategoryId: values.principalCategoryId,
+        interestCategoryId: values.interestCategoryId,
+      })
+    );
+    setIsPaymentModalVisible(false);
+  };
+
+  const handleDeleteExtraPrincipalTransaction = (transactionId: string) => {
+    if (!loan?.id) return;
+    dispatch(
+      loanActions.deleteExtraPrincipalTransactionRequest({
+        loanId: loan.id,
+        transactionId,
+      })
+    );
+  };
+
+  const handleSimulatePrepayment = (values: {
+    prepaymentAmount: number;
+    strategy: 'reduce_term' | 'reduce_payment';
+  }) => {
+    if (!loan?.id) return;
+    dispatch(
+      loanActions.simulatePrepaymentRequest({
+        loanId: loan.id,
+        prepaymentAmount: values.prepaymentAmount,
+        prepaymentDate: new Date().toISOString().split('T')[0],
+        strategy: values.strategy,
+      })
+    );
+  };
+
+  const handleExtraPrincipalPayment = (values: IExtraPrincipalPaymentFormData) => {
+    if (!loan?.id) return;
+    dispatch(
+      loanActions.extraPrincipalPaymentRequest({
+        loanId: loan.id,
+        amount: values.amount,
+        paymentDate: values.paymentDate.toISOString(),
+        accountId: values.accountId,
+        categoryId: values.categoryId,
+        note: values.note,
+        // Strategy removed: always reduces monthly payment, keeps term unchanged
+      })
+    );
+    setIsExtraPrincipalModalVisible(false);
+  };
+
+  // Payment Schedule with Status columns
+  const paymentScheduleColumns: ColumnsType<IPaymentScheduleWithStatus> = [
     {
-      title: t('loans.month'),
+      title: 'Tháng',
       dataIndex: 'month',
       key: 'month',
       width: 80,
+      align: 'center',
       render: (month: number) => <strong>#{month}</strong>,
     },
     {
-      title: t('loans.date'),
-      dataIndex: 'date',
-      key: 'date',
+      title: 'Ngày đến hạn',
+      dataIndex: 'paymentDate',
+      key: 'paymentDate',
       width: 120,
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
-      title: t('loans.monthlyPayment'),
+      title: 'Số tiền phải trả',
       dataIndex: 'payment',
       key: 'payment',
+      width: 140,
       align: 'right',
-      render: (payment: number) => (
-        <span style={{ fontWeight: 600, color: '#3b82f6' }}>{formatCurrency(payment)}</span>
-      ),
+      render: (principal: number, record: IPaymentScheduleWithStatus) => {
+        if (record.payment === 0 && loan.status === LoanStatus.PAID_OFF) {
+          return '-';
+        }
+        return <span style={{ fontWeight: 600 }}>{formatCurrency(principal)}</span>;
+      },
     },
     {
-      title: t('loans.principal'),
+      title: 'Gốc',
       dataIndex: 'principal',
       key: 'principal',
+      width: 120,
       align: 'right',
-      render: (principal: number) => <span>{formatCurrency(principal)}</span>,
+      render: (principal: number, record: IPaymentScheduleWithStatus) => {
+        if (record.payment === 0 && loan.status === LoanStatus.PAID_OFF) {
+          return '-';
+        }
+        return formatCurrency(principal);
+      },
     },
     {
-      title: t('loans.interest'),
+      title: 'Lãi',
       dataIndex: 'interest',
       key: 'interest',
+      width: 120,
       align: 'right',
-      render: (interest: number) => (
-        <span style={{ color: '#ef4444' }}>{formatCurrency(interest)}</span>
-      ),
+      render: (amount: number, record: IPaymentScheduleWithStatus) => {
+        if (record.payment === 0 && loan.status === LoanStatus.PAID_OFF) {
+          return '-';
+        }
+        return <span style={{ fontWeight: 600, color: '#10b981' }}>{formatCurrency(amount)}</span>;
+      },
     },
     {
-      title: t('loans.balance'),
-      dataIndex: 'balance',
-      key: 'balance',
-      align: 'right',
-      render: (balance: number) => (
-        <span style={{ fontWeight: 600 }}>{formatCurrency(balance)}</span>
-      ),
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      align: 'center',
+      render: (status: 'paid' | 'unpaid', record: IPaymentScheduleWithStatus) => {
+        if (status === 'paid') {
+          return <Tag color="success">Đã thanh toán</Tag>;
+        }
+        if (status === 'unpaid' && record.principal < 0 && loan.status === LoanStatus.PAID_OFF) {
+          return '-';
+        }
+        return <Tag color="default">Chưa thanh toán</Tag>;
+      },
+    },
+    {
+      title: 'Ngày thanh toán',
+      dataIndex: 'actualPaymentDate',
+      key: 'actualPaymentDate',
+      width: 140,
+      render: (date: string | null) => (date ? dayjs(date).format('DD/MM/YYYY HH:mm') : '-'),
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'note',
+      key: 'note',
+      width: 150,
+      render: (note: string | null) => note || '-',
     },
   ];
 
-  // Payment history columns
-  const paymentColumns: ColumnsType<ILoanPayment> = [
+  // Payment History columns (transaction records)
+  const paymentHistoryColumns: ColumnsType<IExtraPrincipalTransaction> = [
     {
       title: t('loans.paymentDate'),
-      dataIndex: 'paymentDate',
-      key: 'paymentDate',
+      dataIndex: 'date',
+      key: 'date',
       render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
+    },
+    {
+      title: t('transactions.type'),
+      dataIndex: 'description',
+      key: 'description',
+      render: (description: string) => {
+        if (description?.includes('Trả nợ gốc (ngoài lịch)')) {
+          return <Tag color="orange">Trả gốc tự do</Tag>;
+        }
+        if (description?.includes('Trả nợ gốc')) {
+          return <Tag color="blue">Trả gốc</Tag>;
+        }
+        if (description?.includes('Lãi vay')) {
+          return <Tag color="red">Trả lãi</Tag>;
+        }
+        return <Tag>Khác</Tag>;
+      },
     },
     {
       title: t('transactions.amount'),
@@ -241,24 +404,51 @@ const LoanDetailPage: React.FC = () => {
       ),
     },
     {
-      title: t('loans.principal'),
-      dataIndex: 'principal',
-      key: 'principal',
-      align: 'right',
-      render: (principal: number) => formatCurrency(principal),
+      title: t('accounts.account'),
+      dataIndex: 'accountName',
+      key: 'accountName',
+      render: (accountName: string) => <Tag color="green">{accountName}</Tag>,
     },
     {
-      title: t('loans.interest'),
-      dataIndex: 'interest',
-      key: 'interest',
-      align: 'right',
-      render: (interest: number) => formatCurrency(interest),
+      title: t('categories.category'),
+      dataIndex: 'categoryName',
+      key: 'categoryName',
+      render: (categoryName: string) => <Tag>{categoryName}</Tag>,
     },
     {
       title: t('transactions.note'),
       dataIndex: 'note',
       key: 'note',
       render: (note: string) => note || '-',
+    },
+    {
+      title: t('common.actions'),
+      key: 'actions',
+      align: 'center',
+      width: 120,
+      render: (_: any, record: IExtraPrincipalTransaction) => {
+        // Show delete button for transactions within the last 7 days
+        const transactionDate = dayjs(record.date);
+        const daysSinceTransaction = dayjs().diff(transactionDate, 'day');
+        const canDelete = daysSinceTransaction <= 7;
+
+        if (!canDelete) return null;
+
+        return (
+          <Popconfirm
+            title="Xóa giao dịch thanh toán?"
+            description="Bạn có chắc chắn muốn xóa giao dịch này không?"
+            onConfirm={() => handleDeleteExtraPrincipalTransaction(record.id)}
+            okText={t('common.confirm')}
+            cancelText={t('common.cancel')}
+            okButtonProps={{ danger: true }}
+          >
+            <Button type="text" danger size="small" icon={<DeleteOutlined />} loading={isLoading}>
+              {t('common.delete')}
+            </Button>
+          </Popconfirm>
+        );
+      },
     },
   ];
 
@@ -270,12 +460,34 @@ const LoanDetailPage: React.FC = () => {
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/loans')}>
             {t('common.back')}
           </Button>
-          <Button icon={<EditOutlined />} onClick={() => navigate(`/loans/${id}/edit`)}>
-            {t('common.edit')}
-          </Button>
-          <Button type="primary" icon={<PlusOutlined />}>
-            {t('debts.recordPayment')}
-          </Button>
+          {loan.status !== LoanStatus.PAID_OFF && (
+            <>
+              <Button icon={<EditOutlined />} onClick={() => navigate(`/loans/${id}/edit`)}>
+                {t('common.edit')}
+              </Button>
+              <Button
+                icon={<CalculatorOutlined />}
+                onClick={() => setIsSimulatorModalVisible(true)}
+              >
+                {t('loans.prepaymentSimulator')}
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setIsPaymentModalVisible(true)}
+              >
+                {t('debts.recordPayment')}
+              </Button>
+              <Button
+                type="default"
+                icon={<DollarOutlined />}
+                onClick={() => setIsExtraPrincipalModalVisible(true)}
+                style={{ borderColor: '#10b981', color: '#10b981' }}
+              >
+                {t('loans.extraPrincipalPayment')}
+              </Button>
+            </>
+          )}
         </Space>
 
         <h1>
@@ -293,7 +505,7 @@ const LoanDetailPage: React.FC = () => {
           <Card>
             <Statistic
               title={t('loans.remainingBalance')}
-              value={loan.remainingBalance}
+              value={loan.remainingPrincipal}
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ color: '#ef4444' }}
               prefix={<DollarOutlined />}
@@ -315,7 +527,7 @@ const LoanDetailPage: React.FC = () => {
           <Card>
             <Statistic
               title={t('loans.totalInterest')}
-              value={loan.totalInterest}
+              value={loan.totalInterestPaid}
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ color: '#f59e0b' }}
               prefix={<PercentageOutlined />}
@@ -328,14 +540,20 @@ const LoanDetailPage: React.FC = () => {
               title={t('loans.paid')}
               value={paidPercentage.toFixed(1)}
               suffix="%"
-              valueStyle={{ color: '#10b981' }}
+              valueStyle={{ color: progressColor }}
             />
             <div className="progress-section">
               <Progress
                 percent={paidPercentage}
                 showInfo={false}
-                strokeColor={paidPercentage === 100 ? '#10b981' : '#3b82f6'}
+                strokeColor={progressColor}
+                status={isOverdue && paidPercentage < 100 ? 'exception' : 'normal'}
               />
+              {isOverdue && paidPercentage < 100 && (
+                <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px' }}>
+                  ⚠️ {t('loans.overdue')}
+                </div>
+              )}
             </div>
           </Card>
         </Col>
@@ -348,7 +566,7 @@ const LoanDetailPage: React.FC = () => {
             <Tag color="blue">{LoanTypeLabels[loan.type]}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label={t('loans.loanAmount')}>
-            <strong>{formatCurrency(loan.principal)}</strong>
+            <strong>{formatCurrency(loan.originalAmount)}</strong>
           </Descriptions.Item>
           <Descriptions.Item label={t('loans.interestRate')}>
             <strong>
@@ -366,14 +584,26 @@ const LoanDetailPage: React.FC = () => {
           <Descriptions.Item label={t('loans.dueDate')}>
             {dayjs(loan.startDate).add(loan.termMonths, 'month').format('DD/MM/YYYY')}
           </Descriptions.Item>
+          {disbursementAccount && (
+            <Descriptions.Item label="Tài khoản nhận tiền">
+              <Tag color="green">{disbursementAccount.name}</Tag>
+              {loan.disbursementDate && (
+                <span style={{ marginLeft: '8px', fontSize: '12px', color: '#6b7280' }}>
+                  (Giải ngân: {dayjs(loan.disbursementDate).format('DD/MM/YYYY HH:mm')})
+                </span>
+              )}
+            </Descriptions.Item>
+          )}
           <Descriptions.Item label={t('loans.totalPayment')}>
-            <strong style={{ color: '#ef4444' }}>{formatCurrency(loan.totalPayment)}</strong>
+            <strong style={{ color: '#ef4444' }}>
+              {formatCurrency(loan.monthlyPayment * loan.termMonths)}
+            </strong>
           </Descriptions.Item>
           <Descriptions.Item label={t('loans.paid')}>
             <strong style={{ color: '#10b981' }}>{formatCurrency(paidAmount)}</strong>
           </Descriptions.Item>
           <Descriptions.Item label={t('budgets.remaining')}>
-            <strong style={{ color: '#ef4444' }}>{formatCurrency(loan.remainingBalance)}</strong>
+            <strong style={{ color: '#ef4444' }}>{formatCurrency(loan.remainingPrincipal)}</strong>
           </Descriptions.Item>
           {loan.lender && (
             <Descriptions.Item label={t('loans.lenderName')} span={3}>
@@ -395,34 +625,34 @@ const LoanDetailPage: React.FC = () => {
           onChange={setActiveTab}
           items={[
             {
-              key: 'schedule',
-              label: `${t('loans.amortizationSchedule')} (${amortizationSchedule.length} ${t(
+              key: 'status',
+              label: `Trạng thái thanh toán (${loan.termMonths} ${t(
                 'common.thisMonth'
               ).toLowerCase()})`,
               children: (
                 <Table
                   bordered
-                  columns={scheduleColumns}
-                  dataSource={amortizationSchedule}
+                  columns={paymentScheduleColumns}
+                  dataSource={paymentScheduleWithStatus}
                   rowKey="month"
                   loading={isLoading}
                   pagination={{
                     pageSize: 12,
                     showSizeChanger: false,
-                    showTotal: (total) => t('loans.totalPeriods', { total }),
+                    showTotal: (total) => `Tổng ${total} tháng`,
                   }}
-                  scroll={{ x: 800 }}
+                  rowClassName={(record) => (record.status === 'paid' ? 'row-paid' : 'row-unpaid')}
                 />
               ),
             },
             {
               key: 'payments',
-              label: `${t('loans.paymentHistory')} (${payments.length})`,
+              label: `${t('loans.paymentHistory')} (${paymentHistory.length})`,
               children: (
                 <Table
                   bordered
-                  columns={paymentColumns}
-                  dataSource={payments}
+                  columns={paymentHistoryColumns}
+                  dataSource={paymentHistory}
                   rowKey="id"
                   loading={isLoading}
                   pagination={{
@@ -438,6 +668,36 @@ const LoanDetailPage: React.FC = () => {
           ]}
         />
       </Card>
+
+      {/* Record Payment Modal */}
+      <RecordPaymentModal
+        visible={isPaymentModalVisible}
+        loan={loan}
+        isLoading={isLoading}
+        onSubmit={handleRecordPayment}
+        onCancel={() => setIsPaymentModalVisible(false)}
+      />
+
+      {/* Prepayment Simulator Modal */}
+      <PrepaymentSimulatorModal
+        visible={isSimulatorModalVisible}
+        loan={loan}
+        simulation={prepaymentSimulation}
+        isLoading={isLoading}
+        onSimulate={handleSimulatePrepayment}
+        onClose={() => setIsSimulatorModalVisible(false)}
+      />
+
+      {/* Extra Principal Payment Modal */}
+      <ExtraPrincipalPaymentModal
+        visible={isExtraPrincipalModalVisible}
+        loan={loan}
+        accounts={accounts}
+        categories={categories}
+        isLoading={isLoading}
+        onSubmit={handleExtraPrincipalPayment}
+        onCancel={() => setIsExtraPrincipalModalVisible(false)}
+      />
     </StyledPageWrapper>
   );
 };

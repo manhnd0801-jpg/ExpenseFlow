@@ -7,8 +7,12 @@ import { LoanStatusLabels, LoanTypeLabels } from '@/constants/enum-labels';
 import { LoanStatus, LoanType } from '@/constants/enums';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useI18n } from '@/hooks/useI18n';
-import { loanActions, selectIsLoanLoading, selectLoanError } from '@/redux/modules/loans';
-import type { ILoan } from '@/types/models';
+import {
+  loanActions,
+  selectIsLoanLoading,
+  selectLoanError,
+  type ILoan,
+} from '@/redux/modules/loans';
 import { formatCurrency } from '@/utils/formatters';
 import {
   BankOutlined,
@@ -21,20 +25,8 @@ import {
   ReadOutlined,
   ShopOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  Empty,
-  Modal,
-  Progress,
-  Row,
-  Space,
-  Statistic,
-  Table,
-  Tag,
-  type ColumnsType,
-} from 'antd';
+import type { TableColumnsType } from 'antd';
+import { Button, Card, Col, Empty, Modal, Progress, Row, Space, Statistic, Table, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -59,6 +51,7 @@ const LoansListPage: React.FC = () => {
   // ============================================
 
   const summary = React.useMemo(() => {
+    const now = dayjs();
     const activeLoans = loans.filter((loan) => loan.status === LoanStatus.ACTIVE).length;
     const totalRemaining = loans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
     const monthlyPayment = loans
@@ -66,11 +59,25 @@ const LoansListPage: React.FC = () => {
       .reduce((sum, loan) => sum + (loan.monthlyPayment || 0), 0);
     const totalInterest = loans.reduce((sum, loan) => sum + loan.interestAmount, 0);
 
+    // Calculate overdue and upcoming payments
+    const overdueLoans = loans.filter((loan) => {
+      if (loan.status !== LoanStatus.ACTIVE || !loan.nextPaymentDate) return false;
+      return dayjs(loan.nextPaymentDate).isBefore(now, 'day');
+    }).length;
+
+    const upcomingLoans = loans.filter((loan) => {
+      if (loan.status !== LoanStatus.ACTIVE || !loan.nextPaymentDate) return false;
+      const daysUntilDue = dayjs(loan.nextPaymentDate).diff(now, 'day');
+      return daysUntilDue >= 0 && daysUntilDue <= 7; // Due within 7 days
+    }).length;
+
     return {
       activeLoans,
       totalRemaining,
       monthlyPayment,
       totalInterest,
+      overdueLoans,
+      upcomingLoans,
     };
   }, [loans]);
 
@@ -109,7 +116,7 @@ const LoansListPage: React.FC = () => {
 
   const getLoanTypeIcon = (type: LoanType) => {
     switch (type) {
-      case LoanType.HOME:
+      case LoanType.MORTGAGE:
         return <HomeOutlined style={{ fontSize: '20px', color: '#3b82f6' }} />;
       case LoanType.AUTO:
         return <CarOutlined style={{ fontSize: '20px', color: '#10b981' }} />;
@@ -126,7 +133,7 @@ const LoansListPage: React.FC = () => {
   const getStatusColor = (status: LoanStatus): string => {
     const colorMap: Record<LoanStatus, string> = {
       [LoanStatus.ACTIVE]: 'blue',
-      [LoanStatus.COMPLETED]: 'green',
+      [LoanStatus.PAID_OFF]: 'green',
       [LoanStatus.DEFAULTED]: 'red',
     };
     return colorMap[status] || 'default';
@@ -136,7 +143,7 @@ const LoansListPage: React.FC = () => {
   // TABLE COLUMNS
   // ============================================
 
-  const columns: ColumnsType<ILoan> = [
+  const columns: TableColumnsType<ILoan> = [
     {
       title: t('loans.loanName'),
       dataIndex: 'name',
@@ -182,7 +189,7 @@ const LoansListPage: React.FC = () => {
             <Progress
               percent={Number(percentage.toFixed(1))}
               size="small"
-              status={record.status === LoanStatus.COMPLETED ? 'success' : 'active'}
+              status={record.status === LoanStatus.PAID_OFF ? 'success' : 'active'}
             />
           </div>
         );
@@ -195,6 +202,52 @@ const LoansListPage: React.FC = () => {
       width: '10%',
       align: 'center',
       render: (rate: number) => <Tag color="orange">{rate}%</Tag>,
+    },
+    {
+      title: t('loans.nextPaymentDate'),
+      dataIndex: 'nextPaymentDate',
+      key: 'nextPaymentDate',
+      width: '13%',
+      render: (date: string, record: ILoan) => {
+        if (!date || record.status !== LoanStatus.ACTIVE) {
+          return <span style={{ color: '#9ca3af' }}>-</span>;
+        }
+
+        const now = dayjs();
+        const paymentDate = dayjs(date);
+        const daysUntilDue = paymentDate.diff(now, 'day');
+
+        // Overdue
+        if (daysUntilDue < 0) {
+          return (
+            <div>
+              <Tag color="red" style={{ marginBottom: 4 }}>
+                {t('loans.overdue')}
+              </Tag>
+              <div style={{ fontSize: '12px', color: '#ef4444' }}>
+                {paymentDate.format('DD/MM/YYYY')}
+              </div>
+            </div>
+          );
+        }
+
+        // Due today or within 7 days
+        if (daysUntilDue <= 7) {
+          return (
+            <div>
+              <Tag color="orange" style={{ marginBottom: 4 }}>
+                {daysUntilDue === 0 ? t('common.today') : `${daysUntilDue} ${t('common.days')}`}
+              </Tag>
+              <div style={{ fontSize: '12px', color: '#f59e0b' }}>
+                {paymentDate.format('DD/MM/YYYY')}
+              </div>
+            </div>
+          );
+        }
+
+        // Normal
+        return <div style={{ fontSize: '13px' }}>{paymentDate.format('DD/MM/YYYY')}</div>;
+      },
     },
     {
       title: t('loans.dueDate'),
@@ -225,21 +278,25 @@ const LoansListPage: React.FC = () => {
             onClick={() => handleViewLoan(record.id)}
             title={t('common.view')}
           />
-          <Button
-            type="text"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEditLoan(record.id)}
-            title={t('common.edit')}
-          />
-          <Button
-            type="text"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => showDeleteConfirm(record.id)}
-            title={t('common.delete')}
-          />
+          {record.status !== LoanStatus.PAID_OFF && (
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEditLoan(record.id)}
+              title={t('common.edit')}
+            />
+          )}
+          {!record.accountId && (
+            <Button
+              type="text"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => showDeleteConfirm(record.id)}
+              title={t('common.delete')}
+            />
+          )}
         </Space>
       ),
     },
@@ -253,7 +310,7 @@ const LoansListPage: React.FC = () => {
     <div>
       {/* Summary Statistics */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={6} xl={4}>
           <Card>
             <Statistic
               title={t('loans.activeLoans')}
@@ -263,7 +320,27 @@ const LoansListPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={6} xl={4}>
+          <Card style={{ borderLeft: summary.overdueLoans > 0 ? '3px solid #ef4444' : undefined }}>
+            <Statistic
+              title={t('loans.overduePayments')}
+              value={summary.overdueLoans}
+              suffix={t('loans.loanUnit')}
+              valueStyle={{ color: summary.overdueLoans > 0 ? '#ef4444' : '#10b981' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6} xl={4}>
+          <Card style={{ borderLeft: summary.upcomingLoans > 0 ? '3px solid #f59e0b' : undefined }}>
+            <Statistic
+              title={t('loans.upcomingPayments')}
+              value={summary.upcomingLoans}
+              suffix={t('loans.loanUnit')}
+              valueStyle={{ color: summary.upcomingLoans > 0 ? '#f59e0b' : '#9ca3af' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6} xl={4}>
           <Card>
             <Statistic
               title={t('loans.totalRemaining')}
@@ -273,7 +350,7 @@ const LoansListPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={6} xl={4}>
           <Card>
             <Statistic
               title={t('loans.monthlyPayment')}
@@ -283,7 +360,7 @@ const LoansListPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={6} xl={4}>
           <Card>
             <Statistic
               title={t('loans.totalInterest')}

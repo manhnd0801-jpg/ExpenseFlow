@@ -82,4 +82,22 @@ export const debtService = {
       successMessage: messages.paymentRecorded,
     });
   },
+
+  /**
+   * Delete payment for a debt (within 7 days)
+   */
+  deleteDebtPayment: async (debtId: string, paymentId: string): Promise<void> => {
+    const messages = getServiceMessages();
+    return api.delete<void>(API_ENDPOINTS.DEBTS.DELETE_PAYMENT(debtId, paymentId), {
+      showSuccessMessage: true,
+      successMessage: messages.debts.deleted,
+    });
+  },
+
+  /**
+   * Get debt summary statistics
+   */
+  getDebtSummary: async (): Promise<any> => {
+    return api.get<any>(API_ENDPOINTS.DEBTS.SUMMARY);
+  },
 };

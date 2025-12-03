@@ -10,6 +10,7 @@ export { categoryService } from './categoryService';
 export { debtService } from './debtService';
 export { eventService } from './eventService';
 export { goalService } from './goalService';
+export { default as loanService } from './loanService';
 export { notificationService } from './notificationService';
 export { reminderService } from './reminderService';
 export { reportService } from './reportService';

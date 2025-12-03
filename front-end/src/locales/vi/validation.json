@@ -1,5 +1,7 @@
 {
-  "required": {
+  "required": "Vui lòng nhập trường này",
+  "minAmount": "Số tiền tối thiểu là {{min}} VND",
+  "requiredFields": {
     "contributionAmount": "Vui lòng nhập số tiền đóng góp",
     "account": "Vui lòng chọn tài khoản",
     "eventName": "Vui lòng nhập tên sự kiện",

@@ -282,6 +282,9 @@ export interface IDebt {
   paidAmount: number;
   remainingAmount: number;
   interestRate?: number;
+  totalInterestPaid?: number; // Total interest paid so far
+  accountId?: TId; // Account used for this debt (optional for existing records)
+  initialTransactionId?: TId; // Transaction created when debt was established
   borrowedDate: TTimestamp;
   dueDate: TTimestamp;
   status: DebtStatus;
@@ -290,15 +293,33 @@ export interface IDebt {
   createdAt: TTimestamp;
   updatedAt: TTimestamp;
   deletedAt?: TTimestamp;
+  // Virtual properties from backend
+  progressPercentage?: number;
+  isPaid?: boolean;
+  isOverdue?: boolean;
+  daysUntilDue?: number | null;
+  isLending?: boolean;
+  isBorrowing?: boolean;
+  // Relationships
+  account?: IAccount;
+  initialTransaction?: ITransaction;
+  payments?: IDebtPayment[];
 }
 
 export interface IDebtPayment {
   id: TId;
   debtId: TId;
   amount: number;
+  principalAmount?: number; // Principal portion of payment
+  interestAmount?: number; // Interest portion of payment
+  accountId?: TId; // Account used for this payment (optional for existing records)
+  transactionId?: TId; // Transaction created for this payment
   paymentDate: TTimestamp;
   note?: string;
   createdAt: TTimestamp;
+  // Relationships
+  account?: IAccount;
+  transaction?: ITransaction;
 }
 
 export interface ICreateDebtRequest {
@@ -307,9 +328,10 @@ export interface ICreateDebtRequest {
   amount: number; // Send as "amount" to backend
   interestRate?: number;
   borrowedDate: string;
-  dueDate: string;
+  dueDate?: string;
   description?: string;
   contactInfo?: string;
+  accountId?: TId; // Account to use for automatic transaction creation
 }
 
 export interface IUpdateDebtRequest {
@@ -325,6 +347,9 @@ export interface IUpdateDebtRequest {
 
 export interface ICreateDebtPaymentRequest {
   amount: number;
+  principalAmount?: number; // Principal portion of payment (optional - calculated if not provided)
+  interestAmount?: number; // Interest portion of payment (optional - calculated if not provided)
+  accountId?: TId; // Account to use for automatic transaction creation
   paymentDate?: string;
   note?: string;
 }

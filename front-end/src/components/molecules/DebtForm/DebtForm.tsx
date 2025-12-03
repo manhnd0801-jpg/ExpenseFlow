@@ -2,13 +2,15 @@
  * Debt Form Component
  * For creating and editing lending/borrowing debts
  */
+import { AccountSelect } from '@/components/atoms/AccountSelect';
+import { CategorySelect } from '@/components/atoms/CategorySelect';
 import { useI18n } from '@/hooks/useI18n';
-import { DollarOutlined, UserOutlined } from '@ant-design/icons';
+import { BankOutlined, DollarOutlined, TagOutlined, UserOutlined } from '@ant-design/icons';
 import { DatePicker, Form, Input, InputNumber, Modal, Radio, Select, Space } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
-import { DebtStatus, DebtType } from '../../../constants/enums';
+import { CategoryType, DebtStatus, DebtType } from '../../../constants/enums';
 
 const { TextArea } = Input;
 
@@ -24,6 +26,8 @@ interface IDebt {
   status?: number;
   description?: string;
   contactInfo?: string;
+  accountId?: string; // Account to use for automatic transaction creation
+  categoryId?: string; // Category for transaction classification
 }
 
 interface IDebtFormProps {
@@ -212,6 +216,27 @@ export const DebtForm: React.FC<IDebtFormProps> = ({
                 min={0}
                 max={100}
                 step={0.1}
+              />
+            </Form.Item>
+          </div>
+
+          {/* Account Selection */}
+          <div className="form-section">
+            <div className="section-title">
+              <BankOutlined />
+              {t('debts.accountIntegration')}
+            </div>
+
+            <Form.Item name="accountId" label={t('debts.account')} help={t('debts.accountHelp')}>
+              <AccountSelect placeholder={t('debts.selectAccount')} allowClear showBalance />
+            </Form.Item>
+
+            <Form.Item name="categoryId" label={t('debts.category')} help={t('debts.categoryHelp')}>
+              <CategorySelect
+                placeholder={t('debts.selectCategory')}
+                categoryType={CategoryType.EXPENSE} // Debts are typically expense-related
+                allowClear
+                prefix={<TagOutlined />}
               />
             </Form.Item>
           </div>

@@ -19,5 +19,8 @@
   "selectType": "Select type",
   "iconPlaceholder": "E.g.: 🍔, ⛽, 💰...",
   "descriptionPlaceholder": "Notes about category (optional)",
-  "totalCategories": "Total {{total}} categories"
+  "totalCategories": "Total {{total}} categories",
+  "categorySelection": "Category Selection",
+  "commonCategory": "Common Category",
+  "selectCategory": "Select Category"
 }

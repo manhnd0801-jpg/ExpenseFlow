@@ -32,5 +32,18 @@
   "confirmDeleteMessage": "Are you sure you want to delete this debt?",
   "deleteWarning": "This action cannot be undone.",
   "totalLending": "Total {{total}} lending debts",
-  "totalBorrowing": "Total {{total}} borrowing debts"
+  "totalBorrowing": "Total {{total}} borrowing debts",
+  "debtType": "Debt Type",
+  "personAndAmount": "Person & Amount Information",
+  "enterPersonName": "Enter related person name",
+  "enterOriginalAmount": "Enter original amount",
+  "enterInterestRate": "Enter interest rate (%/year)",
+  "selectBorrowedDate": "Select borrowed date",
+  "selectDueDate": "Select due date",
+  "selectStatus": "Select status",
+  "enterNote": "Enter note",
+  "note": "Note",
+  "category": "Category",
+  "categoryHelp": "Select category for debt transactions",
+  "selectCategory": "Select category"
 }

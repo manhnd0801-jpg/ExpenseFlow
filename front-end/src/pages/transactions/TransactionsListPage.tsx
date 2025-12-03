@@ -119,8 +119,9 @@ export const TransactionsPage: React.FC = () => {
       title: t('transactions.date'),
       dataIndex: 'date',
       key: 'date',
-      width: 120,
-      render: (date: string) => dayjs(date).format('DD-MM-YYYY HH:mm'),
+      width: 160,
+      render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
+      sorter: true,
     },
     {
       title: t('transactions.account'),
@@ -182,10 +183,8 @@ export const TransactionsPage: React.FC = () => {
 
         if (record.type === TransactionType.INCOME) {
           color = '#52c41a'; // green
-          prefix = '+';
         } else if (record.type === TransactionType.EXPENSE) {
           color = '#ff4d4f'; // red
-          prefix = '-';
         } else if (record.type === TransactionType.TRANSFER) {
           color = '#fa8c16'; // orange
           prefix = '→'; // arrow for transfer
@@ -213,26 +212,38 @@ export const TransactionsPage: React.FC = () => {
       key: 'actions',
       width: 100,
       align: 'center',
-      render: (_: any, record: ITransaction) => (
-        <Space>
-          {/* Don't allow editing TRANSFER transactions */}
-          {record.type !== TransactionType.TRANSFER && (
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record)}
-              title={t('common.edit')}
-            />
-          )}
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
-            title={t('common.delete')}
-          />
-        </Space>
-      ),
+      render: (_: any, record: ITransaction) => {
+        // Check if this is a loan disbursement transaction by loanId
+        const isLoanDisbursement = !!record.loanId;
+
+        return (
+          <Space>
+            {/* Don't allow editing TRANSFER transactions or loan disbursements */}
+            {record.type !== TransactionType.TRANSFER && !isLoanDisbursement && (
+              <Button
+                type="text"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record)}
+                title={t('common.edit')}
+              />
+            )}
+            {/* Don't allow deleting loan disbursements */}
+            {!isLoanDisbursement && (
+              <Button
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record.id)}
+                title={t('common.delete')}
+              />
+            )}
+            {/* Show info tooltip for protected transactions */}
+            {isLoanDisbursement && (
+              <span style={{ fontSize: '12px', color: '#6b7280' }}>🔒 Giao dịch giải ngân</span>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 

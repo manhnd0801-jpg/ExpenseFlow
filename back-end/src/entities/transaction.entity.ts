@@ -12,7 +12,9 @@ import { TransactionType } from '../common/constants/enums';
 import { DecimalToNumber } from '../common/decorators';
 import { Account } from './account.entity';
 import { Category } from './category.entity';
+import { Debt } from './debt.entity';
 import { Event } from './event.entity';
+import { Loan } from './loan.entity';
 import { User } from './user.entity';
 
 /**
@@ -42,6 +44,12 @@ export class Transaction {
   @Column({ name: 'goal_id', type: 'uuid', nullable: true })
   goalId?: string; // Link to goal (for goal contributions/withdrawals)
 
+  @Column({ name: 'loan_id', type: 'uuid', nullable: true })
+  loanId?: string; // Link to loan (for loan disbursement transactions)
+
+  @Column({ name: 'debt_id', type: 'uuid', nullable: true })
+  debtId?: string; // Link to debt (for debt creation/payment transactions)
+
   @Column({
     type: 'smallint',
     comment: '1=Income, 2=Expense, 3=Transfer',
@@ -52,7 +60,7 @@ export class Transaction {
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   amount: number;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'timestamp' })
   date: Date;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
@@ -78,6 +86,9 @@ export class Transaction {
 
   @Column({ name: 'recurring_id', type: 'uuid', nullable: true })
   recurringId?: string; // Link to recurring transaction template
+
+  @Column({ name: 'payment_id', type: 'uuid', nullable: true })
+  paymentId?: string; // Link to loan_payments if this transaction was created from a loan payment
 
   @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
@@ -119,6 +130,14 @@ export class Transaction {
   @ManyToOne(() => Event, (event) => event.transactions, { nullable: true })
   @JoinColumn({ name: 'event_id' })
   event?: Event;
+
+  @ManyToOne(() => Loan, (loan) => loan.disbursementTransactions, { nullable: true })
+  @JoinColumn({ name: 'loan_id' })
+  loan?: Loan;
+
+  @ManyToOne(() => Debt, { nullable: true })
+  @JoinColumn({ name: 'debt_id' })
+  debt?: Debt;
 
   // Virtual properties
   get isTransfer(): boolean {

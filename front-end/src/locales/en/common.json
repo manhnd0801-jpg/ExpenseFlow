@@ -22,6 +22,7 @@
   "viewAll": "View All",
   "today": "Today",
   "yesterday": "Yesterday",
+  "days": "days",
   "thisWeek": "This Week",
   "thisMonth": "This Month",
   "thisYear": "This Year",
@@ -42,5 +43,6 @@
   "irreversibleAction": "This action cannot be undone.",
   "createCategory": "Create Category",
   "totalItems": "Total {{total}} items",
-  "createdAt": "Created At"
+  "createdAt": "Created At",
+  "advancedOptions": "Advanced Options"
 }

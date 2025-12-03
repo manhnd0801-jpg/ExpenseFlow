@@ -178,8 +178,10 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id: string) => `/debts/${id}`,
     UPDATE: (id: string) => `/debts/${id}`,
     DELETE: (id: string) => `/debts/${id}`,
+    SUMMARY: '/debts/summary',
     PAYMENTS: (id: string) => `/debts/${id}/payments`,
     CREATE_PAYMENT: (id: string) => `/debts/${id}/payments`,
+    DELETE_PAYMENT: (debtId: string, paymentId: string) => `/debts/${debtId}/payments/${paymentId}`,
   },
 
   // Events

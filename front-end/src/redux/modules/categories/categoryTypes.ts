@@ -23,6 +23,7 @@ export interface ICategory {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  isDefault: boolean;
 }
 
 /**

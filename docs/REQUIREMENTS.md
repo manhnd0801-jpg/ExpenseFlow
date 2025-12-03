@@ -63,50 +63,243 @@
 - **Theo dõi số dư**: Hiển thị số dư hiện tại của từng tài khoản
 - **Đồng bộ ngân hàng**: Tích hợp API ngân hàng (tùy chọn nâng cao)
 
-### 2.7. Quản Lý Công Nợ
+### 2.7. Quản Lý Công Nợ (Debts)
 
-- **Cho vay**: Ghi nhận các khoản cho người khác vay
-  - Người vay
-  - Số tiền cho vay
-  - Lãi suất (nếu có)
-  - Ngày cho vay
-  - Hạn trả
-  - Trạng thái (chưa trả, đã trả một phần, đã trả hết)
-- **Đi vay**: Ghi nhận các khoản vay nợ
-  - Người cho vay/Tổ chức
-  - Số tiền vay
-  - Lãi suất
-  - Ngày vay
-  - Hạn trả
-  - Kỳ hạn trả (hàng tháng, quý, năm)
-- **Ghi nhận thanh toán**: Cập nhật từng lần trả nợ/thu nợ
-- **Lịch sử công nợ**: Xem chi tiết các lần thanh toán
-- **Nhắc nhở đến hạn**: Thông báo khi đến hạn trả/thu nợ
+**Lưu ý quan trọng:** Hệ thống quản lý công nợ **PHẢI tích hợp với Accounts và Transactions** để đồng bộ số dư tài chính chính xác.
+
+#### 2.7.1. Tạo Khoản Công Nợ
+
+**Cho vay (Lending):**
+
+- Người vay (borrowerName)
+- Số tiền cho vay (amount)
+- Lãi suất nếu có (interestRate %)
+- Ngày cho vay (borrowedDate)
+- Hạn trả (dueDate) - tùy chọn
+- Ghi chú (note)
+- **Chọn tài khoản nguồn** (accountId) - Bắt buộc
+  - Khi tạo khoản cho vay:
+    - Hệ thống tự động **TRỪ TIỀN** khỏi tài khoản nguồn
+    - Tạo transaction type=EXPENSE với:
+      - `amount`: Số tiền cho vay
+      - `category`: "Cho vay" (mặc định hoặc user tự chọn)
+      - `debt_id`: Link đến debt record
+      - `description`: "Cho vay: [Tên người vay] - [Số tiền]"
+      - `date`: borrowedDate
+  - Số dư account giảm ngay lập tức
+- **Trạng thái khởi tạo:** ACTIVE
+
+**Đi vay (Borrowing):**
+
+- Người cho vay/Tổ chức (lenderName)
+- Số tiền vay (amount)
+- Lãi suất (interestRate %)
+- Ngày vay (borrowedDate)
+- Hạn trả (dueDate) - tùy chọn
+- Kỳ hạn trả (paymentFrequency): 1=Monthly, 2=Quarterly, 3=Yearly, 4=One-time
+- Ghi chú (note)
+- **Chọn tài khoản đích** (accountId) - Bắt buộc
+  - Khi tạo khoản đi vay:
+    - Hệ thống tự động **CỘNG TIỀN** vào tài khoản đích
+    - Tạo transaction type=INCOME với:
+      - `amount`: Số tiền vay
+      - `category`: "Vay nợ" (mặc định hoặc user tự chọn)
+      - `debt_id`: Link đến debt record
+      - `description`: "Vay nợ: [Tên người cho vay] - [Số tiền]"
+      - `date`: borrowedDate
+  - Số dư account tăng ngay lập tức
+- **Trạng thái khởi tạo:** ACTIVE
+
+**Tracking fields:**
+
+- `originalAmount`: Số tiền gốc ban đầu (KHÔNG thay đổi)
+- `remainingAmount`: Số tiền còn lại (giảm khi trả nợ/thu nợ)
+- `paidAmount`: Số tiền đã trả/thu = originalAmount - remainingAmount
+- `totalInterestPaid`: Tổng lãi đã trả (nếu có)
+
+#### 2.7.2. Ghi Nhận Thanh Toán Công Nợ
+
+**Khi trả nợ (Cho vay - Thu tiền về):**
+
+- User nhập:
+  - Số tiền thu về (paymentAmount)
+  - Ngày thu (paymentDate)
+  - Tài khoản nhận tiền (accountId)
+  - Ghi chú (note)
+- Hệ thống xử lý:
+  - **CỘNG TIỀN** vào account nhận
+  - Tạo transaction type=INCOME với:
+    - `amount`: paymentAmount
+    - `category`: "Thu nợ" (hoặc "Thu tiền cho vay")
+    - `debt_id`: Link đến debt record
+    - `description`: "Thu nợ từ [Tên người vay] - Kỳ [X]"
+  - Giảm `remainingAmount` của debt
+  - Cập nhật `status`:
+    - Nếu remainingAmount = 0 → PAID
+    - Nếu 0 < remainingAmount < originalAmount → PARTIAL_PAID
+  - Lưu vào `debt_payments` table:
+    - `debt_id`, `amount`, `paymentDate`, `transaction_id`, `note`
+
+**Khi trả nợ (Đi vay - Trả tiền):**
+
+- User nhập:
+  - Số tiền trả (paymentAmount)
+  - Ngày trả (paymentDate)
+  - Tài khoản trả tiền (accountId)
+  - Phân tách gốc/lãi (tùy chọn):
+    - Số tiền gốc (principalAmount)
+    - Số tiền lãi (interestAmount)
+    - Nếu không phân tách: Hệ thống tính toán tự động dựa trên interestRate
+  - Ghi chú (note)
+- Hệ thống xử lý:
+  - **TRỪ TIỀN** khỏi account trả
+  - Tạo transaction type=EXPENSE với:
+    - `amount`: paymentAmount
+    - `category`: "Trả nợ" (hoặc chia thành 2 transaction: gốc + lãi)
+    - `debt_id`: Link đến debt record
+    - `description`: "Trả nợ [Tên người cho vay] - Kỳ [X]"
+  - Giảm `remainingAmount` của debt
+  - Cập nhật `totalInterestPaid` += interestAmount
+  - Cập nhật `status`:
+    - Nếu remainingAmount = 0 → PAID
+    - Nếu 0 < remainingAmount < originalAmount → PARTIAL_PAID
+  - Lưu vào `debt_payments` table:
+    - `debt_id`, `amount`, `principalAmount`, `interestAmount`, `paymentDate`, `transaction_id`, `note`
+
+#### 2.7.3. Xóa/Hủy Khoản Công Nợ
+
+**Khi xóa debt chưa thanh toán xong:**
+
+- Hỏi user: "Khoản công nợ này chưa thanh toán xong. Bạn muốn xử lý số dư như thế nào?"
+  - **Option 1: Hoàn tiền về tài khoản** (Cho vay → Cộng tiền về, Đi vay → Trừ tiền)
+    - Tạo transaction ngược lại với số tiền remainingAmount
+    - Xóa debt và tất cả debt_payments
+  - **Option 2: Xóa luôn (giữ lại transaction history)**
+    - Soft delete debt (đánh dấu deleted_at)
+    - Giữ nguyên debt_payments để audit
+    - Giữ nguyên transactions để không ảnh hưởng history
+
+**Khi xóa debt đã thanh toán xong (PAID):**
+
+- Chỉ cho phép soft delete
+- Giữ nguyên toàn bộ transactions để tracking history
+
+#### 2.7.4. Lịch Sử Công Nợ
+
+- Xem tất cả các lần thanh toán (debt_payments)
+- Mỗi record bao gồm:
+  - Ngày thanh toán
+  - Số tiền (gốc + lãi nếu có)
+  - Số dư còn lại sau khi trả
+  - Transaction liên quan (link)
+  - Tài khoản sử dụng
+  - Ghi chú
+- Filter theo: Ngày, Số tiền, Trạng thái
+
+#### 2.7.5. Tính Toán Lãi Suất
+
+**Lãi đơn (Simple Interest):**
+
+- Công thức: `I = P × r × t`
+  - P = originalAmount (số tiền gốc)
+  - r = interestRate / 100 (lãi suất năm)
+  - t = số năm (tính từ borrowedDate đến hiện tại)
+- Tổng tiền phải trả = P + I
+
+**Lãi kép (Compound Interest)** - Phase nâng cao:
+
+- Công thức: `A = P × (1 + r/n)^(n×t)`
+  - n = số lần ghép lãi trong năm (12=hàng tháng, 4=hàng quý)
+
+**Lưu ý:**
+
+- Hệ thống mặc định dùng lãi đơn
+- Khi user trả nợ, có thể chọn trả:
+  - Chỉ lãi (interestAmount)
+  - Chỉ gốc (principalAmount)
+  - Cả gốc và lãi
+- Lãi tích lũy được tính từ borrowedDate đến paymentDate
+
+#### 2.7.6. Nhắc Nhở Công Nợ
+
+- **Nhắc trước hạn trả:**
+  - Cấu hình: X ngày trước dueDate (mặc định 3 ngày)
+  - Notification: "Sắp đến hạn trả nợ [Tên] - [Số tiền] vào [Ngày]"
+- **Nhắc quá hạn:**
+  - Nếu dueDate đã qua mà remainingAmount > 0
+  - Status tự động chuyển sang OVERDUE
+  - Notification hàng ngày: "Nợ quá hạn: [Tên] - [Số tiền] - Quá hạn [X] ngày"
+- **Nhắc định kỳ theo paymentFrequency:**
+  - Nếu debt có paymentFrequency (Monthly/Quarterly/Yearly)
+  - Tạo reminder tự động cho mỗi kỳ hạn
+
+#### 2.7.7. Báo Cáo Công Nợ
+
+**Tổng quan:**
+
+- Tổng tiền đang cho vay (tổng remainingAmount của debts type=LENDING)
+- Tổng tiền đang đi vay (tổng remainingAmount của debts type=BORROWING)
+- Tổng lãi đã thu/trả
+- Số lượng khoản nợ theo trạng thái (Active, Partial Paid, Paid, Overdue)
+
+**Chi tiết từng khoản:**
+
+- Lịch sử thanh toán đầy đủ
+- Timeline: Ngày vay → Các lần trả → Ngày trả xong (nếu có)
+- Biểu đồ tiến độ trả nợ (percentage)
+- Dự đoán thời gian trả xong (dựa trên tốc độ trả hiện tại)
+
+**Export:**
+
+- Xuất báo cáo công nợ ra PDF/Excel
+- Bao gồm tất cả transactions liên quan
 
 ### 2.8. Quản Lý Khoản Vay
 
-- **Thẻ tín dụng**: Theo dõi chi tiêu thẻ, hạn mức, kỳ thanh toán
-- **Vay ngân hàng**: Quản lý các khoản vay dài hạn (nhà, xe)
-- **Lịch trả nợ (Amortization)**:
+- **Loại khoản vay**: Personal loan, Mortgage, Auto loan, Business loan, Other
+- **Vay ngân hàng**: Quản lý các khoản vay với lãi suất cố định
+- **Giải ngân khoản vay**:
+  - Khi tạo khoản vay có thể chọn tài khoản để nhận tiền giải ngân
+  - Nếu chọn account: Tự động cộng tiền vào tài khoản và tạo transaction thu nhập
+  - Nếu không chọn: Chỉ ghi nhận khoản vay để tracking
+  - Ngày giải ngân (disbursementDate) được ghi nhận để tính lịch trả nợ
+- **Lịch trả nợ (Amortization Schedule)**:
   - Tự động tính toán kỳ hạn trả hàng tháng (gốc + lãi)
   - Lãi suất giảm dần theo số gốc còn lại
-  - Hiển thị bảng trả nợ chi tiết (amortization schedule)
+  - Hiển thị bảng trả nợ chi tiết 60 tháng với trạng thái paid/unpaid
   - Phân tách rõ tiền gốc và tiền lãi mỗi kỳ
-- **Thanh toán ngoài kế hoạch (Prepayment)**:
+  - Lịch trả bắt đầu từ: disbursementDate + 1 tháng (VD: Giải ngân 3/11 → Trả kỳ đầu 3/12)
+  - Lưu giữ lịch sử các khoản đã thanh toán với số tiền thực tế
+- **Ghi nhận thanh toán theo lịch**:
+  - Thanh toán đúng số tiền monthlyPayment của tháng hiện tại
+  - Tự động phân bổ vào principal (gốc) và interest (lãi)
+  - Giảm remainingPrincipal và remainingMonths
+  - Cập nhật nextPaymentDate tự động
+- **Trả nợ gốc tự do (Extra Principal Payment)**:
   - Cho phép trả thêm tiền gốc bất kỳ lúc nào
-  - Tự động tính toán lại lịch trả nợ khi có prepayment
-  - Lãi suất các kỳ sau giảm theo số gốc mới
-  - Tùy chọn: Giảm số tiền trả hàng tháng HOẶC giảm số tháng trả
+  - Tự động tính toán lại monthlyPayment (giảm) dựa trên số gốc mới
+  - **Số tháng vay (termMonths) KHÔNG thay đổi**: Vay 60 tháng thì vẫn phải trả 60 tháng
+  - Chỉ giảm số tiền phải trả hàng tháng (monthlyPayment)
+  - Lãi suất các kỳ sau giảm theo số gốc còn lại mới
+  - Tạo transaction riêng với flag isPrepayment=true
+- **Xóa khoản thanh toán**:
+  - Chỉ được xóa trong vòng 7 ngày kể từ ngày thanh toán
+  - Khôi phục trạng thái khoản vay về trước khi thanh toán
+  - Hoàn tiền về tài khoản và xóa transaction liên quan
+- **Lịch sử thanh toán (Payment History)**:
+  - Hiển thị tất cả các lần thanh toán (theo lịch + trả gốc tự do)
+  - Phân biệt scheduled payment (isPrepayment=false) vs extra principal (isPrepayment=true)
+  - Ghi nhận rõ số tiền gốc/lãi của từng lần thanh toán
 - **Tính lãi**:
   - Tự động tính lãi suất theo kỳ dựa trên số gốc còn lại
-  - Hỗ trợ nhiều phương thức tính lãi: Lãi đơn, lãi kép
-  - Tính lãi theo công thức amortization chuẩn
-- **Cảnh báo hạn mức**: Thông báo khi sử dụng quá hạn mức thẻ
+  - Công thức amortization chuẩn: M = P × [r(1+r)^n] / [(1+r)^n - 1]
+  - Lãi mỗi tháng = remainingPrincipal × (interestRate / 12)
 - **Báo cáo khoản vay**:
   - Tổng lãi đã trả / còn phải trả
   - Tổng gốc đã trả / còn lại
   - Biểu đồ tỷ lệ gốc/lãi theo thời gian
-  - So sánh kế hoạch ban đầu vs thực tế (khi có prepayment)
+  - So sánh: Số tiền trả ban đầu vs số tiền trả hiện tại (sau khi trả gốc tự do)
+  - Tiết kiệm được bao nhiêu lãi nhờ trả gốc tự do
 
 ### 2.9. Mục Tiêu Tài Chính
 

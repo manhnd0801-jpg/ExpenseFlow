@@ -532,14 +532,20 @@ CREATE TABLE transactions (
     -- Receipt/Invoice
     image_url VARCHAR(500),
 
-    -- Event tracking
+    -- ⭐ NEW: Link to related entities
     event_id UUID REFERENCES events(id) ON DELETE SET NULL,
+    goal_id UUID REFERENCES goals(id) ON DELETE SET NULL,
+    debt_id UUID REFERENCES debts(id) ON DELETE SET NULL, -- NEW: Link to debt
+    loan_id UUID REFERENCES loans(id) ON DELETE SET NULL,
 
     -- Tags for better categorization
     tags VARCHAR(255)[], -- Array of tags
 
     -- Recurring transaction reference
     recurring_transaction_id UUID REFERENCES recurring_transactions(id) ON DELETE SET NULL,
+
+    -- Description with context
+    description TEXT, -- Auto-generated description (VD: "Cho vay: John Doe - 10,000,000 VND")
 
     -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -553,8 +559,67 @@ CREATE INDEX idx_transactions_user_date ON transactions(user_id, transaction_dat
 CREATE INDEX idx_transactions_account ON transactions(account_id);
 CREATE INDEX idx_transactions_category ON transactions(category_id);
 CREATE INDEX idx_transactions_event ON transactions(event_id);
+CREATE INDEX idx_transactions_goal ON transactions(goal_id);
+CREATE INDEX idx_transactions_debt ON transactions(debt_id); -- NEW: Query by debt
+CREATE INDEX idx_transactions_loan ON transactions(loan_id);
 CREATE INDEX idx_transactions_type ON transactions(type);
 CREATE INDEX idx_transactions_created ON transactions(created_at DESC);
+```
+
+**Ví dụ Transaction khi tạo Debt:**
+
+```sql
+-- Cho vay (Lending) - EXPENSE transaction
+INSERT INTO transactions VALUES (
+    user_id = 'user-xxx',
+    account_id = 'account-cash', -- Trừ tiền từ tài khoản tiền mặt
+    category_id = 'category-lending', -- Category "Cho vay"
+    amount = 20000000,
+    type = 2, -- EXPENSE
+    transaction_date = '2025-12-03',
+    debt_id = 'debt-xxx',
+    description = 'Cho vay: John Doe - 20,000,000 VND',
+    note = 'Cho vay trả góp trong 6 tháng'
+);
+
+-- Đi vay (Borrowing) - INCOME transaction
+INSERT INTO transactions VALUES (
+    user_id = 'user-yyy',
+    account_id = 'account-bank', -- Cộng tiền vào tài khoản ngân hàng
+    category_id = 'category-borrowing', -- Category "Vay nợ"
+    amount = 100000000,
+    type = 1, -- INCOME
+    transaction_date = '2025-12-03',
+    debt_id = 'debt-yyy',
+    description = 'Vay nợ: ABC Bank - 100,000,000 VND',
+    note = 'Vay ngân hàng lãi suất 12%/năm'
+);
+
+-- Thu nợ (Lending Payment) - INCOME transaction
+INSERT INTO transactions VALUES (
+    user_id = 'user-xxx',
+    account_id = 'account-bank',
+    category_id = 'category-debt-collection',
+    amount = 5000000,
+    type = 1, -- INCOME
+    transaction_date = '2025-12-10',
+    debt_id = 'debt-xxx',
+    description = 'Thu nợ từ John Doe - Kỳ 1',
+    note = 'Đã thu 5 triệu'
+);
+
+-- Trả nợ (Borrowing Payment) - EXPENSE transaction
+INSERT INTO transactions VALUES (
+    user_id = 'user-yyy',
+    account_id = 'account-bank',
+    category_id = 'category-debt-repayment',
+    amount = 11000000, -- 10M gốc + 1M lãi
+    type = 2, -- EXPENSE
+    transaction_date = '2025-12-10',
+    debt_id = 'debt-yyy',
+    description = 'Trả nợ ABC Bank - Tháng 12 (10M gốc + 1M lãi)',
+    note = 'Đã trả đúng hạn'
+);
 ```
 
 ### 2.5. Budgets Table
@@ -637,76 +702,184 @@ CREATE INDEX idx_goals_status ON goals(status);
 CREATE INDEX idx_goals_deadline ON goals(deadline);
 ```
 
-### 2.7. Debts Table
+### 2.7. Debts Table (Công Nợ - Tích Hợp với Accounts & Transactions)
+
+**Thiết kế quan trọng:**
+
+- Mỗi debt PHẢI liên kết với Account (tài khoản nguồn/đích)
+- Mỗi debt PHẢI tạo Transaction khi khởi tạo
+- Mỗi debt_payment PHẢI tạo Transaction khi thanh toán
+- Đảm bảo số dư Account luôn đồng bộ với transactions
 
 ```sql
 CREATE TABLE debts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
-    type SMALLINT NOT NULL, -- 1=Lending(Cho vay), 2=Borrowing(Đi vay)
+    -- Debt type: 1=Lending(Cho vay), 2=Borrowing(Đi vay)
+    type SMALLINT NOT NULL,
 
+    -- Person/Organization info
     person_name VARCHAR(255) NOT NULL, -- Name of lender/borrower
-    person_contact VARCHAR(255), -- Phone/Email
+    contact_info VARCHAR(255), -- Phone/Email
 
-    principal_amount DECIMAL(15, 2) NOT NULL, -- Số tiền gốc
-    remaining_amount DECIMAL(15, 2) NOT NULL, -- Số tiền còn lại
+    -- Amount tracking
+    original_amount DECIMAL(15, 2) NOT NULL, -- Số tiền gốc ban đầu (KHÔNG thay đổi)
+    remaining_amount DECIMAL(15, 2) NOT NULL, -- Số tiền còn lại (giảm khi trả)
+    total_interest_paid DECIMAL(15, 2) DEFAULT 0, -- Tổng lãi đã trả/thu
 
-    interest_rate DECIMAL(5, 2) DEFAULT 0, -- % per year
+    interest_rate DECIMAL(5, 2) DEFAULT 0, -- % lãi suất năm
 
-    borrowed_date DATE NOT NULL,
-    due_date DATE,
+    -- Dates (TIMESTAMP for precise tracking)
+    borrowed_date TIMESTAMP NOT NULL, -- Ngày vay/cho vay
+    due_date TIMESTAMP, -- Hạn trả (tùy chọn)
 
     payment_frequency SMALLINT, -- 1=Monthly, 2=Quarterly, 3=Yearly, 4=One-time
 
-    status SMALLINT DEFAULT 1, -- 1=Active, 2=Partial Paid, 3=Fully Paid, 4=Overdue
+    -- Status: 1=Active, 2=Partial Paid, 3=Fully Paid, 4=Overdue
+    status SMALLINT DEFAULT 1,
 
-    note TEXT,
+    -- ⭐ CRITICAL: Link to Account & Transaction
+    account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
+    -- Tài khoản nguồn (Lending) hoặc đích (Borrowing)
+    -- Không cho phép xóa account nếu còn debt liên kết (RESTRICT)
+
+    initial_transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
+    -- Transaction được tạo khi khởi tạo debt
+    -- Lending: EXPENSE transaction (trừ tiền khỏi account)
+    -- Borrowing: INCOME transaction (cộng tiền vào account)
+
+    description TEXT, -- Ghi chú mô tả khoản nợ
+    notes TEXT, -- Ghi chú nội bộ
+
+    -- Reminder settings
+    reminder_enabled BOOLEAN DEFAULT TRUE,
+    reminder_days_before INTEGER DEFAULT 3, -- Nhắc trước X ngày
 
     -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP, -- Soft delete
 
-    CONSTRAINT positive_amounts CHECK (principal_amount > 0 AND remaining_amount >= 0),
+    CONSTRAINT positive_amounts CHECK (
+        original_amount > 0 AND
+        remaining_amount >= 0 AND
+        total_interest_paid >= 0
+    ),
     CONSTRAINT valid_debt_type CHECK (type IN (1, 2)),
     CONSTRAINT valid_debt_status CHECK (status BETWEEN 1 AND 4),
     CONSTRAINT valid_payment_frequency CHECK (payment_frequency IS NULL OR payment_frequency BETWEEN 1 AND 4)
 );
 
--- Indexes
+-- Indexes (Critical for performance)
 CREATE INDEX idx_debts_user ON debts(user_id);
 CREATE INDEX idx_debts_type ON debts(type);
 CREATE INDEX idx_debts_status ON debts(status);
 CREATE INDEX idx_debts_due_date ON debts(due_date);
+CREATE INDEX idx_debts_account ON debts(account_id); -- NEW: Query by account
+CREATE INDEX idx_debts_active ON debts(user_id, status) WHERE status IN (1, 2, 4) AND deleted_at IS NULL;
 ```
 
-### 2.8. Debt Payments Table
+### 2.8. Debt Payments Table (Lịch Sử Thanh Toán Công Nợ)
+
+**Thiết kế quan trọng:**
+
+- Mỗi payment PHẢI tạo Transaction tương ứng
+- Lending payment → INCOME transaction (thu tiền về account)
+- Borrowing payment → EXPENSE transaction (trừ tiền khỏi account)
+- Phân tách rõ gốc (principal) và lãi (interest)
 
 ```sql
 CREATE TABLE debt_payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE,
 
-    amount DECIMAL(15, 2) NOT NULL,
-    payment_date DATE NOT NULL,
+    -- Payment amounts
+    amount DECIMAL(15, 2) NOT NULL, -- Tổng số tiền thanh toán
+    principal_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Phần gốc
+    interest_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Phần lãi
 
-    note TEXT,
+    payment_date TIMESTAMP NOT NULL, -- Ngày thanh toán thực tế
 
-    -- Link to transaction if recorded
+    -- ⭐ CRITICAL: Link to Account & Transaction
+    account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
+    -- Tài khoản nhận tiền (Lending) hoặc trả tiền (Borrowing)
+
     transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
+    -- Transaction được tạo khi ghi nhận payment
+    -- Lending: INCOME transaction (cộng tiền vào account)
+    -- Borrowing: EXPENSE transaction (trừ tiền khỏi account)
+
+    -- Balance after this payment
+    remaining_balance_after DECIMAL(15, 2) NOT NULL, -- Số dư còn lại sau payment này
+
+    -- Payment metadata
+    payment_method VARCHAR(100), -- Cash, Bank Transfer, etc.
+    reference_number VARCHAR(255), -- Mã tham chiếu (bill number, transfer code)
+
+    note TEXT, -- Ghi chú cho payment này
+
+    -- Status: 1=Pending, 2=Completed, 3=Failed, 4=Cancelled
+    status SMALLINT DEFAULT 2,
 
     -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT positive_amount CHECK (amount > 0)
+    CONSTRAINT positive_amounts CHECK (
+        amount > 0 AND
+        principal_amount >= 0 AND
+        interest_amount >= 0 AND
+        remaining_balance_after >= 0
+    ),
+    CONSTRAINT valid_split CHECK (amount = principal_amount + interest_amount),
+    CONSTRAINT valid_status CHECK (status BETWEEN 1 AND 4)
 );
 
--- Indexes
-CREATE INDEX idx_debt_payments_debt ON debt_payments(debt_id);
+-- Indexes (Critical for performance)
+CREATE INDEX idx_debt_payments_debt ON debt_payments(debt_id, payment_date DESC);
 CREATE INDEX idx_debt_payments_date ON debt_payments(payment_date DESC);
+CREATE INDEX idx_debt_payments_account ON debt_payments(account_id); -- NEW: Query by account
+CREATE INDEX idx_debt_payments_status ON debt_payments(status);
+```
+
+**Ví dụ dữ liệu:**
+
+```sql
+-- Lending payment (Thu nợ)
+INSERT INTO debt_payments VALUES (
+    debt_id = 'xxx-lending-debt-id',
+    amount = 5000000,
+    principal_amount = 5000000,
+    interest_amount = 0,
+    payment_date = '2025-12-03',
+    account_id = 'account-xxx', -- Tài khoản nhận tiền
+    transaction_id = 'transaction-yyy', -- INCOME transaction
+    remaining_balance_after = 15000000,
+    note = 'Thu nợ kỳ 1 từ John Doe'
+);
+
+-- Borrowing payment (Trả nợ)
+INSERT INTO debt_payments VALUES (
+    debt_id = 'zzz-borrowing-debt-id',
+    amount = 11000000,
+    principal_amount = 10000000,
+    interest_amount = 1000000, -- Lãi
+    payment_date = '2025-12-03',
+    account_id = 'account-zzz', -- Tài khoản trả tiền
+    transaction_id = 'transaction-www', -- EXPENSE transaction
+    remaining_balance_after = 90000000,
+    note = 'Trả nợ tháng 12 cho ABC Bank'
+);
 ```
 
 ### 2.8B. Loans Table (Khoản Vay có Amortization)
+
+**Lưu ý quan trọng về Payment Strategy:**
+
+- Hệ thống KHÔNG hỗ trợ tùy chọn strategy (reduce_term vs reduce_payment)
+- Mặc định: Trả gốc tự do → Giảm monthlyPayment, GIỮ NGUYÊN termMonths
+- Lý do: "Vay 60 tháng thì phải trả 60 tháng, chỉ giảm số tiền phải trả hàng tháng"
 
 ```sql
 CREATE TABLE loans (
@@ -714,151 +887,216 @@ CREATE TABLE loans (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
     -- Loan details
-    lender_name VARCHAR(255) NOT NULL, -- Tên ngân hàng/người cho vay
-    loan_type SMALLINT NOT NULL, -- 1=Personal, 2=Mortgage, 3=Auto, 4=Business, 5=Other
+    name VARCHAR(255) NOT NULL, -- Tên khoản vay (VD: "Vay mua xe")
+    lender VARCHAR(255), -- Tên ngân hàng/người cho vay
+    type SMALLINT NOT NULL, -- 1=Personal, 2=Mortgage, 3=Auto, 4=Business, 5=Other
 
-    principal_amount DECIMAL(15, 2) NOT NULL, -- Số tiền vay gốc ban đầu
-    current_principal DECIMAL(15, 2) NOT NULL, -- Số gốc còn lại
+    original_amount DECIMAL(15, 2) NOT NULL, -- Số tiền vay gốc ban đầu (KHÔNG THAY ĐỔI)
+    remaining_principal DECIMAL(15, 2) NOT NULL, -- Số gốc còn lại (giảm khi trả)
 
-    interest_rate DECIMAL(5, 2) NOT NULL, -- % lãi suất năm
+    interest_rate DECIMAL(5, 2) NOT NULL, -- % lãi suất năm (VD: 12.0)
 
-    -- Loan terms
-    loan_term_months INTEGER NOT NULL, -- Số tháng vay (vd: 12, 24, 60)
-    remaining_months INTEGER NOT NULL, -- Số tháng còn lại
+    -- Loan term (KHÔNG THAY ĐỔI sau khi tạo)
+    term_months INTEGER NOT NULL, -- Tổng số tháng vay (VD: 60)
+    remaining_months INTEGER NOT NULL, -- Số tháng còn lại (giảm khi trả theo lịch)
 
-    disbursement_date DATE NOT NULL, -- Ngày giải ngân
-    first_payment_date DATE NOT NULL, -- Ngày trả nợ đầu tiên
-    maturity_date DATE NOT NULL, -- Ngày đến hạn cuối cùng
+    -- Monthly payment (CÓ THỂ THAY ĐỔI khi trả gốc tự do)
+    monthly_payment DECIMAL(15, 2) NOT NULL, -- Số tiền trả hàng tháng hiện tại
 
-    -- Monthly payment calculation
-    monthly_payment DECIMAL(15, 2) NOT NULL, -- Số tiền trả hàng tháng (gốc + lãi)
-
-    -- Prepayment settings
-    allow_prepayment BOOLEAN DEFAULT TRUE,
-    prepayment_penalty_rate DECIMAL(5, 2) DEFAULT 0, -- % phí trả trước hạn
-    prepayment_strategy SMALLINT DEFAULT 1, -- 1=Reduce Term, 2=Reduce Payment
+    -- Dates (TIMESTAMP for precise tracking)
+    start_date TIMESTAMP NOT NULL, -- Ngày ký hợp đồng vay
+    disbursement_date TIMESTAMP, -- Ngày giải ngân thực tế (khi chọn account)
+    next_payment_date TIMESTAMP, -- Ngày trả tiếp theo (disbursement_date + 1 tháng)
+    last_payment_date TIMESTAMP, -- Ngày trả gần nhất
 
     status SMALLINT DEFAULT 1, -- 1=Active, 2=Paid Off, 3=Defaulted, 4=Refinanced
 
-    -- Total paid tracking
-    total_principal_paid DECIMAL(15, 2) DEFAULT 0,
-    total_interest_paid DECIMAL(15, 2) DEFAULT 0,
+    -- Tracking
+    total_principal_paid DECIMAL(15, 2) DEFAULT 0, -- Tổng gốc đã trả
+    total_interest_paid DECIMAL(15, 2) DEFAULT 0, -- Tổng lãi đã trả
+    total_prepayment DECIMAL(15, 2) DEFAULT 0, -- Tổng trả gốc tự do
 
-    account_id UUID REFERENCES accounts(id) ON DELETE SET NULL, -- Tài khoản thanh toán
+    -- Account for payments
+    account_id UUID REFERENCES accounts(id) ON DELETE SET NULL, -- Tài khoản giải ngân
 
-    note TEXT,
+    -- Optional fields
+    description TEXT,
+    notes TEXT,
+    reminder_enabled BOOLEAN DEFAULT TRUE,
+    reminder_days_before INTEGER DEFAULT 3,
 
     -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    paid_off_at TIMESTAMP,
+    deleted_at TIMESTAMP, -- Soft delete
 
     CONSTRAINT positive_amounts CHECK (
-        principal_amount > 0 AND
-        current_principal >= 0 AND
+        original_amount > 0 AND
+        remaining_principal >= 0 AND
         interest_rate >= 0 AND
-        loan_term_months > 0 AND
-        remaining_months >= 0
+        term_months > 0 AND
+        remaining_months >= 0 AND
+        monthly_payment >= 0
     ),
-    CONSTRAINT valid_loan_type CHECK (loan_type BETWEEN 1 AND 5),
-    CONSTRAINT valid_loan_status CHECK (status BETWEEN 1 AND 4),
-    CONSTRAINT valid_prepayment_strategy CHECK (prepayment_strategy BETWEEN 1 AND 2)
+    CONSTRAINT valid_loan_type CHECK (type BETWEEN 1 AND 5),
+    CONSTRAINT valid_loan_status CHECK (status BETWEEN 1 AND 4)
 );
 
 -- Indexes
 CREATE INDEX idx_loans_user ON loans(user_id);
 CREATE INDEX idx_loans_status ON loans(status);
-CREATE INDEX idx_loans_maturity ON loans(maturity_date);
-CREATE INDEX idx_loans_active ON loans(user_id, status) WHERE status = 1; -- 1 = Active
+CREATE INDEX idx_loans_next_payment ON loans(next_payment_date);
+CREATE INDEX idx_loans_active ON loans(user_id, status) WHERE status = 1 AND deleted_at IS NULL;
 ```
 
 ### 2.8C. Loan Payments Table (Lịch Sử Thanh Toán Khoản Vay)
+
+**Phân biệt 2 loại thanh toán:**
+
+1. **Scheduled Payment** (isPrepayment=false): Thanh toán theo lịch hàng tháng
+2. **Extra Principal Payment** (isPrepayment=true): Trả gốc tự do ngoài lịch
 
 ```sql
 CREATE TABLE loan_payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     loan_id UUID NOT NULL REFERENCES loans(id) ON DELETE CASCADE,
 
-    payment_number INTEGER NOT NULL, -- Kỳ trả thứ mấy (1, 2, 3...)
+    payment_number INTEGER, -- Kỳ trả thứ mấy (1, 2, 3...) - NULL nếu là extra principal
 
-    payment_date DATE NOT NULL,
-    due_date DATE NOT NULL, -- Ngày đáo hạn theo lịch
+    payment_date TIMESTAMP NOT NULL, -- Ngày thanh toán thực tế (with time)
+    due_date TIMESTAMP, -- Ngày đáo hạn theo lịch (NULL nếu là extra principal)
 
-    -- Scheduled amounts (theo kế hoạch)
-    scheduled_principal DECIMAL(15, 2) NOT NULL,
-    scheduled_interest DECIMAL(15, 2) NOT NULL,
-    scheduled_total DECIMAL(15, 2) NOT NULL,
-
-    -- Actual amounts (thực tế trả)
-    actual_principal DECIMAL(15, 2) DEFAULT 0,
-    actual_interest DECIMAL(15, 2) DEFAULT 0,
-    actual_total DECIMAL(15, 2) DEFAULT 0,
-
-    -- Prepayment
-    prepayment_amount DECIMAL(15, 2) DEFAULT 0, -- Số tiền trả thêm (ngoài kế hoạch)
-    prepayment_penalty DECIMAL(15, 2) DEFAULT 0, -- Phí trả trước hạn
+    -- Payment amounts
+    amount DECIMAL(15, 2) NOT NULL, -- Tổng số tiền trả
+    principal_amount DECIMAL(15, 2) NOT NULL, -- Phần gốc
+    interest_amount DECIMAL(15, 2) NOT NULL, -- Phần lãi
+    prepayment_amount DECIMAL(15, 2) DEFAULT 0, -- = amount nếu isPrepayment=true
 
     -- Balance after payment
-    principal_balance_after DECIMAL(15, 2) NOT NULL, -- Số gốc còn lại sau khi trả
+    remaining_principal DECIMAL(15, 2) NOT NULL, -- Số gốc còn lại sau khi trả
 
-    status SMALLINT DEFAULT 1, -- 1=Pending, 2=Paid, 3=Overdue, 4=Skipped
+    status SMALLINT DEFAULT 2, -- 1=Pending, 2=Paid, 3=Failed, 4=Skipped
+
+    -- Payment type flags
+    is_prepayment BOOLEAN DEFAULT FALSE, -- TRUE = Trả gốc tự do
+    is_scheduled BOOLEAN DEFAULT FALSE, -- TRUE = Thanh toán theo lịch
+
+    -- State before this payment (for reversal)
+    previous_remaining_months INTEGER, -- Để restore khi delete payment
+    previous_monthly_payment DECIMAL(15, 2), -- Để restore khi delete payment
 
     -- Link to transaction
-    transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
+    transaction_id VARCHAR(255), -- UUID của transaction liên quan
 
     note TEXT,
 
     -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT positive_amounts CHECK (
-        scheduled_principal >= 0 AND
-        scheduled_interest >= 0 AND
-        actual_principal >= 0 AND
-        actual_interest >= 0 AND
+        amount >= 0 AND
+        principal_amount >= 0 AND
+        interest_amount >= 0 AND
         prepayment_amount >= 0
-    )
+    ),
+    CONSTRAINT valid_status CHECK (status BETWEEN 1 AND 4)
 );
 
 -- Indexes
 CREATE INDEX idx_loan_payments_loan ON loan_payments(loan_id, payment_number);
 CREATE INDEX idx_loan_payments_due_date ON loan_payments(due_date);
 CREATE INDEX idx_loan_payments_status ON loan_payments(status);
-CREATE INDEX idx_loan_payments_pending ON loan_payments(loan_id, status) WHERE status = 1; -- 1 = Pending
+CREATE INDEX idx_loan_payments_type ON loan_payments(loan_id, is_prepayment);
 ```
 
-### 2.8D. Loan Amortization Schedule View
+**Ví dụ dữ liệu:**
 
 ```sql
--- View để xem lịch trả nợ (amortization schedule)
-CREATE VIEW loan_amortization_schedule AS
+-- Scheduled payment (tháng 1)
+INSERT INTO loan_payments VALUES (
+    loan_id = 'xxx',
+    payment_number = 1,
+    payment_date = '2025-12-03',
+    due_date = '2025-12-03',
+    amount = 16800000,
+    principal_amount = 15800000,
+    interest_amount = 1000000,
+    prepayment_amount = 0,
+    remaining_principal = 984200000,
+    status = 2, -- Paid
+    is_prepayment = FALSE,
+    is_scheduled = TRUE
+);
+
+-- Extra principal payment
+INSERT INTO loan_payments VALUES (
+    loan_id = 'xxx',
+    payment_number = NULL,
+    payment_date = '2025-12-03',
+    due_date = NULL,
+    amount = 200000000,
+    principal_amount = 200000000,
+    interest_amount = 0,
+    prepayment_amount = 200000000,
+    remaining_principal = 784200000,
+    status = 2, -- Paid
+    is_prepayment = TRUE,
+    is_scheduled = FALSE,
+    previous_remaining_months = 60,
+    previous_monthly_payment = 16800000
+);
+```
+
+### 2.8D. Payment Schedule View (Lịch Trả Nợ với Trạng Thái)
+
+**Lưu ý:** Backend tạo payment schedule động, KHÔNG lưu vào database
+
+- Generate 60 tháng schedule on-the-fly khi request API
+- Tháng đã trả: Lấy data thực từ loan_payments (giữ nguyên số tiền lịch sử)
+- Tháng chưa trả: Tính toán với monthlyPayment hiện tại (đã giảm sau khi trả gốc)
+
+```sql
+-- View để tracking lịch sử thanh toán (không phải schedule)
+CREATE VIEW loan_payment_history AS
 SELECT
     lp.loan_id,
-    l.lender_name,
+    l.name AS loan_name,
+    l.lender,
     lp.payment_number,
+    lp.payment_date,
     lp.due_date,
-    lp.scheduled_principal,
-    lp.scheduled_interest,
-    lp.scheduled_total,
-    lp.actual_principal,
-    lp.actual_interest,
+    lp.amount,
+    lp.principal_amount,
+    lp.interest_amount,
     lp.prepayment_amount,
-    lp.principal_balance_after,
+    lp.remaining_principal,
     lp.status,
-    -- Cumulative totals
-    SUM(lp.scheduled_principal) OVER (
+    lp.is_prepayment,
+    lp.is_scheduled,
+    lp.note,
+    -- Cumulative totals (chỉ tính scheduled payments)
+    SUM(CASE WHEN lp.is_scheduled THEN lp.principal_amount ELSE 0 END) OVER (
         PARTITION BY lp.loan_id
-        ORDER BY lp.payment_number
-    ) as cumulative_principal,
-    SUM(lp.scheduled_interest) OVER (
+        ORDER BY lp.payment_date, lp.created_at
+    ) as cumulative_scheduled_principal,
+    SUM(CASE WHEN lp.is_scheduled THEN lp.interest_amount ELSE 0 END) OVER (
         PARTITION BY lp.loan_id
-        ORDER BY lp.payment_number
-    ) as cumulative_interest
+        ORDER BY lp.payment_date, lp.created_at
+    ) as cumulative_scheduled_interest,
+    -- Tổng trả gốc tự do
+    SUM(CASE WHEN lp.is_prepayment THEN lp.prepayment_amount ELSE 0 END) OVER (
+        PARTITION BY lp.loan_id
+        ORDER BY lp.payment_date, lp.created_at
+    ) as cumulative_prepayment
 FROM loan_payments lp
 JOIN loans l ON l.id = lp.loan_id
-ORDER BY lp.loan_id, lp.payment_number;
+WHERE lp.status = 2 -- Paid
+ORDER BY lp.payment_date DESC, lp.created_at DESC;
 ```
+
+ORDER BY lp.loan_id, lp.payment_number;
+
+````
 
 ### 2.9. Events Table
 
@@ -891,7 +1129,7 @@ CREATE TABLE events (
 CREATE INDEX idx_events_user ON events(user_id);
 CREATE INDEX idx_events_dates ON events(start_date, end_date);
 CREATE INDEX idx_events_active ON events(is_active);
-```
+````
 
 ### 2.10. Recurring Transactions Table
 

@@ -45,5 +45,8 @@
   "updatedDate": "Cập nhật lần cuối",
   "income": "Thu nhập",
   "expense": "Chi tiêu",
-  "deleteSuccess": "Xóa giao dịch thành công!"
+  "deleteSuccess": "Xóa giao dịch thành công!",
+  "total": "Tổng cộng",
+  "enterAmount": "Nhập số tiền",
+  "enterNote": "Nhập ghi chú"
 }

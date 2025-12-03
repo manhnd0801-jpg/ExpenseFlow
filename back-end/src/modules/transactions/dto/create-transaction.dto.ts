@@ -56,8 +56,8 @@ export class CreateTransactionDto {
   amount: number;
 
   @ApiProperty({
-    description: 'Transaction date (YYYY-MM-DD)',
-    example: '2025-01-15',
+    description: 'Transaction date and time (ISO 8601 format: YYYY-MM-DDTHH:mm:ss)',
+    example: '2025-01-15T14:30:00',
   })
   @IsDate()
   @Type(() => Date)
@@ -140,4 +140,13 @@ export class CreateTransactionDto {
   @IsUUID()
   @IsOptional()
   toAccountId?: string;
+
+  @ApiProperty({
+    description: 'Debt ID (if transaction is linked to a debt)',
+    example: '550e8400-e29b-41d4-a716-446655440004',
+    required: false,
+  })
+  @IsUUID()
+  @IsOptional()
+  debtId?: string;
 }

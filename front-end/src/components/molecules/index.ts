@@ -15,6 +15,7 @@ export { DebtForm } from './DebtForm';
 export { EventForm } from './EventForm';
 export { GoalDetailModal } from './GoalDetailModal';
 export { GoalForm } from './GoalForm';
+export { PaymentForm, type IPaymentFormData } from './PaymentForm/PaymentForm';
 export { TransactionForm } from './TransactionForm';
 
 // Charts

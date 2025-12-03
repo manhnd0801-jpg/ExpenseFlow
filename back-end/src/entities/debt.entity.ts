@@ -10,8 +10,10 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { DebtStatus, DebtType } from '../common/constants/enums';
-import { DecimalToNumber } from '../common/decorators';
+import { DateToString, DecimalToNumber } from '../common/decorators';
+import { Account } from './account.entity';
 import { DebtPayment } from './debt-payment.entity';
+import { Transaction } from './transaction.entity';
 import { User } from './user.entity';
 
 /**
@@ -50,10 +52,22 @@ export class Debt {
   @Column({ name: 'interestRate', type: 'decimal', precision: 5, scale: 2, default: 0 })
   interestRate: number; // Annual interest rate percentage
 
-  @Column({ name: 'borrowedDate', type: 'date' })
+  @DecimalToNumber()
+  @Column({ name: 'totalInterestPaid', type: 'decimal', precision: 15, scale: 2, default: 0 })
+  totalInterestPaid: number; // Total interest paid so far
+
+  @Column({ name: 'account_id', type: 'uuid', nullable: true })
+  accountId?: string; // Account used for this debt (source for lending, destination for borrowing)
+
+  @Column({ name: 'initial_transaction_id', type: 'uuid', nullable: true })
+  initialTransactionId?: string; // Transaction created when debt was established
+
+  @Column({ name: 'borrowedDate', type: 'timestamp' })
+  @DateToString()
   borrowedDate: Date;
 
-  @Column({ name: 'dueDate', type: 'date', nullable: true })
+  @Column({ name: 'dueDate', type: 'timestamp', nullable: true })
+  @DateToString()
   dueDate: Date;
 
   @Column({
@@ -83,6 +97,14 @@ export class Debt {
   @OneToMany(() => DebtPayment, (payment) => payment.debt)
   payments: DebtPayment[];
 
+  @ManyToOne(() => Account)
+  @JoinColumn({ name: 'account_id' })
+  account: Account;
+
+  @ManyToOne(() => Transaction, { nullable: true })
+  @JoinColumn({ name: 'initial_transaction_id' })
+  initialTransaction?: Transaction;
+
   // Virtual properties
   get paidAmount(): number {
     return this.originalAmount - this.remainingAmount;
@@ -93,7 +115,7 @@ export class Debt {
   }
 
   get isPaid(): boolean {
-    return this.remainingAmount <= 0 || this.status === DebtStatus.PAID;
+    return this.remainingAmount <= 0 || this.status === DebtStatus.COMPLETED;
   }
 
   get isOverdue(): boolean {

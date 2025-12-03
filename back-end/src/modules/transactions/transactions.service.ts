@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, FindOptionsWhere, Repository } from 'typeorm';
+import { Between, FindOptionsWhere, IsNull, Repository } from 'typeorm';
 import { TransactionType } from '../../common/constants/enums';
 import { Account } from '../../entities/account.entity';
 import { Goal } from '../../entities/goal.entity';
+import { Loan } from '../../entities/loan.entity';
 import { Transaction } from '../../entities/transaction.entity';
 import { CreateTransactionDto, QueryTransactionDto, UpdateTransactionDto } from './dto';
 
@@ -16,6 +17,8 @@ export class TransactionsService {
     private readonly accountRepository: Repository<Account>,
     @InjectRepository(Goal)
     private readonly goalRepository: Repository<Goal>,
+    @InjectRepository(Loan)
+    private readonly loanRepository: Repository<Loan>,
   ) {}
 
   /**
@@ -37,8 +40,9 @@ export class TransactionsService {
       throw new BadRequestException('toAccountId should only be provided for transfer transactions');
     }
 
-    // Validate category for non-transfer transactions
-    if (type !== TransactionType.TRANSFER && !categoryId) {
+    // Validate category for non-transfer transactions (except for debt/event related transactions)
+    const isRelatedTransaction = rest.debtId || rest.eventId;
+    if (type !== TransactionType.TRANSFER && !categoryId && !isRelatedTransaction) {
       throw new BadRequestException('categoryId is required for income and expense transactions');
     }
 
@@ -91,7 +95,7 @@ export class TransactionsService {
       startDate,
       endDate,
       search,
-      sortBy = 'date',
+      sortBy = 'createdAt',
       sortOrder = 'DESC',
     } = queryDto;
 
@@ -126,9 +130,11 @@ export class TransactionsService {
       });
     }
 
-    // Sorting
+    // Sorting - sort by date (transaction date), then by createdAt for consistency
     const sortField = sortBy === 'date' ? 'transaction.date' : `transaction.${sortBy}`;
     queryBuilder.orderBy(sortField, sortOrder);
+    // Secondary sort by createdAt to ensure consistent ordering for same-date transactions
+    queryBuilder.addOrderBy('transaction.createdAt', 'DESC');
 
     // Pagination
     const skip = (page - 1) * limit;
@@ -252,6 +258,21 @@ export class TransactionsService {
    */
   async remove(userId: string, id: string): Promise<void> {
     const transaction = await this.findOne(userId, id);
+
+    // Check if this is a loan disbursement transaction using loanId
+    if (transaction.loanId) {
+      // Check if loan still exists
+      const loan = await this.loanRepository.findOne({
+        where: { id: transaction.loanId, deletedAt: IsNull() },
+      });
+
+      if (loan) {
+        throw new BadRequestException(
+          'Cannot delete loan disbursement transaction. This transaction is linked to an active loan. ' +
+            'Please delete the loan first or contact administrator.',
+        );
+      }
+    }
 
     await this.transactionRepository.manager.transaction(async (transactionalEntityManager) => {
       // Revert transaction impact on balance

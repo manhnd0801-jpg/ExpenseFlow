@@ -18,10 +18,12 @@ export class LoanPayment {
   @Column({ type: 'integer', nullable: true })
   paymentNumber: number; // Payment sequence (1, 2, 3...)
 
-  @Column({ type: 'date' })
+  @Column({ type: 'timestamp' })
+  @DateToString()
   paymentDate: Date;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
+  @DateToString()
   dueDate: Date; // Original due date for scheduled payments
 
   @DecimalToNumber()
@@ -62,6 +64,14 @@ export class LoanPayment {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   transactionId: string; // Link to transaction entity if needed
+
+  // Store loan state before this payment for proper reversal
+  @Column({ type: 'integer', nullable: true })
+  previousRemainingMonths: number; // Remaining months before this payment
+
+  @DecimalToNumber()
+  @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
+  previousMonthlyPayment: number; // Monthly payment before this payment
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

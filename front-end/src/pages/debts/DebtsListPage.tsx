@@ -1,26 +1,30 @@
 /**
  * Debts List Page
  */
-import { DebtForm } from '@/components/molecules';
+import { DebtForm, PaymentForm, type IPaymentFormData } from '@/components/molecules';
 import { DebtStatus, DebtType } from '@/constants/enums';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useI18n } from '@/hooks/useI18n';
 import {
+  createDebtPaymentRequest,
   createDebtRequest,
   deleteDebtRequest,
+  fetchDebtSummaryRequest,
   fetchDebtsRequest,
   updateDebtRequest,
 } from '@/redux/modules/debts';
-import { IDebt } from '@/types/models';
+import type { IDebt } from '@/types/models';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import {
+  BankOutlined,
   DeleteOutlined,
   DollarOutlined,
   EditOutlined,
   EyeOutlined,
   PlusOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Modal, Space, Table, Tabs, Tag } from 'antd';
+import { Button, Card, Col, Modal, Row, Space, Statistic, Table, Tabs, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -37,11 +41,14 @@ const DebtsListPage: React.FC = () => {
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDebtFormVisible, setIsDebtFormVisible] = useState(false);
+  const [isPaymentFormVisible, setIsPaymentFormVisible] = useState(false);
   const [editingDebt, setEditingDebt] = useState<IDebt | undefined>(undefined);
+  const [paymentDebt, setPaymentDebt] = useState<IDebt | undefined>(undefined);
 
-  // Load debts on mount
+  // Load debts and summary on mount
   useEffect(() => {
     dispatch(fetchDebtsRequest());
+    dispatch(fetchDebtSummaryRequest());
   }, [dispatch]);
 
   // Filter debts by type
@@ -117,7 +124,7 @@ const DebtsListPage: React.FC = () => {
 
           <div style={{ marginBottom: 12 }}>
             <strong>{t('debts.originalAmount')}:</strong>
-            <p style={{ margin: '8px 0', color: '#666' }}>{formatCurrency(debt.amount)}</p>
+            <p style={{ margin: '8px 0', color: '#666' }}>{formatCurrency(debt.originalAmount)}</p>
           </div>
 
           <div style={{ marginBottom: 12 }}>
@@ -149,10 +156,10 @@ const DebtsListPage: React.FC = () => {
             <div style={{ margin: '8px 0' }}>{renderStatus(debt.status)}</div>
           </div>
 
-          {debt.note && (
+          {debt.description && (
             <div style={{ marginBottom: 12 }}>
-              <strong>{t('debts.note')}:</strong>
-              <p style={{ margin: '8px 0', color: '#666' }}>{debt.note}</p>
+              <strong>{t('debts.description')}:</strong>
+              <p style={{ margin: '8px 0', color: '#666' }}>{debt.description}</p>
             </div>
           )}
         </div>
@@ -162,25 +169,33 @@ const DebtsListPage: React.FC = () => {
   };
 
   const handlePayment = (debt: IDebt) => {
-    // Simple payment modal - can be extended with full payment form later
-    Modal.confirm({
-      title: t('debts.recordPayment'),
-      content: t('debts.recordPaymentConfirm'),
-      okText: t('debts.recordPayment'),
-      cancelText: t('common.cancel'),
-      onOk: () => {
-        // For now, just mark as completed - can be extended with partial payment amounts
-        dispatch(
-          updateDebtRequest({
-            id: debt.id,
-            data: {
-              status: DebtStatus.COMPLETED,
-              remainingAmount: 0,
-            },
-          })
-        );
-      },
-    });
+    setPaymentDebt(debt);
+    setIsPaymentFormVisible(true);
+  };
+
+  const handlePaymentSubmit = (data: IPaymentFormData) => {
+    if (!paymentDebt) return;
+
+    dispatch(
+      createDebtPaymentRequest({
+        debtId: paymentDebt.id,
+        data: {
+          amount: data.amount,
+          paymentDate: data.paymentDate,
+          accountId: data.accountId,
+          principalAmount: data.principalAmount,
+          interestAmount: data.interestAmount,
+        },
+      })
+    );
+
+    setIsPaymentFormVisible(false);
+    setPaymentDebt(undefined);
+  };
+
+  const handlePaymentCancel = () => {
+    setIsPaymentFormVisible(false);
+    setPaymentDebt(undefined);
   };
 
   const renderStatus = (status: DebtStatus) => {
@@ -204,11 +219,33 @@ const DebtsListPage: React.FC = () => {
       render: (name: string) => <div style={{ fontWeight: 500 }}>{name}</div>,
     },
     {
-      title: t('debts.amount'),
-      dataIndex: 'amount',
-      key: 'amount',
-      render: (amount: number) => (
-        <div style={{ fontWeight: 500, color: '#1890ff' }}>{formatCurrency(amount)}</div>
+      title: t('debts.originalAmount'),
+      dataIndex: 'originalAmount',
+      key: 'originalAmount',
+      render: (amount: number, debt: IDebt) => (
+        <div>
+          <div style={{ fontWeight: 500, color: '#1890ff' }}>{formatCurrency(amount)}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>
+            Còn lại: {formatCurrency(debt.remainingAmount)}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: t('debts.account'),
+      dataIndex: 'account',
+      key: 'account',
+      render: (account: any) => (
+        <div>
+          {account ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <BankOutlined style={{ color: '#1890ff' }} />
+              <span>{account.name}</span>
+            </div>
+          ) : (
+            <span style={{ color: '#999', fontStyle: 'italic' }}>Chưa liên kết</span>
+          )}
+        </div>
       ),
     },
     {
@@ -259,7 +296,7 @@ const DebtsListPage: React.FC = () => {
             onClick={() => handleView(debt)}
             title={t('debts.viewDetail')}
           />
-          {debt.status === DebtStatus.ACTIVE && (
+          {debt.remainingAmount > 0 && debt.status !== DebtStatus.COMPLETED && (
             <Button
               type="text"
               icon={<DollarOutlined />}
@@ -286,8 +323,49 @@ const DebtsListPage: React.FC = () => {
     },
   ];
 
+  const summary = useAppSelector((state) => state.debts.summary);
+
   return (
     <div>
+      {/* Summary Statistics */}
+      {summary && (
+        <Row gutter={16} style={{ marginBottom: 24 }}>
+          <Col xs={24} sm={8}>
+            <Card>
+              <Statistic
+                title="Tổng nợ hiện tại"
+                value={summary.totalDebtAmount}
+                formatter={(value) => formatCurrency(Number(value))}
+                prefix={<WalletOutlined />}
+                valueStyle={{ color: '#f5222d' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card>
+              <Statistic
+                title="Đã thanh toán"
+                value={summary.totalPaidAmount}
+                formatter={(value) => formatCurrency(Number(value))}
+                prefix={<DollarOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card>
+              <Statistic
+                title="Tổng lãi đã trả"
+                value={summary.totalInterestPaid}
+                formatter={(value) => formatCurrency(Number(value))}
+                prefix={<BankOutlined />}
+                valueStyle={{ color: '#fa8c16' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+      )}
+
       <Card title={t('debts.title')}>
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
           <TabPane tab={t('debts.lending')} key="1">
@@ -361,6 +439,20 @@ const DebtsListPage: React.FC = () => {
         initialValues={editingDebt}
         loading={isLoading}
       />
+
+      {/* Payment Form Modal */}
+      <Modal
+        title={`Ghi nhận thanh toán - ${paymentDebt?.personName}`}
+        open={isPaymentFormVisible}
+        onCancel={handlePaymentCancel}
+        footer={null}
+        width={600}
+        destroyOnClose
+      >
+        {paymentDebt && (
+          <PaymentForm debt={paymentDebt} onSubmit={handlePaymentSubmit} loading={isLoading} />
+        )}
+      </Modal>
     </div>
   );
 };

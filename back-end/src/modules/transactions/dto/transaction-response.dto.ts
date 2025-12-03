@@ -28,6 +28,14 @@ export class TransactionResponseDto {
   eventId?: string;
 
   @Expose()
+  @ApiProperty({ description: 'Loan ID (for loan disbursement transactions)', required: false })
+  loanId?: string;
+
+  @Expose()
+  @ApiProperty({ description: 'Debt ID (for debt-related transactions)', required: false })
+  debtId?: string;
+
+  @Expose()
   @ApiProperty({ description: 'Transaction type: 1=Income, 2=Expense, 3=Transfer' })
   type: number;
 

@@ -16,6 +16,28 @@ All protected endpoints require JWT token in header:
 Authorization: Bearer <access_token>
 ```
 
+### Date/Time Format
+
+**Important:** All date/time fields use ISO 8601 format with full timestamp:
+
+```
+Format: YYYY-MM-DDTHH:mm:ss.sssZ
+Example: "2025-12-03T14:30:00.000Z"
+
+Affected fields:
+- loans: startDate, disbursementDate, nextPaymentDate, lastPaymentDate
+- loan_payments: paymentDate, dueDate
+- debts: borrowedDate, dueDate
+- debt_payments: paymentDate
+- transactions: date
+```
+
+Frontend must:
+
+- Send dates using `dayjs().toISOString()` or `new Date().toISOString()`
+- NOT use `.format('YYYY-MM-DD')` which loses time component
+- Display using `dayjs(date).format('DD/MM/YYYY HH:mm')` when showing time
+
 ### Response Format
 
 ```typescript
@@ -790,17 +812,23 @@ Response: 200 OK
 
 ---
 
-## 7. Debt APIs
+## 7. Debt APIs (Quản Lý Công Nợ với Account & Transaction Integration)
+
+**⚠️ CRITICAL CHANGES:**
+
+- Debts PHẢI liên kết với Account (accountId required)
+- Tự động tạo Transaction khi tạo debt và payment
+- Tự động cập nhật số dư Account
 
 ### 7.1. Get All Debts
 
 ```http
-GET /debts?type=lending&status=active
+GET /api/v1/debts?type=1&status=1
 Authorization: Bearer <token>
 
 Query Parameters:
-- type: lending | borrowing
-- status: active | partial_paid | fully_paid | overdue
+- type: 1 (Lending) | 2 (Borrowing)
+- status: 1 (Active) | 2 (Partial Paid) | 3 (Fully Paid) | 4 (Overdue)
 
 Response: 200 OK
 {
@@ -808,72 +836,300 @@ Response: 200 OK
   "data": [
     {
       "id": "uuid",
-      "type": "lending",
+      "type": 1, // 1=Lending, 2=Borrowing
       "personName": "Nguyen Van B",
-      "personContact": "0123456789",
-      "principalAmount": 10000000,
+      "contactInfo": "0123456789",
+      "originalAmount": 10000000,
       "remainingAmount": 7000000,
-      "interestRate": 5,
-      "borrowedDate": "2025-01-01",
-      "dueDate": "2025-12-31",
-      "status": "partial_paid",
-      "payments": [...]
+      "totalInterestPaid": 150000,
+      "interestRate": 5, // %/năm
+      "borrowedDate": "2025-01-01T00:00:00.000Z",
+      "dueDate": "2025-12-31T23:59:59.000Z",
+      "paymentFrequency": 1, // 1=Monthly, 2=Quarterly, 3=Yearly, 4=One-time
+      "status": 2, // Partial Paid
+      "accountId": "account-uuid",
+      "initialTransactionId": "transaction-uuid",
+      "description": "Cho vay mua xe",
+      "reminderEnabled": true,
+      "reminderDaysBefore": 3,
+      "createdAt": "2025-01-01T10:00:00.000Z",
+      "updatedAt": "2025-01-15T14:30:00.000Z",
+
+      // Relations (if included)
+      "account": {
+        "id": "account-uuid",
+        "name": "Tiền mặt",
+        "type": 1
+      },
+      "payments": [
+        {
+          "id": "payment-uuid",
+          "amount": 3000000,
+          "principalAmount": 2850000,
+          "interestAmount": 150000,
+          "paymentDate": "2025-01-15T14:30:00.000Z",
+          "accountId": "account-uuid2",
+          "transactionId": "transaction-uuid2"
+        }
+      ]
     }
-  ]
+  ],
+  "meta": {
+    "total": 10,
+    "lending": {
+      "count": 5,
+      "totalAmount": 50000000,
+      "totalRemaining": 20000000
+    },
+    "borrowing": {
+      "count": 5,
+      "totalAmount": 100000000,
+      "totalRemaining": 75000000
+    }
+  }
 }
 ```
 
-### 7.2. Create Debt
+### 7.2. Get Debt by ID
 
 ```http
-POST /debts
+GET /api/v1/debts/:id
 Authorization: Bearer <token>
 
-Request Body:
+Response: 200 OK
 {
-  "type": "lending",
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "type": 1,
+    "personName": "Nguyen Van B",
+    "originalAmount": 10000000,
+    "remainingAmount": 7000000,
+    "totalInterestPaid": 150000,
+    "interestRate": 5,
+    "borrowedDate": "2025-01-01T00:00:00.000Z",
+    "dueDate": "2025-12-31T23:59:59.000Z",
+    "status": 2,
+    "accountId": "account-uuid",
+    "initialTransactionId": "transaction-uuid",
+
+    // Relations included
+    "account": { ... },
+    "initialTransaction": { ... },
+    "payments": [ ... ]
+  }
+}
+```
+
+### 7.3. Create Debt
+
+**⚠️ IMPORTANT:** Hệ thống sẽ tự động:
+
+1. TRỪ/CỘNG tiền vào account (tùy type)
+2. Tạo Transaction type=EXPENSE (Lending) hoặc INCOME (Borrowing)
+3. Link debt ↔ transaction
+
+```http
+POST /api/v1/debts
+Authorization: Bearer <token>
+Content-Type: application/json
+
+Request Body (Lending - Cho vay):
+{
+  "type": 1, // 1=Lending
   "personName": "Nguyen Van B",
-  "personContact": "0123456789",
-  "principalAmount": 10000000,
-  "interestRate": 5,
-  "borrowedDate": "2025-01-01",
-  "dueDate": "2025-12-31",
-  "paymentFrequency": "monthly",
-  "note": "Cho vay mua xe"
+  "contactInfo": "0123456789",
+  "amount": 10000000,
+  "interestRate": 5, // Optional, default 0
+  "borrowedDate": "2025-01-01T10:00:00.000Z", // ISO string with time
+  "dueDate": "2025-12-31T23:59:59.000Z", // Optional
+  "paymentFrequency": 1, // Optional: 1=Monthly, 2=Quarterly, 3=Yearly, 4=One-time
+  "accountId": "account-uuid", // REQUIRED - Tài khoản nguồn
+  "categoryId": "category-lending-uuid", // Optional - Category "Cho vay"
+  "description": "Cho vay mua xe",
+  "reminderEnabled": true,
+  "reminderDaysBefore": 3
 }
 
-Response: 201 Created
-```
-
-### 7.3. Record Debt Payment
-
-```http
-POST /debts/:id/payments
-Authorization: Bearer <token>
-
-Request Body:
+Request Body (Borrowing - Đi vay):
 {
-  "amount": 1000000,
-  "paymentDate": "2025-01-15",
-  "note": "Trả nợ lần 1"
+  "type": 2, // 2=Borrowing
+  "personName": "ABC Bank",
+  "contactInfo": "1900-xxxx",
+  "amount": 100000000,
+  "interestRate": 12,
+  "borrowedDate": "2025-01-01T10:00:00.000Z",
+  "dueDate": "2025-12-31T23:59:59.000Z",
+  "paymentFrequency": 1, // Monthly
+  "accountId": "account-bank-uuid", // REQUIRED - Tài khoản đích
+  "categoryId": "category-borrowing-uuid", // Optional - Category "Vay nợ"
+  "description": "Vay ngân hàng mua nhà"
 }
 
 Response: 201 Created
 {
   "success": true,
   "data": {
-    "paymentId": "uuid",
-    "debtId": "uuid",
-    "amount": 1000000,
-    "remainingDebt": 9000000
-  }
+    "id": "uuid",
+    "type": 1,
+    "personName": "Nguyen Van B",
+    "originalAmount": 10000000,
+    "remainingAmount": 10000000,
+    "totalInterestPaid": 0,
+    "interestRate": 5,
+    "borrowedDate": "2025-01-01T10:00:00.000Z",
+    "status": 1, // Active
+    "accountId": "account-uuid",
+    "initialTransactionId": "transaction-uuid",
+
+    // Auto-created transaction
+    "transaction": {
+      "id": "transaction-uuid",
+      "type": 2, // EXPENSE (cho vay trừ tiền)
+      "amount": 10000000,
+      "categoryId": "category-lending-uuid",
+      "description": "Cho vay: Nguyen Van B - 10,000,000 VND",
+      "debtId": "uuid"
+    },
+
+    // Updated account balance
+    "updatedAccount": {
+      "id": "account-uuid",
+      "balance": 40000000 // Giảm từ 50M → 40M
+    }
+  },
+  "message": "Debt created successfully. Transaction recorded and account balance updated."
 }
 ```
 
-### 7.4. Get Debt Payment History
+### 7.4. Update Debt
 
 ```http
-GET /debts/:id/payments
+PATCH /api/v1/debts/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+
+Request Body:
+{
+  "personName": "Nguyen Van B Updated",
+  "contactInfo": "0987654321",
+  "dueDate": "2026-01-31T23:59:59.000Z",
+  "description": "Updated description",
+  "reminderDaysBefore": 7
+}
+
+Response: 200 OK
+{
+  "success": true,
+  "data": { ... updated debt ... }
+}
+```
+
+### 7.5. Delete Debt
+
+**⚠️ IMPORTANT:** Xóa debt sẽ:
+
+- Soft delete debt (set deleted_at)
+- GIỮ NGUYÊN transactions để audit
+- KHÔNG hoàn tiền tự động (user tự quản lý)
+
+```http
+DELETE /api/v1/debts/:id
+Authorization: Bearer <token>
+
+Response: 200 OK
+{
+  "success": true,
+  "message": "Debt deleted successfully. Transactions are retained for audit trail."
+}
+```
+
+### 7.6. Record Debt Payment
+
+**⚠️ IMPORTANT:** Hệ thống sẽ tự động:
+
+1. CỘNG/TRỪ tiền vào account (tùy debt type)
+2. Tạo Transaction type=INCOME (Lending) hoặc EXPENSE (Borrowing)
+3. Cập nhật remainingAmount và status của debt
+4. Lưu payment history
+
+```http
+POST /api/v1/debts/:id/payments
+Authorization: Bearer <token>
+Content-Type: application/json
+
+Request Body (Lending - Thu nợ):
+{
+  "amount": 3000000,
+  "principalAmount": 2850000, // Optional: Phần gốc
+  "interestAmount": 150000, // Optional: Phần lãi
+  "paymentDate": "2025-01-15T14:30:00.000Z",
+  "accountId": "account-bank-uuid", // REQUIRED - Tài khoản nhận tiền
+  "categoryId": "category-debt-collection-uuid", // Optional
+  "paymentMethod": "Bank Transfer", // Optional
+  "referenceNumber": "TRF123456", // Optional
+  "note": "Thu nợ kỳ 1"
+}
+
+Request Body (Borrowing - Trả nợ):
+{
+  "amount": 11000000,
+  "principalAmount": 10000000,
+  "interestAmount": 1000000,
+  "paymentDate": "2025-01-15T14:30:00.000Z",
+  "accountId": "account-bank-uuid", // REQUIRED - Tài khoản trả tiền
+  "categoryId": "category-debt-repayment-uuid", // Optional
+  "note": "Trả nợ tháng 1"
+}
+
+Response: 201 Created
+{
+  "success": true,
+  "data": {
+    "payment": {
+      "id": "payment-uuid",
+      "debtId": "debt-uuid",
+      "amount": 3000000,
+      "principalAmount": 2850000,
+      "interestAmount": 150000,
+      "paymentDate": "2025-01-15T14:30:00.000Z",
+      "accountId": "account-bank-uuid",
+      "transactionId": "transaction-uuid",
+      "remainingBalanceAfter": 7000000,
+      "status": 2 // Completed
+    },
+
+    // Auto-created transaction
+    "transaction": {
+      "id": "transaction-uuid",
+      "type": 1, // INCOME (thu nợ cộng tiền)
+      "amount": 3000000,
+      "description": "Thu nợ từ Nguyen Van B - Kỳ 1",
+      "debtId": "debt-uuid"
+    },
+
+    // Updated debt
+    "updatedDebt": {
+      "id": "debt-uuid",
+      "remainingAmount": 7000000, // Giảm từ 10M → 7M
+      "totalInterestPaid": 150000,
+      "status": 2 // Partial Paid
+    },
+
+    // Updated account balance
+    "updatedAccount": {
+      "id": "account-bank-uuid",
+      "balance": 43000000 // Tăng từ 40M → 43M
+    }
+  },
+  "message": "Payment recorded successfully. Transaction created and balances updated."
+}
+```
+
+### 7.7. Get Debt Payment History
+
+```http
+GET /api/v1/debts/:id/payments
 Authorization: Bearer <token>
 
 Response: 200 OK
@@ -881,13 +1137,119 @@ Response: 200 OK
   "success": true,
   "data": [
     {
-      "id": "uuid",
-      "amount": 1000000,
-      "paymentDate": "2025-01-15",
-      "note": "Trả nợ lần 1",
-      "createdAt": "2025-01-15T10:00:00Z"
+      "id": "payment-uuid",
+      "debtId": "debt-uuid",
+      "amount": 3000000,
+      "principalAmount": 2850000,
+      "interestAmount": 150000,
+      "paymentDate": "2025-01-15T14:30:00.000Z",
+      "accountId": "account-bank-uuid",
+      "transactionId": "transaction-uuid",
+      "remainingBalanceAfter": 7000000,
+      "paymentMethod": "Bank Transfer",
+      "referenceNumber": "TRF123456",
+      "note": "Thu nợ kỳ 1",
+      "status": 2,
+      "createdAt": "2025-01-15T14:30:00.000Z",
+
+      // Relations
+      "account": {
+        "id": "account-bank-uuid",
+        "name": "Vietcombank",
+        "type": 2
+      },
+      "transaction": {
+        "id": "transaction-uuid",
+        "type": 1,
+        "amount": 3000000,
+        "description": "Thu nợ từ Nguyen Van B - Kỳ 1"
+      }
     }
-  ]
+  ],
+  "meta": {
+    "totalPayments": 3,
+    "totalAmount": 9000000,
+    "totalPrincipal": 8550000,
+    "totalInterest": 450000
+  }
+}
+```
+
+### 7.8. Delete Debt Payment
+
+**⚠️ IMPORTANT:** Chỉ được xóa trong vòng 7 ngày kể từ paymentDate
+
+```http
+DELETE /api/v1/debts/:debtId/payments/:paymentId
+Authorization: Bearer <token>
+
+Response: 200 OK (nếu < 7 ngày)
+{
+  "success": true,
+  "message": "Payment deleted and debt state restored successfully.",
+  "data": {
+    "restoredDebt": {
+      "remainingAmount": 10000000, // Khôi phục về trước khi payment
+      "status": 1
+    },
+    "refundedAccount": {
+      "balance": 40000000 // Hoàn tiền về account
+    },
+    "deletedTransaction": {
+      "id": "transaction-uuid" // Transaction đã bị xóa
+    }
+  }
+}
+
+Response: 400 Bad Request (nếu > 7 ngày)
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_DELETE_TIMEOUT",
+    "message": "Cannot delete payment after 7 days",
+    "details": [
+      "Payment date: 2025-01-01T10:00:00.000Z",
+      "Days elapsed: 15",
+      "Delete deadline: 2025-01-08T10:00:00.000Z"
+    ]
+  }
+}
+```
+
+### 7.9. Get Debt Summary Report
+
+```http
+GET /api/v1/debts/summary
+Authorization: Bearer <token>
+
+Query Parameters:
+- startDate: ISO string (optional)
+- endDate: ISO string (optional)
+
+Response: 200 OK
+{
+  "success": true,
+  "data": {
+    "lending": {
+      "totalDebts": 5,
+      "activeDebts": 3,
+      "totalOriginalAmount": 50000000,
+      "totalRemaining": 20000000,
+      "totalCollected": 30000000,
+      "totalInterestCollected": 1500000,
+      "averageInterestRate": 5.2
+    },
+    "borrowing": {
+      "totalDebts": 3,
+      "activeDebts": 2,
+      "totalOriginalAmount": 100000000,
+      "totalRemaining": 75000000,
+      "totalPaid": 25000000,
+      "totalInterestPaid": 3000000,
+      "averageInterestRate": 12.5
+    },
+    "netPosition": -55000000 // Borrowing - Lending remaining
+  }
 }
 ```
 
@@ -895,14 +1257,20 @@ Response: 200 OK
 
 ## 7B. Loan APIs (Quản Lý Khoản Vay với Amortization)
 
+**Lưu ý Quan Trọng:**
+
+- **KHÔNG có tùy chọn strategy**: Trả gốc tự do LUÔN giảm monthlyPayment, GIỮ NGUYÊN termMonths
+- **Lịch trả bắt đầu từ**: disbursementDate + 1 tháng (VD: Giải ngân 3/11 → Trả đầu 3/12)
+- **Xóa payment**: Chỉ được xóa trong 7 ngày, tự động restore loan state
+
 ### 7B.1. Get All Loans
 
 ```http
-GET /loans?status=active
+GET /api/v1/loans?status=1
 Authorization: Bearer <token>
 
 Query Parameters:
-- status: active | paid_off | defaulted | refinanced
+- status: 1 (Active) | 2 (Paid Off) | 3 (Defaulted) | 4 (Refinanced)
 
 Response: 200 OK
 {
@@ -910,21 +1278,23 @@ Response: 200 OK
   "data": [
     {
       "id": "uuid",
-      "lenderName": "Ngân hàng Vietcombank",
-      "loanType": "mortgage",
-      "principalAmount": 50000000,
-      "currentPrincipal": 35000000,
+      "name": "Vay mua xe",
+      "lender": "Ngân hàng Vietcombank",
+      "type": 2, // 1=Personal, 2=Mortgage, 3=Auto, 4=Business, 5=Other
+      "originalAmount": 1000000000,
+      "remainingPrincipal": 803333333,
       "interestRate": 12,
-      "loanTermMonths": 12,
-      "remainingMonths": 9,
-      "monthlyPayment": 4442458,
-      "disbursementDate": "2025-01-01",
-      "maturityDate": "2025-12-01",
-      "status": "active",
-      "totalPrincipalPaid": 15000000,
-      "totalInterestPaid": 850000,
-      "allowPrepayment": true,
-      "prepaymentStrategy": "reduce_term"
+      "termMonths": 60,
+      "remainingMonths": 61,
+      "monthlyPayment": 14575492, // Giảm từ 16800000 sau trả gốc 200M
+      "startDate": "2024-11-03T00:00:00.000Z",
+      "disbursementDate": "2024-11-03T10:30:00.000Z",
+      "nextPaymentDate": "2025-01-03T00:00:00.000Z",
+      "lastPaymentDate": "2024-12-03T14:30:00.000Z",
+      "status": 1,
+      "totalPrincipalPaid": 200000000,
+      "totalInterestPaid": 0,
+      "totalPrepayment": 200000000
     }
   ]
 }
@@ -933,24 +1303,22 @@ Response: 200 OK
 ### 7B.2. Create Loan
 
 ```http
-POST /loans
+POST /api/v1/loans
 Authorization: Bearer <token>
 Content-Type: application/json
 
 Request Body:
 {
-  "lenderName": "Ngân hàng Vietcombank",
-  "loanType": "personal",
-  "principalAmount": 50000000,
+  "name": "Vay mua xe",
+  "lender": "Ngân hàng Vietcombank",
+  "type": 3, // 1=Personal, 2=Mortgage, 3=Auto, 4=Business, 5=Other
+  "originalAmount": 1000000000,
   "interestRate": 12,
-  "loanTermMonths": 12,
-  "disbursementDate": "2025-01-01",
-  "firstPaymentDate": "2025-02-01",
-  "accountId": "uuid",
-  "allowPrepayment": true,
-  "prepaymentPenaltyRate": 0,
-  "prepaymentStrategy": "reduce_term",
-  "note": "Vay mua xe"
+  "termMonths": 60,
+  "startDate": "2024-11-03T00:00:00.000Z", // ISO 8601 format
+  "accountId": "uuid", // Optional: Nếu có thì tự động giải ngân
+  "description": "Vay ngân hàng mua xe",
+  "notes": "Lãi suất cố định 12%/năm"
 }
 
 Response: 201 Created
@@ -958,143 +1326,34 @@ Response: 201 Created
   "success": true,
   "data": {
     "id": "uuid",
-    "lenderName": "Ngân hàng Vietcombank",
-    "principalAmount": 50000000,
-    "monthlyPayment": 4442458,
-    "totalInterest": 3309496,
-    "totalPayment": 53309496,
-    "amortizationSchedule": [...]
+    "name": "Vay mua xe",
+    "lender": "Ngân hàng Vietcombank",
+    "type": 3,
+    "originalAmount": 1000000000,
+    "remainingPrincipal": 1000000000,
+    "interestRate": 12,
+    "termMonths": 60,
+    "remainingMonths": 60,
+    "monthlyPayment": 16800000, // Tính theo công thức amortization
+    "startDate": "2024-11-03T00:00:00.000Z",
+    "disbursementDate": "2024-11-03T10:30:00.000Z", // Nếu có accountId
+    "nextPaymentDate": "2024-12-03T00:00:00.000Z", // disbursementDate + 1 tháng
+    "status": 1,
+    "accountId": "uuid"
   },
-  "message": "Loan created successfully. Amortization schedule generated."
+  "message": "Khoản vay được tạo thành công. Tiền đã giải ngân vào tài khoản."
 }
 
 Notes:
-- monthlyPayment được tính tự động theo công thức:
-  M = P * [r(1+r)^n] / [(1+r)^n - 1]
-  Trong đó:
-    P = Principal (số tiền vay)
-    r = Monthly interest rate (lãi suất tháng)
-    n = Number of months (số tháng vay)
+- Nếu có accountId: Tự động giải ngân (cộng tiền vào account + tạo transaction)
+- monthlyPayment tính theo: M = P × [r(1+r)^n] / [(1+r)^n - 1]
+- nextPaymentDate = disbursementDate + 1 tháng
 ```
 
-### 7B.3. Get Loan Details with Amortization Schedule
+### 7B.3. Get Payment Schedule with Status (60 tháng)
 
 ```http
-GET /loans/:id
-Authorization: Bearer <token>
-
-Response: 200 OK
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "lenderName": "Ngân hàng Vietcombank",
-    "loanType": "personal",
-    "principalAmount": 50000000,
-    "currentPrincipal": 35000000,
-    "interestRate": 12,
-    "loanTermMonths": 12,
-    "remainingMonths": 9,
-    "monthlyPayment": 4442458,
-    "disbursementDate": "2025-01-01",
-    "firstPaymentDate": "2025-02-01",
-    "maturityDate": "2025-12-01",
-    "status": "active",
-    "totalPrincipalPaid": 15000000,
-    "totalInterestPaid": 850000,
-    "amortizationSchedule": [
-      {
-        "paymentNumber": 1,
-        "dueDate": "2025-02-01",
-        "scheduledPrincipal": 3942458,
-        "scheduledInterest": 500000,
-        "scheduledTotal": 4442458,
-        "actualPrincipal": 3942458,
-        "actualInterest": 500000,
-        "prepaymentAmount": 0,
-        "principalBalanceAfter": 46057542,
-        "status": "paid"
-      },
-      {
-        "paymentNumber": 2,
-        "dueDate": "2025-03-01",
-        "scheduledPrincipal": 3981883,
-        "scheduledInterest": 460575,
-        "scheduledTotal": 4442458,
-        "actualPrincipal": 3981883,
-        "actualInterest": 460575,
-        "prepaymentAmount": 0,
-        "principalBalanceAfter": 42075659,
-        "status": "paid"
-      },
-      {
-        "paymentNumber": 3,
-        "dueDate": "2025-04-01",
-        "scheduledPrincipal": 4021702,
-        "scheduledInterest": 420756,
-        "scheduledTotal": 4442458,
-        "actualPrincipal": 4021702,
-        "actualInterest": 420756,
-        "prepaymentAmount": 20000000,
-        "principalBalanceAfter": 18053957,
-        "status": "paid",
-        "note": "Trả nợ trước hạn 20tr"
-      },
-      {
-        "paymentNumber": 4,
-        "dueDate": "2025-05-01",
-        "scheduledPrincipal": 4261919,
-        "scheduledInterest": 180540,
-        "scheduledTotal": 4442459,
-        "principalBalanceAfter": 13792038,
-        "status": "pending"
-      }
-    ],
-    "summary": {
-      "totalScheduledPayment": 53309496,
-      "totalPaid": 29228233,
-      "totalRemaining": 24081263,
-      "savedInterestFromPrepayment": 1500000
-    }
-  }
-}
-```
-
-### 7B.4. Record Loan Payment
-
-```http
-POST /loans/:id/payments/:paymentId
-Authorization: Bearer <token>
-Content-Type: application/json
-
-Request Body:
-{
-  "principalAmount": 4021702,
-  "interestAmount": 420756,
-  "prepaymentAmount": 20000000,
-  "note": "Trả nợ tháng 3 + trả trước 20tr"
-}
-
-Response: 201 Created
-{
-  "success": true,
-  "data": {
-    "paymentId": "uuid",
-    "loanId": "uuid",
-    "totalPaid": 24442458,
-    "newCurrentPrincipal": 18053957,
-    "newRemainingMonths": 5,
-    "newMaturityDate": "2025-09-01",
-    "savedInterest": 1500000
-  },
-  "message": "Payment recorded. Loan schedule recalculated due to prepayment."
-}
-```
-
-### 7B.5. Get Upcoming Loan Payments
-
-```http
-GET /loans/:id/upcoming-payments?limit=3
+GET /api/v1/loans/:id/payment-schedule
 Authorization: Bearer <token>
 
 Response: 200 OK
@@ -1102,62 +1361,264 @@ Response: 200 OK
   "success": true,
   "data": [
     {
-      "paymentNumber": 4,
-      "dueDate": "2025-05-01",
-      "scheduledTotal": 4442459,
-      "principalPortion": 4261919,
-      "interestPortion": 180540,
-      "daysUntilDue": 10,
-      "status": "pending"
+      "paymentNumber": 1,
+      "paymentDate": "2024-12-03",
+      "payment": 16800000, // Số tiền thực tế đã trả (từ database)
+      "principal": 15800000,
+      "interest": 1000000,
+      "remainingPrincipal": 984200000,
+      "isPaid": true,
+      "status": "paid",
+      "actualPaymentDate": "2024-12-03T00:00:00.000Z",
+      "actualAmount": 16800000,
+      "paymentId": "uuid",
+      "note": null
     },
     {
-      "paymentNumber": 5,
-      "dueDate": "2025-06-01",
-      "scheduledTotal": 4442458,
-      "principalPortion": 4304548,
-      "interestPortion": 137910,
-      "daysUntilDue": 41,
-      "status": "pending"
+      "paymentNumber": 2,
+      "paymentDate": "2025-01-03",
+      "payment": 14575492, // Số tiền tính toán với monthlyPayment mới
+      "principal": 6575492,
+      "interest": 8000000,
+      "remainingPrincipal": 977624508,
+      "isPaid": false,
+      "status": "unpaid",
+      "actualPaymentDate": null,
+      "actualAmount": null,
+      "paymentId": null,
+      "note": null
     }
+    // ... 58 tháng nữa
   ]
 }
+
+Notes:
+- Tháng đã trả: Lấy data từ loan_payments (giữ nguyên số tiền lịch sử)
+- Tháng chưa trả: Tính với loan.monthlyPayment hiện tại
+- Tổng cộng 60 dòng (hoặc termMonths của khoản vay)
 ```
 
-### 7B.6. Simulate Prepayment
+### 7B.4. Record Scheduled Payment
 
 ```http
-POST /loans/:id/simulate-prepayment
+POST /api/v1/loans/:id/payments
 Authorization: Bearer <token>
 Content-Type: application/json
 
 Request Body:
 {
-  "prepaymentAmount": 10000000,
-  "strategy": "reduce_term"
+  "accountId": "uuid",
+  "paymentDate": "2024-12-03",
+  "categoryId": "uuid" // Optional, default = "Trả nợ"
 }
+
+Response: 201 Created
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "loanId": "uuid",
+    "paymentNumber": 1,
+    "paymentDate": "2024-12-03",
+    "amount": 16800000,
+    "principalAmount": 15800000,
+    "interestAmount": 1000000,
+    "remainingPrincipal": 984200000,
+    "status": 2, // Paid
+    "isPrepayment": false,
+    "isScheduled": true
+  },
+  "message": "Thanh toán theo lịch thành công"
+}
+
+Notes:
+- Trả đúng monthlyPayment của tháng hiện tại
+- Tự động phân bổ principal/interest dựa trên remainingPrincipal
+- Giảm remainingMonths xuống 1
+- Cập nhật nextPaymentDate +1 tháng
+```
+
+### 7B.5. Make Extra Principal Payment (Trả Gốc Tự Do)
+
+```http
+POST /api/v1/loans/:id/extra-principal
+Authorization: Bearer <token>
+Content-Type: application/json
+
+Request Body:
+{
+  "amount": 200000000,
+  "accountId": "uuid",
+  "paymentDate": "2024-12-03",
+  "categoryId": "uuid", // Optional
+  "note": "Trả gốc tự do 200 triệu"
+}
+
+Response: 201 Created
+{
+  "success": true,
+  "data": {
+    "newRemainingPrincipal": 803333333,
+    "oldMonthlyPayment": 16800000,
+    "newMonthlyPayment": 14575492,
+    "termMonths": 60, // KHÔNG THAY ĐỔI
+    "remainingMonths": 60, // KHÔNG THAY ĐỔI
+    "savedInterest": 135000000 // Ước tính lãi tiết kiệm được
+  },
+  "message": "Trả gốc tự do thành công. Số tiền trả hàng tháng giảm từ 16.8M xuống 14.5M"
+}
+
+Notes:
+- KHÔNG có tùy chọn strategy
+- LUÔN giảm monthlyPayment, GIỮ NGUYÊN termMonths
+- amount <= remainingPrincipal
+- Tạo loan_payment với isPrepayment=true
+- Tạo transaction liên kết
+```
+
+### 7B.6. Delete Payment (Trong 7 Ngày)
+
+```http
+DELETE /api/v1/loans/:loanId/payments/:paymentId
+Authorization: Bearer <token>
 
 Response: 200 OK
 {
   "success": true,
-  "data": {
-    "currentScenario": {
-      "remainingMonths": 9,
-      "monthlyPayment": 4442458,
-      "totalRemainingInterest": 1500000,
-      "maturityDate": "2025-12-01"
-    },
-    "afterPrepayment": {
-      "remainingMonths": 6,
-      "monthlyPayment": 4442458,
-      "totalRemainingInterest": 750000,
-      "maturityDate": "2025-09-01",
-      "savedInterest": 750000,
-      "monthsSaved": 3
+  "message": "Đã xóa khoản thanh toán và khôi phục trạng thái khoản vay"
+}
+
+Error: 400 Bad Request (Nếu quá 7 ngày)
+{
+  "success": false,
+  "error": {
+    "code": "LOAN_006",
+    "message": "Cannot delete payment older than 7 days"
+  }
+}
+
+Notes:
+- Chỉ xóa được payment trong vòng 7 ngày
+- Tự động restore loan state (remainingPrincipal, monthlyPayment, etc.)
+- Hoàn tiền về account
+- Xóa transaction liên quan
+```
+
+### 7B.7. Get Loan Extra Principal History
+
+```http
+GET /api/v1/loans/:id/extra-principal
+Authorization: Bearer <token>
+
+Response: 200 OK
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "paymentDate": "2024-12-03",
+      "amount": 200000000,
+      "remainingPrincipal": 803333333,
+      "previousMonthlyPayment": 16800000,
+      "newMonthlyPayment": 14575492,
+      "note": "Trả gốc tự do 200 triệu",
+      "canDelete": true, // true nếu < 7 ngày
+      "daysSincePayment": 3
     }
-  },
-  "message": "Prepayment simulation. This is for preview only."
+  ]
 }
 ```
+
+### 7B.8. Get Amortization Schedule (Không có trạng thái)
+
+````http
+GET /api/v1/loans/:id/amortization-schedule
+Authorization: Bearer <token>
+
+Response: 200 OK
+{
+  "success": true,
+  "data": [
+    {
+      "paymentNumber": 1,
+      "paymentDate": "2024-12-03",
+      "payment": 14575492,
+      "principal": 6575492,
+      "interest": 8000000,
+      "remainingPrincipal": 977624508
+    },
+    {
+      "paymentNumber": 2,
+      "paymentDate": "2025-01-03",
+      "payment": 14575492,
+      "principal": 6640992,
+      "interest": 7934500,
+      "remainingPrincipal": 970983516
+    }
+    // ... 58 tháng nữa
+  ]
+### 7B.9. Get Loan Transaction History
+
+```http
+GET /api/v1/loans/:id/extra-principal
+Authorization: Bearer <token>
+
+Response: 200 OK
+{
+  "success": true,
+  "data": [
+    {
+      "id": "transaction-uuid",
+      "type": 2, // EXPENSE
+      "amount": 200000000,
+      "date": "2024-12-03",
+      "description": "Trả nợ gốc (ngoài lịch): Vay mua xe",
+      "note": "Trả gốc tự do 200 triệu",
+      "accountId": "uuid",
+      "account": {
+        "name": "Tài khoản VCB"
+      },
+      "categoryId": "uuid",
+      "category": {
+        "name": "Trả nợ"
+      },
+      "paymentId": "uuid"
+    },
+    {
+      "id": "transaction-uuid-2",
+      "type": 1, // INCOME (Giải ngân)
+      "amount": 1000000000,
+      "date": "2024-11-03",
+      "description": "Giải ngân khoản vay: Vay mua xe",
+      "note": "Giải ngân từ Ngân hàng Vietcombank",
+      "accountId": "uuid"
+    }
+  ]
+}
+````
+
+---
+
+## 7C. Debt APIs (Quản Lý Công Nợ Đơn Giản)
+
+**Lưu ý:** Debts khác với Loans
+
+- Debts: Công nợ đơn giản (cho vay/đi vay cá nhân), không có amortization
+- Loans: Khoản vay ngân hàng có lãi suất, amortization schedule
+  },
+  "afterPrepayment": {
+  "remainingMonths": 6,
+  "monthlyPayment": 4442458,
+  "totalRemainingInterest": 750000,
+  "maturityDate": "2025-09-01",
+  "savedInterest": 750000,
+  "monthsSaved": 3
+  }
+  },
+  "message": "Prepayment simulation. This is for preview only."
+  }
+
+````
 
 ### 7B.7. Get Loan Summary Report
 
@@ -1203,7 +1664,7 @@ Response: 200 OK
     }
   }
 }
-```
+````
 
 ---
 

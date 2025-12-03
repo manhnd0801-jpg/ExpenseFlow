@@ -22,6 +22,7 @@
   "viewAll": "Xem tất cả",
   "today": "Hôm nay",
   "yesterday": "Hôm qua",
+  "days": "ngày",
   "thisWeek": "Tuần này",
   "thisMonth": "Tháng này",
   "thisYear": "Năm này",
@@ -42,5 +43,6 @@
   "irreversibleAction": "Hành động này không thể hoàn tác.",
   "createCategory": "Tạo danh mục",
   "totalItems": "Tổng {{total}} mục",
-  "createdAt": "Tạo lúc"
+  "createdAt": "Tạo lúc",
+  "advancedOptions": "Tùy chọn nâng cao"
 }

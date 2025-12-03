@@ -1,5 +1,7 @@
 {
-  "required": {
+  "required": "Please fill in this field",
+  "minAmount": "Minimum amount is {{min}} VND",
+  "requiredFields": {
     "contributionAmount": "Please enter contribution amount",
     "account": "Please select an account"
   },

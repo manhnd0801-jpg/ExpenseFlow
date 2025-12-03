@@ -22,6 +22,7 @@ export interface ITransaction {
   categoryId: string;
   accountId: string;
   toAccountId?: string; // For TRANSFER transactions
+  loanId?: string; // For loan disbursement transactions
   type: TransactionType;
   amount: number;
   description: string;

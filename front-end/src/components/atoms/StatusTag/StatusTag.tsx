@@ -61,12 +61,10 @@ const getStatusColor = (type: IStatusTagProps['type'], value: number): string =>
       switch (value) {
         case LoanStatus.ACTIVE:
           return 'blue';
-        case LoanStatus.COMPLETED:
+        case LoanStatus.PAID_OFF:
           return 'green';
         case LoanStatus.DEFAULTED:
           return 'red';
-        case LoanStatus.REFINANCED:
-          return 'purple';
         default:
           return 'default';
       }

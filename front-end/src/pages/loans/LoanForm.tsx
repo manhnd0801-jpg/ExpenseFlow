@@ -26,6 +26,7 @@ import { LoanTypeLabels } from '@/constants/enum-labels';
 import { LoanType } from '@/constants/enums';
 import { useAppDispatch, useAppSelector, useNotification } from '@/hooks';
 import { useI18n } from '@/hooks/useI18n';
+import { accountActions, selectAccounts } from '@/redux/modules/accounts';
 import {
   ICreateLoanPayload,
   loanActions,
@@ -143,12 +144,16 @@ const LoanForm: React.FC = () => {
   // Redux selectors
   const currentLoan = useAppSelector(selectCurrentLoan);
   const isLoading = useAppSelector(selectIsLoanLoading);
+  const accounts = useAppSelector(selectAccounts);
 
   // Local state
   const [calculation, setCalculation] = useState<ILoanCalculation | null>(null);
 
   // Load loan detail if editing
   useEffect(() => {
+    // Load accounts for dropdown
+    dispatch(accountActions.listAccountsRequest({}));
+
     if (isEditMode && id) {
       dispatch(loanActions.getLoanDetailRequest(id));
     }
@@ -164,17 +169,18 @@ const LoanForm: React.FC = () => {
       form.setFieldsValue({
         name: currentLoan.name,
         type: currentLoan.type,
-        principal: currentLoan.principal,
+        originalAmount: currentLoan.originalAmount,
         interestRate: currentLoan.interestRate,
         termMonths: currentLoan.termMonths,
         startDate: dayjs(currentLoan.startDate),
         description: currentLoan.description,
         lender: currentLoan.lender,
+        accountId: currentLoan.accountId, // Populate accountId if exists
       });
 
       // Calculate initial values
       calculateLoan({
-        principal: currentLoan.principal,
+        originalAmount: currentLoan.originalAmount,
         interestRate: currentLoan.interestRate,
         termMonths: currentLoan.termMonths,
       });
@@ -183,13 +189,13 @@ const LoanForm: React.FC = () => {
 
   // Calculate loan amortization
   const calculateLoan = (values: {
-    principal?: number;
+    originalAmount?: number;
     interestRate?: number;
     termMonths?: number;
   }) => {
-    const { principal, interestRate, termMonths } = values;
+    const { originalAmount, interestRate, termMonths } = values;
 
-    if (!principal || !interestRate || !termMonths) {
+    if (!originalAmount || !interestRate || !termMonths) {
       setCalculation(null);
       return;
     }
@@ -199,12 +205,12 @@ const LoanForm: React.FC = () => {
 
     // Calculate monthly payment using formula: M = P * [r(1+r)^n] / [(1+r)^n - 1]
     const monthlyPayment =
-      (principal * monthlyRate * Math.pow(1 + monthlyRate, termMonths)) /
+      (originalAmount * monthlyRate * Math.pow(1 + monthlyRate, termMonths)) /
       (Math.pow(1 + monthlyRate, termMonths) - 1);
 
     const totalPayment = monthlyPayment * termMonths;
-    const totalInterest = totalPayment - principal;
-    const effectiveRate = (totalInterest / principal) * 100;
+    const totalInterest = totalPayment - originalAmount;
+    const effectiveRate = (totalInterest / originalAmount) * 100;
 
     setCalculation({
       monthlyPayment: Math.round(monthlyPayment),
@@ -217,7 +223,7 @@ const LoanForm: React.FC = () => {
   // Handle form values change
   const handleValuesChange = (_: any, allValues: any) => {
     calculateLoan({
-      principal: allValues.principal,
+      originalAmount: allValues.originalAmount,
       interestRate: allValues.interestRate,
       termMonths: allValues.termMonths,
     });
@@ -227,9 +233,10 @@ const LoanForm: React.FC = () => {
   const handleSubmit = async (values: any) => {
     try {
       const payload: ICreateLoanPayload = {
+        accountId: values.accountId,
         name: values.name,
         type: values.type,
-        principal: values.principal,
+        originalAmount: values.originalAmount,
         interestRate: values.interestRate,
         termMonths: values.termMonths,
         startDate: values.startDate?.toISOString() || new Date().toISOString(),
@@ -244,6 +251,7 @@ const LoanForm: React.FC = () => {
             name: payload.name,
             description: payload.description,
             lender: payload.lender,
+            accountId: payload.accountId,
           })
         );
       } else {
@@ -311,11 +319,35 @@ const LoanForm: React.FC = () => {
                 </Select>
               </Form.Item>
 
+              <Form.Item
+                label="Tài khoản nhận tiền (tùy chọn)"
+                name="accountId"
+                tooltip={
+                  isEditMode && currentLoan?.disbursementDate
+                    ? 'Khoản vay đã được giải ngân, không thể thay đổi tài khoản'
+                    : 'Chọn tài khoản để ghi nhận số tiền vay vào. Nếu không chọn, chỉ tạo khoản vay không tạo giao dịch.'
+                }
+              >
+                <Select
+                  placeholder="Chọn tài khoản nhận tiền"
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                  disabled={isEditMode && !!currentLoan?.disbursementDate}
+                >
+                  {accounts.map((account: any) => (
+                    <Select.Option key={account.id} value={account.id}>
+                      {account.name} ({formatCurrency(account.balance)})
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
               <Row gutter={16}>
                 <Col xs={24} sm={12}>
                   <Form.Item
                     label="Số tiền vay (VND)"
-                    name="principal"
+                    name="originalAmount"
                     rules={[
                       { required: true, message: 'Vui lòng nhập số tiền vay' },
                       {
@@ -479,7 +511,7 @@ const LoanForm: React.FC = () => {
                   <div className="result-item">
                     <span className="label">{t('loans.loanAmount')}:</span>
                     <span className="value">
-                      {formatCurrency(form.getFieldValue('principal') || 0)}
+                      {formatCurrency(form.getFieldValue('originalAmount') || 0)}
                     </span>
                   </div>
 

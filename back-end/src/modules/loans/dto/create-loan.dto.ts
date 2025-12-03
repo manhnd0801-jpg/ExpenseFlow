@@ -9,6 +9,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  IsUUID,
   Max,
   MaxLength,
   Min,
@@ -65,6 +66,14 @@ export class CreateLoanDto {
   @ApiProperty({ example: '2024-01-01', description: 'Loan start date (YYYY-MM-DD)' })
   @IsDateString()
   startDate: string;
+
+  @ApiPropertyOptional({
+    description: 'Account ID where loan amount will be deposited',
+    example: 'uuid-string',
+  })
+  @IsOptional()
+  @IsUUID()
+  accountId?: string;
 
   @ApiPropertyOptional({ example: 'Home loan for new apartment' })
   @IsOptional()

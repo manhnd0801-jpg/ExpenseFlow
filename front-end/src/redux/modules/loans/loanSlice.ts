@@ -7,11 +7,15 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   IAmortizationScheduleItem,
   ICreateLoanPayload,
+  IDeleteExtraPrincipalTransactionPayload,
   IDeleteLoanPayload,
+  IDeleteLoanPaymentPayload,
+  IExtraPrincipalPaymentPayload,
+  IExtraPrincipalTransaction,
   ILoan,
   ILoanListQuery,
-  ILoanPayment,
   initialLoanState,
+  IPaymentScheduleWithStatus,
   IPrepaymentSimulation,
   IRecordLoanPaymentPayload,
   ISimulatePrepaymentPayload,
@@ -41,7 +45,13 @@ const loanSlice = createSlice({
       }>
     ) => {
       const { loans, total, page, limit } = action.payload;
-      state.loans = loans;
+      // Map backend response to include computed properties
+      state.loans = loans.map((loan) => ({
+        ...loan,
+        remainingAmount: loan.remainingPrincipal,
+        interestAmount: loan.totalInterestPaid,
+        dueDate: loan.nextPaymentDate,
+      }));
       state.pagination = {
         page,
         pageSize: limit,
@@ -69,7 +79,15 @@ const loanSlice = createSlice({
     },
 
     getLoanDetailSuccess: (state, action: PayloadAction<ILoan>) => {
-      state.currentLoan = action.payload;
+      // Map backend response to include computed properties
+      state.currentLoan = {
+        ...action.payload,
+        remainingAmount: action.payload.remainingPrincipal,
+        interestAmount: action.payload.totalInterestPaid,
+        dueDate: action.payload.nextPaymentDate,
+      };
+      // Map payments from backend response to state
+      state.loanPayments = action.payload.payments || [];
       state.isLoading = false;
       state.error = null;
       state.errors.detail = undefined;
@@ -91,7 +109,13 @@ const loanSlice = createSlice({
     },
 
     createLoanSuccess: (state, action: PayloadAction<ILoan>) => {
-      state.loans.unshift(action.payload); // Add to beginning
+      const loanWithComputed = {
+        ...action.payload,
+        remainingAmount: action.payload.remainingPrincipal,
+        interestAmount: action.payload.totalInterestPaid,
+        dueDate: action.payload.nextPaymentDate,
+      };
+      state.loans.unshift(loanWithComputed); // Add to beginning
       state.isLoading = false;
       state.error = null;
       state.errors.create = undefined;
@@ -114,18 +138,24 @@ const loanSlice = createSlice({
     },
 
     updateLoanSuccess: (state, action: PayloadAction<ILoan>) => {
-      const index = state.loans.findIndex((loan) => loan.id === action.payload.id);
+      const loanWithComputed = {
+        ...action.payload,
+        remainingAmount: action.payload.remainingPrincipal,
+        interestAmount: action.payload.totalInterestPaid,
+        dueDate: action.payload.nextPaymentDate,
+      };
+      const index = state.loans.findIndex((loan) => loan.id === loanWithComputed.id);
       if (index !== -1) {
         // Remove the updated item from its current position
         state.loans.splice(index, 1);
         // Add the updated item to the beginning (to match backend updatedAt DESC)
-        state.loans.unshift(action.payload);
+        state.loans.unshift(loanWithComputed);
       } else {
         // If item not found, add it to the beginning
-        state.loans.unshift(action.payload);
+        state.loans.unshift(loanWithComputed);
       }
-      if (state.currentLoan?.id === action.payload.id) {
-        state.currentLoan = action.payload;
+      if (state.currentLoan?.id === loanWithComputed.id) {
+        state.currentLoan = loanWithComputed;
       }
       state.isLoading = false;
       state.error = null;
@@ -185,6 +215,28 @@ const loanSlice = createSlice({
     },
 
     // ==========================================
+    // GET PAYMENT SCHEDULE WITH STATUS
+    // ==========================================
+    getPaymentScheduleWithStatusRequest: (state, _action: PayloadAction<string>) => {
+      state.isFetchingPaymentSchedule = true;
+      state.errors.paymentSchedule = undefined;
+    },
+
+    getPaymentScheduleWithStatusSuccess: (
+      state,
+      action: PayloadAction<IPaymentScheduleWithStatus[]>
+    ) => {
+      state.paymentScheduleWithStatus = action.payload;
+      state.isFetchingPaymentSchedule = false;
+      state.errors.paymentSchedule = undefined;
+    },
+
+    getPaymentScheduleWithStatusFailure: (state, action: PayloadAction<string>) => {
+      state.isFetchingPaymentSchedule = false;
+      state.errors.paymentSchedule = action.payload;
+    },
+
+    // ==========================================
     // RECORD LOAN PAYMENT
     // ==========================================
     recordLoanPaymentRequest: (state, _action: PayloadAction<IRecordLoanPaymentPayload>) => {
@@ -215,21 +267,23 @@ const loanSlice = createSlice({
     },
 
     // ==========================================
-    // GET LOAN PAYMENTS
+    // DELETE LOAN PAYMENT
     // ==========================================
-    getLoanPaymentsRequest: (state, _action: PayloadAction<string>) => {
-      state.isFetchingPayments = true;
+    deleteLoanPaymentRequest: (state, _action: PayloadAction<IDeleteLoanPaymentPayload>) => {
+      state.isLoading = true;
+      state.error = null;
       state.errors.payment = undefined;
     },
 
-    getLoanPaymentsSuccess: (state, action: PayloadAction<ILoanPayment[]>) => {
-      state.loanPayments = action.payload;
-      state.isFetchingPayments = false;
+    deleteLoanPaymentSuccess: (state) => {
+      state.isLoading = false;
+      state.error = null;
       state.errors.payment = undefined;
     },
 
-    getLoanPaymentsFailure: (state, action: PayloadAction<string>) => {
-      state.isFetchingPayments = false;
+    deleteLoanPaymentFailure: (state, action: PayloadAction<string>) => {
+      state.isLoading = false;
+      state.error = action.payload;
       state.errors.payment = action.payload;
     },
 
@@ -254,6 +308,72 @@ const loanSlice = createSlice({
     },
 
     // ==========================================
+    // EXTRA PRINCIPAL PAYMENT
+    // ==========================================
+    extraPrincipalPaymentRequest: (
+      state,
+      _action: PayloadAction<IExtraPrincipalPaymentPayload>
+    ) => {
+      state.isLoading = true;
+      state.errors.payment = undefined;
+    },
+
+    extraPrincipalPaymentSuccess: (state) => {
+      state.isLoading = false;
+      state.errors.payment = undefined;
+      state.lastUpdated = new Date().toISOString();
+    },
+
+    extraPrincipalPaymentFailure: (state, action: PayloadAction<string>) => {
+      state.isLoading = false;
+      state.errors.payment = action.payload;
+    },
+
+    // ==========================================
+    // GET EXTRA PRINCIPAL TRANSACTIONS
+    // ==========================================
+    getExtraPrincipalTransactionsRequest: (state, _action: PayloadAction<string>) => {
+      state.isFetchingExtraPrincipal = true;
+      state.errors.extraPrincipal = undefined;
+    },
+
+    getExtraPrincipalTransactionsSuccess: (
+      state,
+      action: PayloadAction<IExtraPrincipalTransaction[]>
+    ) => {
+      state.extraPrincipalTransactions = action.payload;
+      state.isFetchingExtraPrincipal = false;
+      state.errors.extraPrincipal = undefined;
+    },
+
+    getExtraPrincipalTransactionsFailure: (state, action: PayloadAction<string>) => {
+      state.isFetchingExtraPrincipal = false;
+      state.errors.extraPrincipal = action.payload;
+    },
+
+    // ==========================================
+    // DELETE EXTRA PRINCIPAL TRANSACTION
+    // ==========================================
+    deleteExtraPrincipalTransactionRequest: (
+      state,
+      _action: PayloadAction<IDeleteExtraPrincipalTransactionPayload>
+    ) => {
+      state.isLoading = true;
+      state.errors.extraPrincipal = undefined;
+    },
+
+    deleteExtraPrincipalTransactionSuccess: (state) => {
+      state.isLoading = false;
+      state.errors.extraPrincipal = undefined;
+      state.lastUpdated = new Date().toISOString();
+    },
+
+    deleteExtraPrincipalTransactionFailure: (state, action: PayloadAction<string>) => {
+      state.isLoading = false;
+      state.errors.extraPrincipal = action.payload;
+    },
+
+    // ==========================================
     // CLEAR/RESET
     // ==========================================
     clearLoanFilters: (state) => {
@@ -263,7 +383,9 @@ const loanSlice = createSlice({
     clearCurrentLoan: (state) => {
       state.currentLoan = null;
       state.amortizationSchedule = [];
+      state.paymentScheduleWithStatus = [];
       state.loanPayments = [];
+      state.extraPrincipalTransactions = [];
       state.prepaymentSimulation = null;
     },
 

@@ -9,6 +9,13 @@ export interface DebtsState {
   debts: IDebt[];
   currentDebt: IDebt | null;
   debtPayments: IDebtPayment[];
+  summary: {
+    totalDebtAmount: number;
+    totalPaidAmount: number;
+    totalRemainingAmount: number;
+    totalInterestPaid: number;
+    activeDebtsCount: number;
+  } | null;
   loading: boolean;
   error: string | null;
 }
@@ -17,6 +24,7 @@ const initialState: DebtsState = {
   debts: [],
   currentDebt: null,
   debtPayments: [],
+  summary: null,
   loading: false,
   error: null,
 };
@@ -118,6 +126,37 @@ const debtsSlice = createSlice({
       state.error = action.payload;
     },
 
+    // Delete debt payment
+    deleteDebtPaymentRequest: (
+      state,
+      _action: PayloadAction<{ debtId: string; paymentId: string }>
+    ) => {
+      state.loading = true;
+      state.error = null;
+    },
+    deleteDebtPaymentSuccess: (state, action: PayloadAction<string>) => {
+      state.debtPayments = state.debtPayments.filter((p) => p.id !== action.payload);
+      state.loading = false;
+    },
+    deleteDebtPaymentFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
+
+    // Fetch debt summary
+    fetchDebtSummaryRequest: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    fetchDebtSummarySuccess: (state, action: PayloadAction<DebtsState['summary']>) => {
+      state.summary = action.payload;
+      state.loading = false;
+    },
+    fetchDebtSummaryFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
+
     // Set current debt
     setCurrentDebt: (state, action: PayloadAction<IDebt | null>) => {
       state.currentDebt = action.payload;
@@ -144,6 +183,12 @@ export const {
   createDebtPaymentRequest,
   createDebtPaymentSuccess,
   createDebtPaymentFailure,
+  deleteDebtPaymentRequest,
+  deleteDebtPaymentSuccess,
+  deleteDebtPaymentFailure,
+  fetchDebtSummaryRequest,
+  fetchDebtSummarySuccess,
+  fetchDebtSummaryFailure,
   setCurrentDebt,
 } = debtsSlice.actions;
 

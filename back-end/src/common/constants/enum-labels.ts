@@ -1,21 +1,21 @@
 import {
-    AccountType,
-    BookRole,
-    BudgetPeriod,
-    CategoryType,
-    Currency,
-    DebtStatus,
-    DebtType,
-    EventStatus,
-    FrequencyType,
-    GoalStatus,
-    LoanStatus,
-    LoanType,
-    NotificationType,
-    PaymentStatus,
-    ReminderType,
-    TransactionType,
-    UserStatus,
+  AccountType,
+  BookRole,
+  BudgetPeriod,
+  CategoryType,
+  Currency,
+  DebtStatus,
+  DebtType,
+  EventStatus,
+  FrequencyType,
+  GoalStatus,
+  LoanStatus,
+  LoanType,
+  NotificationType,
+  PaymentStatus,
+  ReminderType,
+  TransactionType,
+  UserStatus,
 } from './enums';
 
 /**
@@ -64,8 +64,8 @@ export const DebtTypeLabels: Record<DebtType, string> = {
 
 export const DebtStatusLabels: Record<DebtStatus, string> = {
   [DebtStatus.ACTIVE]: 'Đang hoạt động',
-  [DebtStatus.PAID]: 'Đã thanh toán',
-  [DebtStatus.PARTIAL]: 'Thanh toán một phần',
+  [DebtStatus.PARTIAL_PAID]: 'Thanh toán một phần',
+  [DebtStatus.COMPLETED]: 'Đã hoàn thành',
   [DebtStatus.OVERDUE]: 'Quá hạn',
 };
 

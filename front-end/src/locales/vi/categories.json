@@ -19,5 +19,8 @@
   "selectType": "Chọn loại",
   "iconPlaceholder": "Ví dụ: 🍔, ⛽, 💰...",
   "descriptionPlaceholder": "Ghi chú về danh mục (tùy chọn)",
-  "totalCategories": "Tổng {{total}} danh mục"
+  "totalCategories": "Tổng {{total}} danh mục",
+  "categorySelection": "Chọn danh mục",
+  "commonCategory": "Danh mục chung",
+  "selectCategory": "Chọn danh mục"
 }

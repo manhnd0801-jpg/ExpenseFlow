@@ -71,6 +71,8 @@ export const ApiRoutes = {
   DEBTS: {
     BASE: 'debts',
     PAYMENTS: 'payments',
+    DELETE_PAYMENT: 'payments/:paymentId',
+    SUMMARY: 'summary',
     HISTORY: 'history',
   },
 
@@ -78,7 +80,9 @@ export const ApiRoutes = {
   LOANS: {
     BASE: 'loans',
     PAYMENTS: 'payments',
+    DELETE_PAYMENT: 'payments/:paymentId',
     AMORTIZATION_SCHEDULE: 'amortization-schedule',
+    PAYMENT_SCHEDULE: 'payment-schedule', // Payment schedule with status (paid/unpaid)
     SIMULATE_PREPAYMENT: 'simulate-prepayment',
     SCHEDULE: 'schedule',
     PREPAYMENT: 'prepayment',

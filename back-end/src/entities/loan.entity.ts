@@ -12,6 +12,7 @@ import {
 import { LoanStatus, LoanType } from '../common/constants/enums';
 import { DateToString, DecimalToNumber } from '../common/decorators';
 import { LoanPayment } from './loan-payment.entity';
+import { Transaction } from './transaction.entity';
 import { User } from './user.entity';
 
 /**
@@ -60,13 +61,23 @@ export class Loan {
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   monthlyPayment: number; // Calculated monthly payment (principal + interest)
 
-  @Column({ type: 'date' })
+  @Column({ type: 'timestamp' })
+  @DateToString()
   startDate: Date; // Loan start date
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'uuid', nullable: true })
+  accountId: string; // Account that received loan disbursement (if disbursed)
+
+  @Column({ type: 'timestamp', nullable: true })
+  @DateToString()
+  disbursementDate: Date; // Date when loan was actually disbursed to account
+
+  @Column({ type: 'timestamp', nullable: true })
+  @DateToString()
   nextPaymentDate: Date; // Next scheduled payment date
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
+  @DateToString()
   lastPaymentDate: Date; // Last payment made date
 
   @Column({
@@ -113,6 +124,9 @@ export class Loan {
 
   @OneToMany(() => LoanPayment, (payment) => payment.loan)
   payments: LoanPayment[];
+
+  @OneToMany(() => Transaction, (transaction) => transaction.loan)
+  disbursementTransactions: Transaction[];
 
   // Virtual properties
   get totalPaid(): number {

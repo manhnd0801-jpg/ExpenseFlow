@@ -9,7 +9,9 @@ import {
 } from 'typeorm';
 import { PaymentStatus } from '../common/constants/enums';
 import { DateToString, DecimalToNumber } from '../common/decorators';
+import { Account } from './account.entity';
 import { Debt } from './debt.entity';
+import { Transaction } from './transaction.entity';
 
 /**
  * DebtPayment Entity - Debt payment records
@@ -25,9 +27,24 @@ export class DebtPayment {
 
   @DecimalToNumber()
   @Column({ type: 'decimal', precision: 15, scale: 2 })
-  amount: number;
+  amount: number; // Total payment amount (principal + interest)
 
-  @Column({ type: 'date' })
+  @DecimalToNumber()
+  @Column({ name: 'principal_amount', type: 'decimal', precision: 15, scale: 2, default: 0 })
+  principalAmount: number; // Principal portion of the payment
+
+  @DecimalToNumber()
+  @Column({ name: 'interest_amount', type: 'decimal', precision: 15, scale: 2, default: 0 })
+  interestAmount: number; // Interest portion of the payment
+
+  @Column({ name: 'account_id', type: 'uuid', nullable: true })
+  accountId?: string; // Account receiving money (lending) or paying money (borrowing)
+
+  @Column({ name: 'transaction_id', type: 'uuid', nullable: true })
+  transactionId?: string; // Transaction created for this payment
+
+  @Column({ type: 'timestamp' })
+  @DateToString()
   paymentDate: Date;
 
   @Column({
@@ -56,6 +73,14 @@ export class DebtPayment {
   @ManyToOne(() => Debt, (debt) => debt.payments)
   @JoinColumn({ name: 'debt_id' })
   debt: Debt;
+
+  @ManyToOne(() => Account)
+  @JoinColumn({ name: 'account_id' })
+  account: Account;
+
+  @ManyToOne(() => Transaction, { nullable: true })
+  @JoinColumn({ name: 'transaction_id' })
+  transaction?: Transaction;
 
   // Virtual properties
   get isPaid(): boolean {

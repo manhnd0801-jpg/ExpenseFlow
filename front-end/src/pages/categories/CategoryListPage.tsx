@@ -160,13 +160,15 @@ export const CategoryListPage: React.FC = () => {
             onClick={() => handleOpenModal(record)}
             title={t('common.edit')}
           />
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
-            title={t('common.delete')}
-          />
+          {!record.isDefault && (
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record.id)}
+              title={t('common.delete')}
+            />
+          )}
         </Space>
       ),
     },

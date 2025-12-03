@@ -42,5 +42,8 @@
   "selectDueDate": "Chọn hạn trả",
   "selectStatus": "Chọn trạng thái",
   "enterNote": "Nhập ghi chú",
-  "note": "Ghi chú"
+  "note": "Ghi chú",
+  "category": "Danh mục",
+  "categoryHelp": "Chọn danh mục cho giao dịch công nợ",
+  "selectCategory": "Chọn danh mục"
 }

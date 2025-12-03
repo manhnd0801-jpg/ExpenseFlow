@@ -319,92 +319,406 @@ Cronjob chạy cuối mỗi tháng:
 
 ---
 
-## 4. Quy Trình Quản Lý Công Nợ
+## 4. Quy Trình Quản Lý Công Nợ (Debts với Account & Transaction Integration)
 
-### 4.1. Tạo Khoản Cho Vay
+**⚠️ QUAN TRỌNG:**
 
-```
-[Người dùng] → Nhập thông tin
-              - Tên người vay
-              - Số tiền
-              - Lãi suất (%)
-              - Ngày cho vay
-              - Hạn trả
-              - Kỳ hạn trả (tháng/quý/năm)
-              ↓
-[Hệ thống] → Lưu vào bảng debts
-              - type = 1  -- 1 = Lending (Cho vay)
-              - principal_amount = số tiền
-              - remaining_amount = số tiền
-              - status = 1  -- 1 = Active
-              ↓
-           Tạo reminder tự động:
-             - Nhắc nhở trước hạn trả 3 ngày
-             - Nhắc nhở đúng hạn trả
-             - Nhắc nhở sau hạn (overdue)
-              ↓
-[Optional] → Tạo transaction expense (ghi nhận tiền ra)
-              ↓
-[Response] → "Đã ghi nhận khoản cho vay"
-```
+- Debts PHẢI liên kết với Account
+- Tự động tạo Transaction khi tạo debt và payment
+- Tự động cập nhật số dư Account
 
-### 4.2. Thu Nợ (Ghi Nhận Thanh Toán)
+### 4.1. Tạo Khoản Cho Vay (Lending)
 
 ```
-[Người dùng] → Chọn khoản nợ → "Thu nợ"
-              ↓
-[UI] → Form thu nợ
-       - Số tiền thu (mặc định = remaining_amount)
-       - Ngày thu
-       - Ghi chú
+[Người dùng] → Nhập thông tin cho vay
+              - Tên người vay: "Nguyen Van B"
+              - Số tiền: 10,000,000 VND
+              - Lãi suất: 5% (tùy chọn)
+              - Ngày cho vay: 01/01/2025 10:00
+              - Hạn trả: 31/12/2025 23:59 (tùy chọn)
+              - Kỳ hạn: Hàng tháng (tùy chọn)
+              - ⭐ Tài khoản nguồn: "Tiền mặt" (BẮT BUỘC)
+              - Category: "Cho vay" (tùy chọn)
+              - Ghi chú: "Cho vay mua xe"
               ↓
 [Validation]
-  - Số tiền <= remaining_amount?
+  - Số tiền > 0?
+  - Tài khoản có đủ số dư?
+  - Account balance >= amount?
+              ├─ Không đủ → "Số dư tài khoản không đủ"
+              └─ Đủ → Tiếp tục
               ↓
-[Business Logic]
+[Business Logic - Transaction Flow]
   - BEGIN TRANSACTION
-    ├─ Insert vào debt_payments
-    ├─ Update debts:
-    │   - remaining_amount -= payment_amount
-    │   - status =
-    │       if remaining == 0 → 3  -- 3 = Fully Paid
-    │       else if remaining < principal → 2  -- 2 = Partial Paid
-    ├─ Tạo transaction income (ghi nhận tiền vào)
-    ├─ Nếu fully_paid:
-    │   └─ Tạo notification "Đã thu hết nợ từ [person]"
+    │
+    ├─ Step 1: Create Debt Record
+    │   - INSERT INTO debts
+    │     - type = 1 (Lending)
+    │     - personName = "Nguyen Van B"
+    │     - originalAmount = 10,000,000
+    │     - remainingAmount = 10,000,000
+    │     - totalInterestPaid = 0
+    │     - interestRate = 5
+    │     - borrowedDate = '2025-01-01T10:00:00.000Z'
+    │     - dueDate = '2025-12-31T23:59:59.000Z'
+    │     - status = 1 (Active)
+    │     - accountId = 'account-cash-uuid'
+    │
+    ├─ Step 2: Create EXPENSE Transaction (Trừ tiền khỏi account)
+    │   - INSERT INTO transactions
+    │     - type = 2 (EXPENSE)
+    │     - amount = 10,000,000
+    │     - accountId = 'account-cash-uuid'
+    │     - categoryId = 'category-lending-uuid'
+    │     - debtId = debt.id (link)
+    │     - date = '2025-01-01T10:00:00.000Z'
+    │     - description = "Cho vay: Nguyen Van B - 10,000,000 VND"
+    │     - note = "Cho vay mua xe"
+    │
+    ├─ Step 3: Update Account Balance (Trigger tự động)
+    │   - UPDATE accounts
+    │     SET balance = balance - 10,000,000
+    │     WHERE id = 'account-cash-uuid'
+    │   - VD: 50,000,000 → 40,000,000
+    │
+    ├─ Step 4: Link Transaction to Debt
+    │   - UPDATE debts
+    │     SET initialTransactionId = transaction.id
+    │
+    ├─ Step 5: Create Reminders
+    │   - Nếu có dueDate:
+    │     - Tạo reminder trước hạn 3 ngày
+    │     - Tạo reminder đúng hạn
+    │
     └─ COMMIT
               ↓
-[Response] → "Ghi nhận thu nợ thành công"
-             Cập nhật số dư tài khoản
+[Response]
+  {
+    "debt": {
+      "id": "debt-uuid",
+      "type": 1,
+      "personName": "Nguyen Van B",
+      "originalAmount": 10000000,
+      "remainingAmount": 10000000,
+      "accountId": "account-cash-uuid",
+      "initialTransactionId": "transaction-uuid"
+    },
+    "transaction": {
+      "id": "transaction-uuid",
+      "type": 2, // EXPENSE
+      "amount": 10000000,
+      "description": "Cho vay: Nguyen Van B - 10,000,000 VND"
+    },
+    "updatedAccount": {
+      "id": "account-cash-uuid",
+      "name": "Tiền mặt",
+      "balance": 40000000 // Giảm từ 50M
+    }
+  }
+              ↓
+[UI] → Hiển thị thông báo thành công
+       "Đã ghi nhận cho vay 10,000,000 VND cho Nguyen Van B"
+       "Số dư tài khoản Tiền mặt: 40,000,000 VND"
 ```
 
-### 4.3. Kiểm Tra Nợ Quá Hạn
+### 4.2. Tạo Khoản Đi Vay (Borrowing)
+
+```
+[Người dùng] → Nhập thông tin vay nợ
+              - Tên người/tổ chức cho vay: "ABC Bank"
+              - Số tiền: 100,000,000 VND
+              - Lãi suất: 12%
+              - Ngày vay: 01/01/2025 10:00
+              - Hạn trả: 31/12/2025
+              - Kỳ hạn: Hàng tháng
+              - ⭐ Tài khoản đích: "Vietcombank" (BẮT BUỘC)
+              - Category: "Vay nợ" (tùy chọn)
+              - Ghi chú: "Vay mua nhà"
+              ↓
+[Business Logic - Transaction Flow]
+  - BEGIN TRANSACTION
+    │
+    ├─ Step 1: Create Debt Record
+    │   - INSERT INTO debts
+    │     - type = 2 (Borrowing)
+    │     - personName = "ABC Bank"
+    │     - originalAmount = 100,000,000
+    │     - remainingAmount = 100,000,000
+    │     - status = 1 (Active)
+    │     - accountId = 'account-vietcombank-uuid'
+    │
+    ├─ Step 2: Create INCOME Transaction (Cộng tiền vào account)
+    │   - INSERT INTO transactions
+    │     - type = 1 (INCOME)
+    │     - amount = 100,000,000
+    │     - accountId = 'account-vietcombank-uuid'
+    │     - categoryId = 'category-borrowing-uuid'
+    │     - debtId = debt.id
+    │     - description = "Vay nợ: ABC Bank - 100,000,000 VND"
+    │
+    ├─ Step 3: Update Account Balance (Trigger tự động)
+    │   - UPDATE accounts
+    │     SET balance = balance + 100,000,000
+    │   - VD: 20,000,000 → 120,000,000
+    │
+    └─ COMMIT
+              ↓
+[Response] → "Đã ghi nhận vay 100,000,000 VND từ ABC Bank"
+             "Số dư Vietcombank: 120,000,000 VND"
+```
+
+### 4.3. Thu Nợ (Lending Payment)
+
+```
+[Người dùng] → Chọn khoản cho vay → "Thu nợ"
+              ↓
+[UI] → Form thu nợ
+       - Số tiền thu: 3,000,000 (có thể < remainingAmount)
+       - Phân tách:
+         - Gốc: 2,850,000
+         - Lãi: 150,000
+       - Ngày thu: 15/01/2025 14:30
+       - ⭐ Tài khoản nhận: "Vietcombank" (BẮT BUỘC)
+       - Phương thức: "Chuyển khoản"
+       - Mã tham chiếu: "TRF123456"
+       - Ghi chú: "Thu nợ kỳ 1"
+              ↓
+[Validation]
+  - amount > 0?
+  - amount <= debt.remainingAmount?
+  - principalAmount + interestAmount = amount?
+              ↓
+[Business Logic - Transaction Flow]
+  - BEGIN TRANSACTION
+    │
+    ├─ Step 1: Create Debt Payment Record
+    │   - INSERT INTO debt_payments
+    │     - debtId = 'debt-uuid'
+    │     - amount = 3,000,000
+    │     - principalAmount = 2,850,000
+    │     - interestAmount = 150,000
+    │     - paymentDate = '2025-01-15T14:30:00.000Z'
+    │     - accountId = 'account-vietcombank-uuid'
+    │     - remainingBalanceAfter = 7,000,000
+    │     - status = 2 (Completed)
+    │
+    ├─ Step 2: Create INCOME Transaction (Cộng tiền vào account)
+    │   - INSERT INTO transactions
+    │     - type = 1 (INCOME)
+    │     - amount = 3,000,000
+    │     - accountId = 'account-vietcombank-uuid'
+    │     - categoryId = 'category-debt-collection-uuid'
+    │     - debtId = 'debt-uuid'
+    │     - description = "Thu nợ từ Nguyen Van B - Kỳ 1"
+    │     - note = "Thu nợ kỳ 1"
+    │
+    ├─ Step 3: Update Account Balance
+    │   - UPDATE accounts
+    │     SET balance = balance + 3,000,000
+    │   - VD: 40,000,000 → 43,000,000
+    │
+    ├─ Step 4: Link Payment to Transaction
+    │   - UPDATE debt_payments
+    │     SET transactionId = transaction.id
+    │
+    ├─ Step 5: Update Debt
+    │   - UPDATE debts
+    │     SET
+    │       remainingAmount = remainingAmount - principalAmount
+    │         = 10,000,000 - 2,850,000 = 7,150,000
+    │       totalInterestPaid = totalInterestPaid + interestAmount
+    │         = 0 + 150,000 = 150,000
+    │       status = CASE
+    │         WHEN remainingAmount = 0 THEN 3 (Fully Paid)
+    │         WHEN remainingAmount < originalAmount THEN 2 (Partial Paid)
+    │         ELSE 1 (Active)
+    │       END
+    │
+    ├─ Step 6: Notifications
+    │   - Nếu status = 3 (Fully Paid):
+    │     - Tạo notification: "Đã thu hết nợ từ Nguyen Van B"
+    │     - Disable reminders
+    │
+    └─ COMMIT
+              ↓
+[Response]
+  {
+    "payment": {
+      "id": "payment-uuid",
+      "amount": 3000000,
+      "principalAmount": 2850000,
+      "interestAmount": 150000,
+      "transactionId": "transaction-uuid"
+    },
+    "updatedDebt": {
+      "remainingAmount": 7150000,
+      "totalInterestPaid": 150000,
+      "status": 2 // Partial Paid
+    },
+    "updatedAccount": {
+      "balance": 43000000 // Tăng từ 40M
+    }
+  }
+              ↓
+[UI] → "Thu nợ thành công 3,000,000 VND"
+       "Còn lại: 7,150,000 VND"
+       "Số dư Vietcombank: 43,000,000 VND"
+```
+
+### 4.4. Trả Nợ (Borrowing Payment)
+
+```
+[Người dùng] → Chọn khoản vay → "Trả nợ"
+              ↓
+[UI] → Form trả nợ
+       - Số tiền trả: 11,000,000
+       - Phân tách:
+         - Gốc: 10,000,000
+         - Lãi: 1,000,000
+       - Ngày trả: 15/01/2025 14:30
+       - ⭐ Tài khoản trả: "Vietcombank" (BẮT BUỘC)
+       - Ghi chú: "Trả nợ tháng 1"
+              ↓
+[Validation]
+  - amount > 0?
+  - Account có đủ số dư?
+  - balance >= amount?
+              ↓
+[Business Logic - Transaction Flow]
+  - BEGIN TRANSACTION
+    │
+    ├─ Step 1: Create Debt Payment Record
+    │   - INSERT INTO debt_payments
+    │     - amount = 11,000,000
+    │     - principalAmount = 10,000,000
+    │     - interestAmount = 1,000,000
+    │     - accountId = 'account-vietcombank-uuid'
+    │
+    ├─ Step 2: Create EXPENSE Transaction (Trừ tiền khỏi account)
+    │   - INSERT INTO transactions
+    │     - type = 2 (EXPENSE)
+    │     - amount = 11,000,000
+    │     - accountId = 'account-vietcombank-uuid'
+    │     - categoryId = 'category-debt-repayment-uuid'
+    │     - debtId = 'debt-uuid'
+    │     - description = "Trả nợ ABC Bank - Tháng 1 (10M gốc + 1M lãi)"
+    │
+    ├─ Step 3: Update Account Balance
+    │   - UPDATE accounts
+    │     SET balance = balance - 11,000,000
+    │   - VD: 120,000,000 → 109,000,000
+    │
+    ├─ Step 4: Update Debt
+    │   - UPDATE debts
+    │     SET
+    │       remainingAmount = remainingAmount - 10,000,000
+    │         = 100,000,000 - 10,000,000 = 90,000,000
+    │       totalInterestPaid = totalInterestPaid + 1,000,000
+    │       status = Partial Paid (2)
+    │
+    └─ COMMIT
+              ↓
+[Response] → "Trả nợ thành công 11,000,000 VND"
+             "Còn nợ: 90,000,000 VND"
+             "Số dư Vietcombank: 109,000,000 VND"
+```
+
+### 4.5. Xóa Payment (Trong 7 ngày)
+
+```
+[Người dùng] → Chọn payment → "Xóa"
+              ↓
+[Validation]
+  - Tính số ngày: TODAY - payment.paymentDate
+  - Nếu > 7 ngày → "Không thể xóa payment sau 7 ngày"
+              ↓
+[Business Logic - Rollback Transaction]
+  - BEGIN TRANSACTION
+    │
+    ├─ Step 1: Restore Debt State
+    │   - UPDATE debts
+    │     SET
+    │       remainingAmount = remainingAmount + payment.principalAmount
+    │       totalInterestPaid = totalInterestPaid - payment.interestAmount
+    │       status = (calculate based on new remainingAmount)
+    │
+    ├─ Step 2: Restore Account Balance
+    │   - Lending payment (INCOME) → TRỪ lại tiền
+    │     UPDATE accounts SET balance = balance - payment.amount
+    │   - Borrowing payment (EXPENSE) → CỘNG lại tiền
+    │     UPDATE accounts SET balance = balance + payment.amount
+    │
+    ├─ Step 3: Delete Transaction
+    │   - DELETE FROM transactions WHERE id = payment.transactionId
+    │
+    ├─ Step 4: Delete Payment
+    │   - DELETE FROM debt_payments WHERE id = payment.id
+    │
+    └─ COMMIT
+              ↓
+[Response] → "Đã xóa payment và khôi phục trạng thái"
+```
+
+### 4.6. Xóa Debt (Soft Delete)
+
+```
+[Người dùng] → Chọn debt → "Xóa"
+              ↓
+[UI] → Confirm dialog
+       "Khoản nợ này còn [remainingAmount]. Bạn muốn?"
+       - Option 1: Xóa (không hoàn tiền)
+       - Option 2: Hủy
+              ↓
+[Business Logic]
+  - UPDATE debts
+    SET deleted_at = NOW()
+  - GIỮ NGUYÊN:
+    - Transactions (để audit)
+    - Debt_payments (để audit)
+              ↓
+[Response] → "Đã xóa khoản nợ. Lịch sử transactions được giữ lại."
+```
+
+### 4.7. Kiểm Tra Nợ Quá Hạn (Cronjob)
 
 ```
 Cronjob chạy hàng ngày (00:00):
               ↓
-[System] → Tìm debts where:
-           - status IN (1, 2)  -- 1 = Active, 2 = Partial Paid
-           - due_date < TODAY
+[System] → SELECT * FROM debts
+           WHERE
+             status IN (1, 2) -- Active or Partial Paid
+             AND dueDate < NOW()
+             AND deleted_at IS NULL
               ↓
          Với mỗi debt quá hạn:
-           ├─ Update status = 4  -- 4 = Overdue
-           ├─ Tạo notification "Nợ quá hạn"
-           ├─ Gửi email nhắc nhở
-           └─ Tính tiền phạt (nếu có)
+           ├─ UPDATE debts SET status = 4 (Overdue)
+           ├─ INSERT INTO notifications
+           │   - type = 2 (Debt Reminder)
+           │   - title = "Nợ quá hạn"
+           │   - message = "[Type] [Person] - [Amount] đã quá hạn [days] ngày"
+           │
+           └─ Gửi email nhắc nhở (nếu email_enabled)
 ```
 
-### 4.4. Tính Lãi Suất Tự Động
+### 4.8. Tính Lãi Tự Động (Optional - Phase nâng cao)
 
 ```
-Cronjob chạy đầu mỗi tháng:
+Cronjob chạy đầu mỗi tháng (01/XX 00:00):
               ↓
-[System] → Tìm debts có interest_rate > 0
+[System] → SELECT * FROM debts
+           WHERE
+             status IN (1, 2)
+             AND interestRate > 0
+             AND deleted_at IS NULL
               ↓
          Với mỗi debt:
-           ├─ Tính lãi = remaining_amount * (interest_rate/12/100)
-           ├─ Gửi notification "Lãi tháng này: X"
-           └─ (Optional) Tự động cộng lãi vào remaining_amount
+           ├─ Tính lãi tháng = remainingAmount * (interestRate/12/100)
+           │
+           ├─ INSERT INTO notifications
+           │   - "Lãi tháng [Month]: [Amount]"
+           │
+           └─ (Optional) Tự động thêm lãi vào remainingAmount
+               hoặc tạo debt_payment record cho lãi
 ```
 
 ---

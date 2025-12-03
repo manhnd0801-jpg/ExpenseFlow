@@ -14,11 +14,17 @@ import {
   createDebtRequest,
   createDebtSuccess,
   deleteDebtFailure,
+  deleteDebtPaymentFailure,
+  deleteDebtPaymentRequest,
+  deleteDebtPaymentSuccess,
   deleteDebtRequest,
   deleteDebtSuccess,
   fetchDebtPaymentsFailure,
   fetchDebtPaymentsRequest,
   fetchDebtPaymentsSuccess,
+  fetchDebtSummaryFailure,
+  fetchDebtSummaryRequest,
+  fetchDebtSummarySuccess,
   fetchDebtsFailure,
   fetchDebtsRequest,
   fetchDebtsSuccess,
@@ -113,6 +119,30 @@ function* createDebtPaymentSaga(
   }
 }
 
+// Delete debt payment
+function* deleteDebtPaymentSaga(
+  action: PayloadAction<{ debtId: string; paymentId: string }>
+): Generator<any, void, any> {
+  try {
+    yield call(debtService.deleteDebtPayment, action.payload.debtId, action.payload.paymentId);
+    yield put(deleteDebtPaymentSuccess(action.payload.paymentId));
+  } catch (error: any) {
+    yield put(deleteDebtPaymentFailure(error.message || 'Lỗi khi xóa thanh toán'));
+  }
+}
+
+// Fetch debt summary
+function* fetchDebtSummarySaga(): Generator<any, void, any> {
+  try {
+    const response: any = yield call(debtService.getDebtSummary);
+    // Extract data from wrapped response {success, data, message}
+    const summary = response.data || response;
+    yield put(fetchDebtSummarySuccess(summary));
+  } catch (error: any) {
+    yield put(fetchDebtSummaryFailure(error.message || 'Lỗi khi tải thống kê nợ'));
+  }
+}
+
 // Root saga
 export default function* debtSaga() {
   yield takeLatest(fetchDebtsRequest.type, fetchDebtsSaga);
@@ -121,4 +151,6 @@ export default function* debtSaga() {
   yield takeLatest(deleteDebtRequest.type, deleteDebtSaga);
   yield takeLatest(fetchDebtPaymentsRequest.type, fetchDebtPaymentsSaga);
   yield takeLatest(createDebtPaymentRequest.type, createDebtPaymentSaga);
+  yield takeLatest(deleteDebtPaymentRequest.type, deleteDebtPaymentSaga);
+  yield takeLatest(fetchDebtSummaryRequest.type, fetchDebtSummarySaga);
 }

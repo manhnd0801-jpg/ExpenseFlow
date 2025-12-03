@@ -94,7 +94,7 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
 
     const payload: ICreateTransactionPayload = {
       ...values,
-      date: values.date.format('YYYY-MM-DD'),
+      date: values.date.format('YYYY-MM-DDTHH:mm:ss'), // Send with time
     };
     // Initial values for editing transaction
 
@@ -240,8 +240,9 @@ export const TransactionForm: React.FC<ITransactionFormProps> = ({
         rules={[{ required: true, message: t('transactions.dateRequired') }]}
       >
         <DatePicker
+          showTime={{ format: 'HH:mm' }}
           style={{ width: '100%' }}
-          format="DD/MM/YYYY"
+          format="DD/MM/YYYY HH:mm"
           placeholder={t('transactions.selectDate')}
         />
       </Form.Item>
