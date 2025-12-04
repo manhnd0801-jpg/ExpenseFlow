@@ -13,22 +13,28 @@ dayjs.extend(relativeTime);
 
 /**
  * Format number as currency
+ * For VND, always round to whole numbers (no decimals)
  */
 export const formatCurrency = (
   amount: number,
   currency: string = 'VND',
   decimals: number = 0
 ): string => {
-  // const symbol = CURRENCY_FORMAT.SYMBOLS[currency as keyof typeof CURRENCY_FORMAT.SYMBOLS] || '';
+  // For VND, always use 0 decimals (round to whole numbers)
+  const finalDecimals = currency === 'VND' ? 0 : decimals;
+
+  // Round the amount for VND to avoid floating point issues
+  const roundedAmount = currency === 'VND' ? Math.round(amount) : amount;
+
   const formatted = new Intl.NumberFormat(
     CURRENCY_FORMAT.LOCALES[currency as keyof typeof CURRENCY_FORMAT.LOCALES] || 'en-US',
     {
       style: 'currency',
       currency,
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
+      minimumFractionDigits: finalDecimals,
+      maximumFractionDigits: finalDecimals,
     }
-  ).format(amount);
+  ).format(roundedAmount);
   return formatted;
 };
 

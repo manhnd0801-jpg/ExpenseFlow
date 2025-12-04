@@ -184,6 +184,8 @@ export const EventForm: React.FC<IEventFormProps> = ({
               <InputNumber
                 style={{ width: '100%' }}
                 placeholder={t('events.enterBudget')}
+                step={1000}
+                precision={0}
                 formatter={(value) => `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => Number(value!.replace(/₫\s?|(,*)/g, '')) as any}
                 min={0}

@@ -363,6 +363,8 @@ const RecordPaymentModal: React.FC<IRecordPaymentModalProps> = ({
           <InputNumber
             style={{ width: '100%' }}
             placeholder={t('loans.paymentAmount')}
+            step={1000}
+            precision={0}
             formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
             parser={(value) => (value ? parseFloat(value.replace(/\$\s?|(,*)/g, '')) : 0) as any}
             addonAfter="VNĐ"

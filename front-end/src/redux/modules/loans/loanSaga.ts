@@ -225,9 +225,10 @@ function* extraPrincipalPaymentSaga(
     yield put(loanActions.extraPrincipalPaymentSuccess());
 
     message.success(
-      `Trả gốc tự do thành công! Số dư còn lại: ${new Intl.NumberFormat('vi-VN').format(
-        response.newRemainingPrincipal
-      )}₫`
+      `Trả gốc tự do thành công! Số dư còn lại: ${new Intl.NumberFormat('vi-VN', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(Math.round(response.newRemainingPrincipal))}₫`
     );
 
     // Refresh loan detail and extra principal transactions after payment

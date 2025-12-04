@@ -360,6 +360,8 @@ const LoanForm: React.FC = () => {
                     <InputNumber
                       style={{ width: '100%' }}
                       placeholder="VD: 100000000"
+                      step={1000000}
+                      precision={0}
                       formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
                       disabled={isEditMode}
@@ -420,6 +422,8 @@ const LoanForm: React.FC = () => {
                     <InputNumber
                       style={{ width: '100%' }}
                       placeholder="VD: 12"
+                      step={1}
+                      precision={0}
                       disabled={isEditMode}
                     />
                   </Form.Item>

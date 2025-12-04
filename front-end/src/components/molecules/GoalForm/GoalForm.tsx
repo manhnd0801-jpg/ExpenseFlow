@@ -481,6 +481,8 @@ export const GoalForm: React.FC<IGoalFormProps> = ({
                 value={targetAmount}
                 onChange={(value) => setTargetAmount(value || 0)}
                 style={{ width: '100%' }}
+                step={1000}
+                precision={0}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => {
                   const parsed = value?.replace(/\$\s?|(,*)/g, '');

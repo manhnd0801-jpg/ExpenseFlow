@@ -59,7 +59,7 @@ export const TransferModal: React.FC<ITransferModalProps> = ({
     return activeAccounts.find((acc) => acc.id === fromAccountId);
   }, [activeAccounts, fromAccountId]);
 
-  // Format currency
+  // Format currency - VND always rounded to whole numbers
   const formatCurrency = (amount: number, currencyEnum: number | string = 1): string => {
     let currencyCode = 'VND';
 
@@ -69,17 +69,24 @@ export const TransferModal: React.FC<ITransferModalProps> = ({
       currencyCode = currencyEnum.toUpperCase();
     }
 
+    const roundedAmount = currencyCode === 'VND' ? Math.round(amount) : amount;
+    const decimals = currencyCode === 'VND' ? 0 : 2;
+
     try {
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: currencyCode,
-      }).format(amount);
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      }).format(roundedAmount);
     } catch (error) {
       console.warn(`Invalid currency: ${currencyEnum}, falling back to VND`);
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND',
-      }).format(amount);
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(Math.round(amount));
     }
   };
 
@@ -206,6 +213,8 @@ export const TransferModal: React.FC<ITransferModalProps> = ({
           <InputNumber
             style={{ width: '100%' }}
             min={0}
+            step={1000}
+            precision={0}
             formatter={formatNumber}
             parser={parseNumber}
             placeholder="0"

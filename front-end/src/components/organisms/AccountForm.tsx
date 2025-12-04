@@ -128,6 +128,8 @@ export const AccountForm: React.FC<IAccountFormProps> = ({
             <InputNumber
               style={{ width: '100%' }}
               min={0}
+              step={1000}
+              precision={0}
               formatter={formatCurrency}
               parser={parseCurrency}
               placeholder="0"

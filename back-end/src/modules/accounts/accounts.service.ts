@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { TransactionType } from '../../common/constants/enums';
+import { addVND, roundVND, subtractVND } from '../../common/utils/currency.util';
 import { Account } from '../../entities/account.entity';
 import { Transaction } from '../../entities/transaction.entity';
 import { CreateAccountDto, TransferDto, UpdateAccountDto } from './dto';
@@ -20,7 +21,7 @@ export class AccountsService {
     const account = this.accountRepository.create({
       ...dto,
       userId,
-      balance: dto.balance || 0,
+      balance: roundVND(dto.balance || 0),
     });
     return await this.accountRepository.save(account);
   }
@@ -63,6 +64,9 @@ export class AccountsService {
    * Creates a TRANSFER transaction and updates both account balances
    */
   async transfer(userId: string, fromAccountId: string, dto: TransferDto): Promise<void> {
+    // Round amount for VND
+    const roundedAmount = roundVND(dto.amount);
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -78,29 +82,29 @@ export class AccountsService {
       }
 
       // Validate sufficient balance
-      if (fromAccount.balance < dto.amount) {
+      if (fromAccount.balance < roundedAmount) {
         throw new BadRequestException('Insufficient balance');
       }
 
       // Validate amount is positive
-      if (dto.amount <= 0) {
+      if (roundedAmount <= 0) {
         throw new BadRequestException('Transfer amount must be positive');
       }
 
-      // Update account balances
-      fromAccount.balance = Number(fromAccount.balance) - Number(dto.amount);
-      toAccount.balance = Number(toAccount.balance) + Number(dto.amount);
+      // Update account balances - round to avoid decimals for VND
+      fromAccount.balance = subtractVND(fromAccount.balance, roundedAmount);
+      toAccount.balance = addVND(toAccount.balance, roundedAmount);
 
       await queryRunner.manager.save(fromAccount);
       await queryRunner.manager.save(toAccount);
 
-      // Create transfer transaction
+      // Create transfer transaction - round amount
       const transaction = this.transactionRepository.create({
         userId,
         accountId: fromAccountId,
         toAccountId: dto.toAccountId,
         type: TransactionType.TRANSFER,
-        amount: dto.amount,
+        amount: roundedAmount,
         date: new Date(),
         description: dto.description || `Transfer from ${fromAccount.name} to ${toAccount.name}`,
       });

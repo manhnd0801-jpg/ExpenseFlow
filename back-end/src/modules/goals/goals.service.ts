@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, IsNull, Repository } from 'typeorm';
 import { CategoryType, GoalStatus, TransactionType } from '../../common/constants/enums';
+import { addVND, roundVND, subtractVND } from '../../common/utils/currency.util';
 import { Account } from '../../entities/account.entity';
 import { Category } from '../../entities/category.entity';
 import { GoalTransaction } from '../../entities/goal-transaction.entity';
@@ -67,6 +68,9 @@ export class GoalsService {
    * Contribute to goal - Deduct from account, add to goal
    */
   async contribute(userId: string, id: string, dto: ContributeGoalDto): Promise<Goal> {
+    // Round amount for VND
+    const roundedAmount = roundVND(dto.amount);
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -85,16 +89,16 @@ export class GoalsService {
       if (!account) {
         throw new NotFoundException('Account not found');
       }
-      if (account.balance < dto.amount) {
+      if (account.balance < roundedAmount) {
         throw new BadRequestException('Insufficient account balance');
       }
 
-      // Step 3: Update account balance (decrease)
-      account.balance = Number(account.balance) - Number(dto.amount);
+      // Step 3: Update account balance (decrease) - round for VND
+      account.balance = subtractVND(account.balance, roundedAmount);
       await queryRunner.manager.save(account);
 
-      // Step 4: Update goal current amount (increase)
-      goal.currentAmount = Number(goal.currentAmount) + Number(dto.amount);
+      // Step 4: Update goal current amount (increase) - round for VND
+      goal.currentAmount = addVND(goal.currentAmount, roundedAmount);
 
       // Check if goal completed
       if (goal.currentAmount >= goal.targetAmount) {
@@ -135,7 +139,7 @@ export class GoalsService {
         categoryId: savingsCategory?.id, // Assign savings category if found
         goalId: id,
         type: TransactionType.EXPENSE,
-        amount: dto.amount,
+        amount: roundedAmount,
         date: new Date(),
         description: `Đóng góp vào mục tiêu: ${goal.name}`,
         note: dto.note || `Contribution to goal: ${goal.name}`,
@@ -147,7 +151,7 @@ export class GoalsService {
         goalId: id,
         accountId: dto.accountId,
         transactionId: savedTransaction.id,
-        amount: dto.amount,
+        amount: roundedAmount,
         type: 'CONTRIBUTION',
         note: dto.note,
       });
@@ -167,6 +171,9 @@ export class GoalsService {
    * Withdraw from goal - Add to account, deduct from goal
    */
   async withdraw(userId: string, id: string, dto: WithdrawGoalDto): Promise<Goal> {
+    // Round amount for VND
+    const roundedAmount = roundVND(dto.amount);
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -174,7 +181,7 @@ export class GoalsService {
     try {
       // Step 1: Validate goal
       const goal = await this.findOne(userId, id);
-      if (dto.amount > goal.currentAmount) {
+      if (roundedAmount > goal.currentAmount) {
         throw new BadRequestException('Withdrawal amount exceeds goal current amount');
       }
 
@@ -187,7 +194,7 @@ export class GoalsService {
       }
 
       // Step 3: Update goal current amount (decrease)
-      goal.currentAmount = Number(goal.currentAmount) - Number(dto.amount);
+      goal.currentAmount = subtractVND(goal.currentAmount, roundedAmount);
 
       // Revert status if was completed
       if (goal.status === GoalStatus.COMPLETED && goal.currentAmount < goal.targetAmount) {
@@ -197,8 +204,8 @@ export class GoalsService {
 
       await queryRunner.manager.save(goal);
 
-      // Step 4: Update account balance (increase)
-      account.balance = Number(account.balance) + Number(dto.amount);
+      // Step 4: Update account balance (increase) - round for VND
+      account.balance = addVND(account.balance, roundedAmount);
       await queryRunner.manager.save(account);
 
       // Step 5: Find savings/income category for withdrawal transaction
@@ -232,7 +239,7 @@ export class GoalsService {
         categoryId: savingsCategory?.id,
         goalId: id,
         type: TransactionType.INCOME,
-        amount: dto.amount,
+        amount: roundedAmount,
         date: new Date(),
         description: `Rút từ mục tiêu: ${goal.name}`,
         note: dto.reason || `Withdrawal from goal: ${goal.name}`,
@@ -244,7 +251,7 @@ export class GoalsService {
         goalId: id,
         accountId: dto.accountId,
         transactionId: savedTransaction.id,
-        amount: dto.amount,
+        amount: roundedAmount,
         type: 'WITHDRAWAL',
         note: dto.reason,
       });
@@ -301,16 +308,16 @@ export class GoalsService {
           `🔵 Processing transaction: ${transaction.type === TransactionType.EXPENSE ? 'CONTRIBUTION' : 'WITHDRAWAL'} of ${transaction.amount} from ${account.name}`,
         );
 
-        // Refund logic:
+        // Refund logic (with VND rounding):
         // - If EXPENSE (contribution): refund money back to account
         // - If INCOME (withdrawal): reverse the withdrawal (deduct from account)
         if (transaction.type === TransactionType.EXPENSE) {
           // Contribution - return money to account
-          account.balance = oldBalance + Number(transaction.amount);
+          account.balance = addVND(oldBalance, transaction.amount);
           console.log(`✅ REFUND: ${account.name} ${oldBalance} + ${transaction.amount} = ${account.balance}`);
         } else if (transaction.type === TransactionType.INCOME) {
           // Withdrawal - reverse the withdrawal
-          account.balance = oldBalance - Number(transaction.amount);
+          account.balance = subtractVND(oldBalance, transaction.amount);
           console.log(`✅ REVERSE: ${account.name} ${oldBalance} - ${transaction.amount} = ${account.balance}`);
         }
 

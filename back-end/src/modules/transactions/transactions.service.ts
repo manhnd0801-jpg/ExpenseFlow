@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindOptionsWhere, IsNull, Repository } from 'typeorm';
 import { TransactionType } from '../../common/constants/enums';
+import { addVND, roundVND, subtractVND } from '../../common/utils/currency.util';
 import { Account } from '../../entities/account.entity';
 import { Goal } from '../../entities/goal.entity';
 import { Loan } from '../../entities/loan.entity';
@@ -46,9 +47,12 @@ export class TransactionsService {
       throw new BadRequestException('categoryId is required for income and expense transactions');
     }
 
+    // Round amount for VND currency
+    const roundedAmount = roundVND(amount);
+
     // Check sufficient balance for expenses and transfers
     if (type === TransactionType.EXPENSE || type === TransactionType.TRANSFER) {
-      if (account.balance < amount) {
+      if (account.balance < roundedAmount) {
         throw new BadRequestException('Insufficient account balance');
       }
     }
@@ -62,14 +66,14 @@ export class TransactionsService {
         toAccountId,
         categoryId,
         type,
-        amount,
+        amount: roundedAmount,
         ...rest,
       });
 
       const savedTransaction = await transactionalEntityManager.save(Transaction, transaction);
 
       // Update account balances
-      await this.updateAccountBalance(transactionalEntityManager, accountId, type, amount, toAccountId);
+      await this.updateAccountBalance(transactionalEntityManager, accountId, type, roundedAmount, toAccountId);
 
       // Load transaction with relations before returning
       const transactionWithRelations = await transactionalEntityManager.findOne(Transaction, {
@@ -169,8 +173,11 @@ export class TransactionsService {
 
     const { accountId, toAccountId, type, amount, ...rest } = updateTransactionDto;
 
+    // Round amount if provided
+    const roundedAmount = amount !== undefined ? roundVND(amount) : undefined;
+
     // If amount or type changed, need to recalculate balances
-    const amountChanged = amount && amount !== transaction.amount;
+    const amountChanged = roundedAmount !== undefined && roundedAmount !== transaction.amount;
     const typeChanged = type && type !== transaction.type;
     const accountChanged = accountId && accountId !== transaction.accountId;
 
@@ -201,8 +208,8 @@ export class TransactionsService {
             // Apply new amount impact
             const newAdjustment =
               (type || transaction.type) === TransactionType.EXPENSE
-                ? amount // Add new contribution
-                : -amount; // Add new withdrawal
+                ? roundedAmount // Add new contribution
+                : -roundedAmount; // Add new withdrawal
 
             goal.currentAmount = Number(goal.currentAmount) + oldAdjustment + newAdjustment;
 
@@ -220,7 +227,7 @@ export class TransactionsService {
           accountId: accountId || transaction.accountId,
           toAccountId: toAccountId !== undefined ? toAccountId : transaction.toAccountId,
           type: type || transaction.type,
-          amount: amount || transaction.amount,
+          amount: roundedAmount !== undefined ? roundedAmount : transaction.amount,
           ...rest,
         });
 
@@ -407,6 +414,7 @@ export class TransactionsService {
 
   /**
    * Update account balance based on transaction
+   * All amounts are rounded for VND currency
    */
   private async updateAccountBalance(
     transactionalEntityManager: any,
@@ -423,14 +431,14 @@ export class TransactionsService {
       throw new NotFoundException('Account not found');
     }
 
-    // Update from account balance
+    // Update from account balance - round for VND
     if (type === TransactionType.INCOME) {
-      account.balance = Number(account.balance) + Number(amount);
+      account.balance = addVND(account.balance, amount);
     } else if (type === TransactionType.EXPENSE) {
-      account.balance = Number(account.balance) - Number(amount);
+      account.balance = subtractVND(account.balance, amount);
     } else if (type === TransactionType.TRANSFER) {
       // For TRANSFER: subtract from source account (when creating/deleting needs reversal)
-      account.balance = Number(account.balance) - Number(amount);
+      account.balance = subtractVND(account.balance, amount);
     }
 
     await transactionalEntityManager.save(Account, account);
@@ -445,7 +453,7 @@ export class TransactionsService {
         throw new NotFoundException('To account not found');
       }
 
-      toAccount.balance = Number(toAccount.balance) + Number(amount);
+      toAccount.balance = addVND(toAccount.balance, amount);
       await transactionalEntityManager.save(Account, toAccount);
     }
   }
@@ -460,7 +468,7 @@ export class TransactionsService {
     amount: number,
     toAccountId?: string,
   ): Promise<void> {
-    // Add money back to source account
+    // Add money back to source account - round for VND
     const fromAccount = await transactionalEntityManager.findOne(Account, {
       where: { id: fromAccountId },
     });
@@ -469,7 +477,7 @@ export class TransactionsService {
       throw new NotFoundException('From account not found');
     }
 
-    fromAccount.balance = Number(fromAccount.balance) + Number(amount);
+    fromAccount.balance = addVND(fromAccount.balance, amount);
     await transactionalEntityManager.save(Account, fromAccount);
 
     // Subtract money from destination account
@@ -482,7 +490,7 @@ export class TransactionsService {
         throw new NotFoundException('To account not found');
       }
 
-      toAccount.balance = Number(toAccount.balance) - Number(amount);
+      toAccount.balance = subtractVND(toAccount.balance, amount);
       await transactionalEntityManager.save(Account, toAccount);
     }
   }

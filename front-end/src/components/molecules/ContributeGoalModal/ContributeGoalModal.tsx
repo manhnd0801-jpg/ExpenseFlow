@@ -321,6 +321,8 @@ export const ContributeGoalModal: React.FC<IContributeGoalModalProps> = ({
             <InputNumber
               style={{ width: '100%' }}
               placeholder={t('goals.enterContributionAmount')}
+              step={1000}
+              precision={0}
               formatter={(value) => `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={(value) => Number(value!.replace(/₫\s?|(,*)/g, ''))}
               min={1000}

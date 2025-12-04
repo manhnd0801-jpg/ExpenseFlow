@@ -90,7 +90,7 @@ const AccountListPage: React.FC = () => {
     setEditingAccount(null);
   };
 
-  // Format currency
+  // Format currency - VND always rounded to whole numbers
   const formatCurrency = (amount: number, currencyEnum: number | string = 1): string => {
     let currencyCode = 'VND';
 
@@ -100,17 +100,25 @@ const AccountListPage: React.FC = () => {
       currencyCode = currencyEnum.toUpperCase();
     }
 
+    // Round amount for VND to avoid decimals
+    const roundedAmount = currencyCode === 'VND' ? Math.round(amount) : amount;
+    const decimals = currencyCode === 'VND' ? 0 : 2;
+
     try {
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: currencyCode,
-      }).format(amount);
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      }).format(roundedAmount);
     } catch (error) {
       console.warn(`Invalid currency: ${currencyEnum}, falling back to VND`);
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND',
-      }).format(amount);
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(Math.round(amount));
     }
   };
 

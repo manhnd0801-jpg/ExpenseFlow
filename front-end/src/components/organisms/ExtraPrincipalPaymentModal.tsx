@@ -135,6 +135,8 @@ const ExtraPrincipalPaymentModal: React.FC<IExtraPrincipalPaymentModalProps> = (
           <InputNumber
             style={{ width: '100%' }}
             placeholder={t('loans.enterExtraPrincipalAmount')}
+            step={1000000}
+            precision={0}
             formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
             parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
             addonAfter="₫"

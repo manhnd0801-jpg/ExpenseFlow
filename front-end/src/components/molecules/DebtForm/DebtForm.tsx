@@ -201,6 +201,8 @@ export const DebtForm: React.FC<IDebtFormProps> = ({
               <InputNumber
                 style={{ width: '100%' }}
                 placeholder={t('debts.enterAmount')}
+                step={1000}
+                precision={0}
                 formatter={(value) => `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => Number(value!.replace(/₫\s?|(,*)/g, '')) as any}
                 min={1000}
@@ -216,6 +218,7 @@ export const DebtForm: React.FC<IDebtFormProps> = ({
                 min={0}
                 max={100}
                 step={0.1}
+                precision={2}
               />
             </Form.Item>
           </div>

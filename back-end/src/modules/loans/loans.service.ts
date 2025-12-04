@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CategoryType, LoanStatus, PaymentStatus, TransactionType } from '../../common/constants/enums';
+import { addVND, roundVND, subtractVND } from '../../common/utils/currency.util';
 import { Account } from '../../entities/account.entity';
 import { Category } from '../../entities/category.entity';
 import { LoanPayment } from '../../entities/loan-payment.entity';
@@ -337,6 +338,12 @@ export class LoansService {
    * Also creates an income transaction if accountId is provided
    */
   async create(userId: string, dto: CreateLoanDto): Promise<Loan> {
+    // Round amounts for VND
+    const roundedOriginalAmount = roundVND(dto.originalAmount);
+    const monthlyPayment = roundVND(
+      this.calculateMonthlyPayment(roundedOriginalAmount, dto.interestRate, dto.termMonths),
+    );
+
     // Validate account if provided
     let account: Account | null = null;
     if (dto.accountId) {
@@ -347,8 +354,6 @@ export class LoansService {
         throw new BadRequestException('Account not found');
       }
     }
-
-    const monthlyPayment = this.calculateMonthlyPayment(dto.originalAmount, dto.interestRate, dto.termMonths);
 
     const startDate = new Date(dto.startDate);
 
@@ -372,8 +377,8 @@ export class LoansService {
         type: dto.type,
         name: dto.name,
         lender: dto.lender,
-        originalAmount: dto.originalAmount,
-        remainingPrincipal: dto.originalAmount,
+        originalAmount: roundedOriginalAmount,
+        remainingPrincipal: roundedOriginalAmount,
         interestRate: dto.interestRate,
         termMonths: dto.termMonths,
         remainingMonths: dto.termMonths,
@@ -420,7 +425,7 @@ export class LoansService {
           categoryId: loanCategory.id,
           loanId: savedLoan.id, // Link transaction to loan
           type: TransactionType.INCOME,
-          amount: dto.originalAmount,
+          amount: roundedOriginalAmount,
           date: startDate,
           description: `Loan disbursement: ${dto.name}${dto.lender ? ` from ${dto.lender}` : ''}`,
           note: `Loan ID: ${savedLoan.id}`,
@@ -430,11 +435,11 @@ export class LoansService {
 
         // Update account balance (same logic as transactions.service.ts)
         const currentBalance = Number(account.balance);
-        const newBalance = currentBalance + dto.originalAmount; // INCOME adds to balance
-        await queryRunner.manager.update(Account, account.id, { balance: newBalance });
+        account.balance = addVND(currentBalance, roundedOriginalAmount);
+        await queryRunner.manager.save(Account, account);
 
         this.logger.log(
-          `Created loan disbursement transaction and updated balance: ${currentBalance} + ${dto.originalAmount} = ${newBalance}`,
+          `Created loan disbursement transaction and updated balance: ${currentBalance} + ${roundedOriginalAmount} = ${account.balance}`,
         );
       }
 
@@ -767,7 +772,7 @@ export class LoansService {
         // However, since we're using queryRunner.manager.create/save directly,
         // we need to manually update the account balance ONCE for the total amount.
 
-        account.balance = Number(account.balance) - Number(dto.amount);
+        account.balance = subtractVND(account.balance, dto.amount);
         await queryRunner.manager.save(account);
 
         // Get categories for transactions (hybrid logic: specific -> common -> auto-create)
@@ -1029,8 +1034,8 @@ export class LoansService {
         }
       }
 
-      // Update account balance
-      account.balance = Number(account.balance) - dto.amount;
+      // Update account balance - round for VND
+      account.balance = subtractVND(account.balance, dto.amount);
       await queryRunner.manager.save(account);
 
       // IMPORTANT: Create LoanPayment record BEFORE updating loan state
@@ -1043,11 +1048,11 @@ export class LoansService {
           loanId: loan.id,
           paymentDate: new Date(dto.paymentDate),
           dueDate: null, // No due date for extra payments
-          amount: dto.amount,
-          principalAmount: dto.amount, // All goes to principal
+          amount: roundVND(dto.amount),
+          principalAmount: roundVND(dto.amount), // All goes to principal
           interestAmount: 0, // No interest for extra payment
-          prepaymentAmount: dto.amount,
-          remainingPrincipal: Number(loan.remainingPrincipal) - dto.amount,
+          prepaymentAmount: roundVND(dto.amount),
+          remainingPrincipal: subtractVND(loan.remainingPrincipal, dto.amount),
           status: PaymentStatus.PAID,
           isPrepayment: true,
           isScheduled: false,
@@ -1252,15 +1257,15 @@ export class LoansService {
         `Deleting legacy transaction without payment record. Cannot restore exact loan state. Transaction: ${transactionId}`,
       );
 
-      // 7. Restore account balance
+      // 7. Restore account balance - round for VND
       const account = transaction.account;
-      account.balance = Number(account.balance) + Number(transaction.amount);
+      account.balance = addVND(account.balance, transaction.amount);
       await queryRunner.manager.save(account);
 
-      // 8. Restore loan principal (best effort)
-      loan.remainingPrincipal = Number(loan.remainingPrincipal) + Number(transaction.amount);
-      loan.totalPrincipalPaid = Math.max(0, Number(loan.totalPrincipalPaid) - Number(transaction.amount));
-      loan.totalPrepayment = Math.max(0, Number(loan.totalPrepayment) - Number(transaction.amount));
+      // 8. Restore loan principal (best effort) - round for VND
+      loan.remainingPrincipal = addVND(loan.remainingPrincipal, transaction.amount);
+      loan.totalPrincipalPaid = Math.max(0, subtractVND(loan.totalPrincipalPaid, transaction.amount));
+      loan.totalPrepayment = Math.max(0, subtractVND(loan.totalPrepayment, transaction.amount));
 
       // 9. For legacy transactions, we can only estimate remainingMonths
       // This is NOT accurate but better than doing nothing

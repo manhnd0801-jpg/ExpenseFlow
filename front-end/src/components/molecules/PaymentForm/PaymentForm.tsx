@@ -187,6 +187,8 @@ export const PaymentForm: React.FC<IPaymentFormProps> = ({
             <InputNumber
               style={{ width: '100%' }}
               placeholder="Nhập số tiền"
+              step={1000}
+              precision={0}
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, ''))}
               prefix={<DollarOutlined />}
@@ -218,6 +220,8 @@ export const PaymentForm: React.FC<IPaymentFormProps> = ({
                 <InputNumber
                   style={{ width: '100%' }}
                   placeholder="Tiền gốc"
+                  step={1000}
+                  precision={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, ''))}
                   prefix={<DollarOutlined />}
@@ -236,6 +240,8 @@ export const PaymentForm: React.FC<IPaymentFormProps> = ({
                 <InputNumber
                   style={{ width: '100%' }}
                   placeholder="Tiền lãi"
+                  step={1000}
+                  precision={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, ''))}
                   prefix={<PercentageOutlined />}

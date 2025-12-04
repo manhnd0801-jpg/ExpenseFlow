@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { roundVND, subtractVND } from '../../common/utils/currency.util';
 import { Account } from '../../entities/account.entity';
 import { Category } from '../../entities/category.entity';
 import { Transaction } from '../../entities/transaction.entity';
@@ -144,16 +145,16 @@ export class ReportsService {
       }
     });
 
-    // Calculate balance for each month
+    // Calculate balance for each month - round for VND
     monthlyData.forEach((data) => {
-      data.balance = data.income - data.expense;
+      data.balance = subtractVND(data.income, data.expense);
     });
 
     return {
       year,
       data: monthlyData,
-      totalIncome: monthlyData.reduce((sum, m) => sum + m.income, 0),
-      totalExpense: monthlyData.reduce((sum, m) => sum + m.expense, 0),
+      totalIncome: roundVND(monthlyData.reduce((sum, m) => sum + m.income, 0)),
+      totalExpense: roundVND(monthlyData.reduce((sum, m) => sum + m.expense, 0)),
     };
   }
 
